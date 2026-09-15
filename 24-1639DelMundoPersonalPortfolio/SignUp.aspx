@@ -20,12 +20,12 @@
   <!-- ============ FORM PANEL ============ -->
   <div class="form-panel">
     <div class="form-card">
-      <div class="field-label kicker reveal">AUTH / SIGN UP</div>
-      <h2 class="reveal">Create account</h2>
-      <p class="sub reveal">Already have one? <a href="sign-in.html">Sign in</a></p>
+      <div class="field-label kicker ">AUTH / SIGN UP</div>
+      <h2 class="">Create account</h2>
+      <p class="sub ">Already have one? <a href="signin.aspx">Sign in</a></p>
  
       <div id="signupForm" novalidate>
-        <div class="field reveal">
+        <div class="field ">
           <label for="name">Full name</label>
           <div class="input-row">
             <input type="text" id="name" name="name" placeholder="Your name" required>
@@ -33,7 +33,7 @@
           <div class="field-error">Enter your name.</div>
         </div>
  
-        <div class="field reveal">
+        <div class="field ">
           <label for="email">Email</label>
           <div class="input-row">
             <input type="email" id="email" name="email" placeholder="you@example.com" required>
@@ -41,7 +41,7 @@
           <div class="field-error">Enter a valid email address.</div>
         </div>
  
-        <div class="field reveal">
+        <div class="field ">
           <label for="password">Password</label>
           <div class="input-row">
             <input type="password" id="password" name="password" placeholder="••••••••" required minlength="8">
@@ -52,7 +52,7 @@
           <div class="field-error">Password must be at least 8 characters.</div>
         </div>
  
-        <div class="field reveal">
+        <div class="field ">
           <label for="confirm">Confirm password</label>
           <div class="input-row">
             <input type="password" id="confirm" name="confirm" placeholder="••••••••" required>
@@ -60,15 +60,15 @@
           <div class="field-error">Passwords don't match.</div>
         </div>
  
-        <label class="checkbox-row reveal">
+        <label class="checkbox-row ">
           <input type="checkbox" name="terms" required>
           I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.
         </label>
  
-        <button type="submit" class="submit reveal"><span>Create account</span></button>
+        <button type="submit" class="submit "><span>Create account</span></button>
       </div>
  
-      <p class="foot-note reveal">[ add your terms / privacy links here ]</p>
+      <p class="foot-note ">[ add your terms / privacy links here ]</p>
     </div>
   </div>
   </div>

@@ -21,12 +21,12 @@
   <!-- ============ FORM PANEL ============ -->
   <div class="form-panel">
     <div class="form-card">
-      <div class="field-label kicker reveal">AUTH / SIGN IN</div>
-      <h2 class="reveal">Sign in</h2>
-      <p class="sub reveal">Don't have an account? <a href="sign-up.html">Create one</a></p>
+      <div class="field-label kicker ">AUTH / SIGN IN</div>
+      <h2 class="">Sign in</h2>
+      <p class="sub ">Don't have an account? <a href="signup.aspx">Create one</a></p>
  
       <div id="signinForm" novalidate>
-        <div class="field reveal">
+        <div class="field ">
           <label for="email">Email</label>
           <div class="input-row">
             <input type="email" id="email" name="email" placeholder="you@example.com" required>
@@ -34,7 +34,7 @@
           <div class="field-error">Enter a valid email address.</div>
         </div>
  
-        <div class="field reveal">
+        <div class="field ">
           <label for="password">Password</label>
           <div class="input-row">
             <input type="password" id="password" name="password" placeholder="••••••••" required minlength="8">
@@ -42,7 +42,7 @@
           <div class="field-error">Password must be at least 8 characters.</div>
         </div>
  
-        <div class="row-between reveal">
+        <div class="row-between ">
           <label class="checkbox-row">
             <input type="checkbox" name="remember">
             Remember me
@@ -50,10 +50,10 @@
           <a href="#">Forgot password?</a>
         </div>
  
-        <button type="submit" class="submit reveal"><span>Sign in</span></button>
+        <button type="submit" class="submit "><span>Sign in</span></button>
       </div>
  
-      <p class="foot-note reveal">Protected by standard session auth. [ add your terms / privacy links here ]</p>
+      <p class="foot-note ">Protected by standard session auth. [ add your terms / privacy links here ]</p>
     </div>
   </div>
  

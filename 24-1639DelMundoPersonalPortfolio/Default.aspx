@@ -2,13 +2,27 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+    <!-- ============================================================ PRELOADER OVERLAY -->
+    <div id="preloader" class="preloader-overlay">
+      <span id="preloaderCounter" class="preloader-counter">0</span>
+    </div>
+
     <div id="progress"></div>
  
 <nav class="index-nav" aria-label="Section index">
+  <a href="Profile.aspx" class="nav-profile-btn" aria-label="Account Profile">
+    <svg class="profile-icon-svg" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="9" y="4" width="6" height="6" />
+      <rect x="11" y="10" width="2" height="2" />
+      <rect x="6" y="12" width="12" height="3" />
+      <rect x="4" y="15" width="16" height="5" />
+    </svg>
+  </a>
   <a href="#hero" data-label="Intro"><span>Intro</span></a>
   <a href="#info" data-label="Info"><span>Info</span></a>
   <a href="#stack" data-label="Stack"><span>Stack</span></a>
   <a href="#skills" data-label="Skills"><span>Skills</span></a>
+  <a href="#experience" data-label="Experience"><span>Experience</span></a>
   <a href="#projects" data-label="Projects"><span>Projects</span></a>
   <a href="#education" data-label="Education"><span>Education</span></a>
   <a href="#awards" data-label="Awards"><span>Awards</span></a>
@@ -66,8 +80,8 @@
         <p class="placeholder">19 years old</p>
       </div>
       <div class="info-row reveal">
-        <span class="field-label">Availability</span>
-        <p class="placeholder">Looking for any opportunity</p>
+        <span class="field-label">Experience</span>
+        <p>3 years of coding</p>
       </div>
     </div>
   </div>
@@ -139,9 +153,6 @@
           <div class="tech-card" data-label="Node.js">
             <img src="Images/icons/nodejs.svg" alt="Node.js" class="tech-icon" />
           </div>
-          <div class="tech-card" data-label="JSON">
-            <img src="Images/icons/json.svg" alt="JSON" class="tech-icon" />
-          </div>
           <div class="tech-card" data-label="PostgreSQL">
             <img src="Images/icons/postgresql.svg" alt="PostgreSQL" class="tech-icon" />
           </div>
@@ -202,22 +213,64 @@
         <span class="skill-val">70</span>
       </div>
       <div class="skill-row reveal">
-        <span class="skill-name placeholder">[ add a skill ]</span>
-        <div class="skill-track"><div class="skill-fill" data-val="50"></div></div>
-        <span class="skill-val">&mdash;</span>
+        <span class="skill-name placeholder">Problem Solving</span>
+        <div class="skill-track"><div class="skill-fill" data-val="85"></div></div>
+        <span class="skill-val">85</span>
       </div>
     </div>
   </div>
 </section>
- 
+
+<!-- ============================================================ EXPERIENCE -->
+<section id="experience">
+  <div class="wrap">
+    <div class="field-label reveal">04 / EXPERIENCE</div>
+    <h2 class="section-title reveal">Where I've worked</h2>
+
+    <div class="exp-list">
+      <div class="exp-card reveal">
+        <div class="exp-header">
+          <div class="exp-role-group">
+            <h3 class="exp-role">Front-End Developer</h3>
+            <span class="exp-company">Prince IT Solution</span>
+          </div>
+          <span class="exp-period">AUGUST 2025 &mdash; NOVEMBER 2025</span>
+        </div>
+        <p class="exp-desc">
+          Design and develop responsive web interfaces using React and Tailwind. Collaborate with team members to deliver efficient and visually appealing web solutions.
+        </p>
+        <div class="exp-tags">
+          <span>React</span><span>Tailwind CSS</span><span>UI Development</span><span>Team Collaboration</span>
+        </div>
+      </div>
+
+      <div class="exp-card reveal">
+        <div class="exp-header">
+          <div class="exp-role-group">
+            <h3 class="exp-role">Full-Stack Developer</h3>
+            <span class="exp-company">Teranet Fiber, Q.C.</span>
+          </div>
+          <span class="exp-period">MARCH 2024 &mdash; APRIL 2024</span>
+        </div>
+        <p class="exp-desc">
+          Assisted in basic web development, backend tasks, and system support. Gained exposure to network operations and technical support workflows.
+        </p>
+        <div class="exp-tags">
+          <span>Web Development</span><span>Backend Tasks</span><span>System Support</span><span>Network Operations</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============================================================ PROJECTS -->
 <section id="projects">
-  <div class="wrap-wide">
-    <div class="field-label reveal">04 / PROJECTS</div>
+  <div class="wrap">
+    <div class="field-label reveal">05 / PROJECTS</div>
     <h2 class="section-title reveal">Selected work</h2>
   </div>
  
-  <div class="wrap-wide">
+  <div class="wrap">
     <div class="bento">
       <!-- P.01 Samson Dental Center -->
       <div class="tile span-7 reveal">
@@ -227,9 +280,7 @@
         <span class="tile-num">P.01</span>
         <div class="tile-content">
           <div class="tile-body-top">
-            <div class="tile-tag">CLINIC PLATFORM / WEB DESIGN</div>
             <h3>Samson Dental Center</h3>
-            <p>A modern clinic web application engineered for patient onboarding, digital service catalogs, and online booking workflows. Built with clean responsive design and intuitive medical UX.</p>
           </div>
           <div class="tile-meta">
             <span>HTML5</span><span>CSS3</span><span>JavaScript</span><span>Healthcare UX</span><span>Responsive</span>
@@ -245,30 +296,26 @@
         <span class="tile-num">P.02</span>
         <div class="tile-content">
           <div class="tile-body-top">
-            <div class="tile-tag">CONVERSATIONAL AI / BOT</div>
-            <h3>Review Bot &amp; Clinic Assistant</h3>
-            <p>Interactive automated customer service and review triage chatbot integrated with Samson Dental Center. Delivers instant pricing estimates, procedure details, and patient inquiry routing.</p>
+            <h3>Review Bot Assistant</h3>
           </div>
           <div class="tile-meta">
-            <span>Chatbot AI</span><span>Conversational UI</span><span>Smart Triage</span><span>DOM Scripting</span>
+            <span>Chatbot AI</span><span>Conversational UI</span><span>DOM Scripting</span>
           </div>
         </div>
       </div>
 
-      <!-- P.03 AeroStack Payroll System -->
+      <!-- P.03 CPU Scheduling Calculator -->
       <div class="tile span-6 reveal">
         <div class="tile-thumb">
-          <img src="Images/payroll.png" alt="AeroStack Co. Payroll Executive Dashboard" loading="lazy" />
+          <img src="Images/cpu_scheduler.png" alt="CPU Scheduling Calculator" loading="lazy" />
         </div>
         <span class="tile-num">P.03</span>
         <div class="tile-content">
           <div class="tile-body-top">
-            <div class="tile-tag">FINTECH / ENTERPRISE DASHBOARD</div>
-            <h3>AeroStack Payroll System</h3>
-            <p>Comprehensive HR and payroll analytics dashboard tracking &#8369;408K+ gross disbursements, employee DTR logs, overtime hours, and automated tax/SSS deduction distributions with visual breakdowns.</p>
+            <h3>CPU Scheduling Calculator</h3>
           </div>
           <div class="tile-meta">
-            <span>Enterprise UI</span><span>Data Analytics</span><span>Payroll Engine</span><span>DTR Logging</span>
+            <span>OS Scheduling</span><span>Gantt Chart</span><span>Algorithm Visualizer</span>
           </div>
         </div>
       </div>
@@ -281,51 +328,46 @@
         <span class="tile-num">P.04</span>
         <div class="tile-content">
           <div class="tile-body-top">
-            <div class="tile-tag">ESPORTS / DRAFT SIMULATOR</div>
             <h3>MLBB Mayhem</h3>
-            <p>Competitive Mobile Legends: Bang Bang fantasy draft simulator. Features multi-region franchise selection (PH, MENA, Malaysia), 5-role roster assembly, real-time draft status, and team refresh mechanics.</p>
           </div>
           <div class="tile-meta">
-            <span>Esports UI</span><span>Draft Simulator</span><span>State Engine</span><span>Interactive Gaming</span>
+            <span>Esports UI</span><span>Draft Simulator</span><span>Interactive Gaming</span>
           </div>
         </div>
       </div>
 
-      <!-- P.05 Tower of Hanoi -->
-      <div class="tile span-5 reveal">
+      <!-- P.05 AeroStack Payroll System -->
+      <div class="tile span-7 reveal">
         <div class="tile-thumb">
-          <img src="Images/tower_of_hanoi.png" alt="Tower of Hanoi Puzzle Game" loading="lazy" />
+          <img src="Images/payroll.png" alt="AeroStack Co. Payroll Executive Dashboard" loading="lazy" />
         </div>
         <span class="tile-num">P.05</span>
         <div class="tile-content">
           <div class="tile-body-top">
-            <div class="tile-tag">ALGORITHM / GAME DEV</div>
-            <h3>Tower of Hanoi</h3>
-            <p>Interactive recursion puzzle with dynamic disk movement, minimum move calculations (2&#8319; &minus; 1), cross-difficulty analytics across 3 to 7 disks, and persistent online competitive leaderboards.</p>
+            <h3>AeroStack Payroll System</h3>
           </div>
           <div class="tile-meta">
-            <span>Algorithms</span><span>Game Physics</span><span>Leaderboards</span><span>Performance Stats</span>
+            <span>Enterprise UI</span><span>Data Analytics</span><span>Payroll Engine</span><span>DTR Logging</span>
           </div>
         </div>
       </div>
 
-      <!-- P.06 CPU Scheduling Calculator -->
-      <div class="tile span-7 reveal">
+      <!-- P.06 Tower of Hanoi -->
+      <div class="tile span-5 reveal">
         <div class="tile-thumb">
-          <img src="Images/cpu_scheduler.png" alt="CPU Scheduling Calculator" loading="lazy" />
+          <img src="Images/tower_of_hanoi.png" alt="Tower of Hanoi Puzzle Game" loading="lazy" />
         </div>
         <span class="tile-num">P.06</span>
         <div class="tile-content">
           <div class="tile-body-top">
-            <div class="tile-tag">OPERATING SYSTEMS / VISUAL SIMULATOR</div>
-            <h3>CPU Scheduling Calculator</h3>
-            <p>Algorithm calculation and visualization tool supporting FCFS, SJF, NPP, Priority, SRTF, and Round Robin. Dynamically generates execution timelines, Gantt charts, and exact turnaround/waiting times.</p>
+            <h3>Tower of Hanoi</h3>
           </div>
           <div class="tile-meta">
-            <span>OS Scheduling</span><span>Gantt Chart</span><span>Algorithm Visualizer</span><span>Performance Metrics</span>
+          <span>Game Physics</span><span>Leaderboards</span><span>Performance Stats</span>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </section>
@@ -333,25 +375,25 @@
 <!-- ============================================================ EDUCATION -->
 <section id="education">
   <div class="wrap">
-    <div class="field-label reveal">05 / EDUCATION</div>
+    <div class="field-label reveal">06 / EDUCATION</div>
     <h2 class="section-title reveal">Background</h2>
  
     <div class="edu-list">
       <div class="list-line reveal">
-        <span class="yr placeholder">[ YEAR ]</span>
+        <span class="yr">2024 &mdash; Present</span>
         <div>
-          <div class="ttl placeholder">[ Degree / Program ]</div>
-          <div class="sub placeholder">[ add relevant coursework or focus ]</div>
+          <div class="ttl">Collegiate Level</div>
+          <div class="sub">Bachelor of Science in Information Technology</div>
         </div>
-        <span class="org placeholder">[ School Name ]</span>
+        <span class="org">Quezon City University</span>
       </div>
       <div class="list-line reveal">
-        <span class="yr placeholder">[ YEAR ]</span>
+        <span class="yr">June &mdash; 2024</span>
         <div>
-          <div class="ttl placeholder">[ Certificate / Course ]</div>
-          <div class="sub placeholder">[ add details ]</div>
+          <div class="ttl">Senior High School</div>
+          <div class="sub">Information and Communication Technology</div>
         </div>
-        <span class="org placeholder">[ Institution ]</span>
+        <span class="org">Gardner College Diliman</span>
       </div>
     </div>
   </div>
@@ -360,23 +402,41 @@
 <!-- ============================================================ AWARDS -->
 <section id="awards">
   <div class="wrap">
-    <div class="field-label reveal">06 / AWARDS</div>
+    <div class="field-label reveal">07 / AWARDS</div>
     <h2 class="section-title reveal">Recognition</h2>
  
     <div class="award-list">
       <div class="list-line reveal">
-        <span class="yr placeholder">[ YEAR ]</span>
+        <span class="yr">2026</span>
         <div>
-          <div class="ttl placeholder">[ Award / Recognition name ]</div>
+          <div class="ttl">DevCup 2026 Competition</div>
+          <div class="sub">2nd Place QCU</div>
         </div>
-        <span class="org placeholder">[ Issuing organization ]</span>
+        <span class="org">Quezon City University</span>
       </div>
       <div class="list-line reveal">
-        <span class="yr placeholder">[ YEAR ]</span>
+        <span class="yr">2025</span>
         <div>
-          <div class="ttl placeholder">[ Award / Recognition name ]</div>
+          <div class="ttl">Code Quest 2025</div>
+          <div class="sub">Certificate of Participation</div>
         </div>
-        <span class="org placeholder">[ Issuing organization ]</span>
+        <span class="org">Quezon City University</span>
+      </div>
+      <div class="list-line reveal">
+        <span class="yr">2025</span>
+        <div>
+          <div class="ttl">AWS Learning Club QCU</div>
+          <div class="sub">Operational Member</div>
+        </div>
+        <span class="org">AWS Learning Club</span>
+      </div>
+      <div class="list-line reveal">
+        <span class="yr">2024</span>
+        <div>
+          <div class="ttl">The Hour of Code</div>
+          <div class="sub">Certificate of Completion</div>
+        </div>
+        <span class="org">ASEAN Youth Organization</span>
       </div>
     </div>
   </div>
@@ -385,14 +445,14 @@
 <!-- ============================================================ HOBBIES -->
 <section id="hobbies">
   <div class="wrap">
-    <div class="field-label reveal">07 / HOBBIES</div>
+    <div class="field-label reveal">08 / HOBBIES</div>
     <h2 class="section-title reveal">Off the clock</h2>
  
-    <div class="chip-row reveal">
-      <span class="chip real">MLBB Esports</span>
-      <span class="chip placeholder">[ add a hobby ]</span>
-      <span class="chip placeholder">[ add a hobby ]</span>
-      <span class="chip placeholder">[ add a hobby ]</span>
+    <div class="chip-row">
+      <span class="chip real reveal">Reading Manhwa, Manhua &amp; Manga</span>
+      <span class="chip real reveal">Online Games</span>
+      <span class="chip real reveal">Coding</span>
+      <span class="chip real reveal">Basketball</span>
     </div>
   </div>
 </section>
@@ -400,13 +460,13 @@
 <!-- ============================================================ CONTACT -->
 <section id="contact">
   <div class="wrap">
-    <div class="field-label reveal">08 / CONTACT</div>
+    <div class="field-label reveal">09 / CONTACT</div>
     <h2 class="contact-cta reveal">Let's build<br>something <span class="accent">structured</span>.</h2>
  
-    <div class="contact-links reveal">
-      <a href="mailto:you@example.com" class="placeholder">[ email ]</a>
-      <a href="#" class="placeholder">[ GitHub ]</a>
-      <a href="#" class="placeholder">[ LinkedIn ]</a>
+    <div class="contact-links">
+      <a href="mailto:delmundo.marckevin.ferolino@gmail.com" class="reveal">[ Email ]</a>
+      <a href="https://github.com/marcKevzzz" class="reveal">[ Github ]</a>
+      <a href="https://www.linkedin.com/in/del-mundo-marc-kevin-f-ba5050436/" class="reveal">[ LinkedIn ]</a>
     </div>
   </div>
 </section>
