@@ -1,0 +1,70 @@
+## =============================================================
+## Visual Studio & .NET .gitignore
+## Repository: 24-1639DelMundoPersonalPortfolio
+## =============================================================
+
+# Visual Studio files and directories
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.dbmdl
+*.jfm
+
+# Build results and binaries
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+bld/
+[Bb]uild/
+
+# NuGet Packages
+*.nupkg
+packages/
+!packages/repositories.config
+!**/packages.config
+*.nuget.props
+*.nuget.targets
+
+# Microsoft Office & Temporary files
+~$*
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Publish & Package directories
+*.Publish.xml
+*.pubxml
+*.azurePubxml
+_PublishedWebsites/
+PackageTmp/
+*.publishproj
+
+# IIS Express & Web Server cache
+_ReSharper*/
+*.resharper
+*.DotSettings.user
+*.suo
+*.sln.docstates
+App_Data/*.mdf
+App_Data/*.ldf
+
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini

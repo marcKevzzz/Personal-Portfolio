@@ -80,17 +80,149 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Auth\Auth.Master" />
+    <Content Include="Auth\SignIn.aspx" />
+    <Content Include="Auth\SignUp.aspx" />
+    <Content Include="Auth\NewPassword.aspx" />
+    <Content Include="Components\Default\NavSection.ascx" />
+    <Content Include="Components\Default\HeroSection.ascx" />
+    <Content Include="Components\Default\BasicInfoSection.ascx" />
+    <Content Include="Components\Default\TechStackSection.ascx" />
+    <Content Include="Components\Default\SkillsSection.ascx" />
+    <Content Include="Components\Default\ExperienceSection.ascx" />
+    <Content Include="Components\Default\ProjectsSection.ascx" />
+    <Content Include="Components\Default\EducationSection.ascx" />
+    <Content Include="Components\Default\AwardsSection.ascx" />
+    <Content Include="Components\Default\HobbiesSection.ascx" />
+    <Content Include="Components\Default\ContactSection.ascx" />
+    <Content Include="Content\Admin.css" />
+    <Content Include="Content\Site.css" />
     <Content Include="Default.aspx" />
     <Content Include="Global.asax" />
-    <Content Include="Scripts.js" />
-    <Content Include="SignIn.aspx" />
-    <Content Include="SignUp.aspx" />
-    <Content Include="Profile.aspx" />
-    <Content Include="Site.css" />
+    <Content Include="Pages\Admin\Admin.aspx" />
+    <Content Include="Pages\Admin\Components\ProfilePanel.ascx" />
+    <Content Include="Pages\Admin\Components\TechStackPanel.ascx" />
+    <Content Include="Pages\Admin\Components\SkillsPanel.ascx" />
+    <Content Include="Pages\Admin\Components\ExperiencePanel.ascx" />
+    <Content Include="Pages\Admin\Components\ProjectsPanel.ascx" />
+    <Content Include="Pages\Admin\Components\EducationPanel.ascx" />
+    <Content Include="Pages\Admin\Components\AwardsPanel.ascx" />
+    <Content Include="Pages\Admin\Components\HobbiesPanel.ascx" />
+    <Content Include="Pages\Admin\Components\UsersPanel.ascx" />
+    <Content Include="Pages\Admin\Components\AdminProfilePanel.ascx" />
+    <Content Include="Pages\Profile.aspx" />
+    <Content Include="Scripts\Admin.js" />
+    <Content Include="Scripts\Scripts.js" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Auth\Auth.Master.cs">
+      <DependentUpon>Auth.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Auth\Auth.Master.designer.cs">
+      <DependentUpon>Auth.Master</DependentUpon>
+    </Compile>
+    <Compile Include="Auth\NewPassword.aspx.cs">
+      <DependentUpon>NewPassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Auth\NewPassword.aspx.designer.cs">
+      <DependentUpon>NewPassword.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Auth\SignIn.aspx.cs">
+      <DependentUpon>SignIn.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Auth\SignIn.aspx.designer.cs">
+      <DependentUpon>SignIn.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Auth\SignUp.aspx.cs">
+      <DependentUpon>SignUp.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Auth\SignUp.aspx.designer.cs">
+      <DependentUpon>SignUp.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\NavSection.ascx.cs">
+      <DependentUpon>NavSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\NavSection.ascx.designer.cs">
+      <DependentUpon>NavSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\HeroSection.ascx.cs">
+      <DependentUpon>HeroSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\HeroSection.ascx.designer.cs">
+      <DependentUpon>HeroSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\BasicInfoSection.ascx.cs">
+      <DependentUpon>BasicInfoSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\BasicInfoSection.ascx.designer.cs">
+      <DependentUpon>BasicInfoSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\TechStackSection.ascx.cs">
+      <DependentUpon>TechStackSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\TechStackSection.ascx.designer.cs">
+      <DependentUpon>TechStackSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\SkillsSection.ascx.cs">
+      <DependentUpon>SkillsSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\SkillsSection.ascx.designer.cs">
+      <DependentUpon>SkillsSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\ExperienceSection.ascx.cs">
+      <DependentUpon>ExperienceSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\ExperienceSection.ascx.designer.cs">
+      <DependentUpon>ExperienceSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\ProjectsSection.ascx.cs">
+      <DependentUpon>ProjectsSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\ProjectsSection.ascx.designer.cs">
+      <DependentUpon>ProjectsSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\EducationSection.ascx.cs">
+      <DependentUpon>EducationSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\EducationSection.ascx.designer.cs">
+      <DependentUpon>EducationSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\AwardsSection.ascx.cs">
+      <DependentUpon>AwardsSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\AwardsSection.ascx.designer.cs">
+      <DependentUpon>AwardsSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\HobbiesSection.ascx.cs">
+      <DependentUpon>HobbiesSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\HobbiesSection.ascx.designer.cs">
+      <DependentUpon>HobbiesSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Default\ContactSection.ascx.cs">
+      <DependentUpon>ContactSection.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Components\Default\ContactSection.ascx.designer.cs">
+      <DependentUpon>ContactSection.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Data\DatabaseHelper.cs" />
     <Compile Include="Default.aspx.cs">
       <DependentUpon>Default.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -101,28 +233,101 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\AuthHelper.cs" />
+    <Compile Include="Models\User.cs" />
+    <Compile Include="Pages\Admin\Admin.aspx.cs">
+      <DependentUpon>Admin.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Admin.aspx.designer.cs">
+      <DependentUpon>Admin.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\ProfilePanel.ascx.cs">
+      <DependentUpon>ProfilePanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\ProfilePanel.ascx.designer.cs">
+      <DependentUpon>ProfilePanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\TechStackPanel.ascx.cs">
+      <DependentUpon>TechStackPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\TechStackPanel.ascx.designer.cs">
+      <DependentUpon>TechStackPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\SkillsPanel.ascx.cs">
+      <DependentUpon>SkillsPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\SkillsPanel.ascx.designer.cs">
+      <DependentUpon>SkillsPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\ExperiencePanel.ascx.cs">
+      <DependentUpon>ExperiencePanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\ExperiencePanel.ascx.designer.cs">
+      <DependentUpon>ExperiencePanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\ProjectsPanel.ascx.cs">
+      <DependentUpon>ProjectsPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\ProjectsPanel.ascx.designer.cs">
+      <DependentUpon>ProjectsPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\EducationPanel.ascx.cs">
+      <DependentUpon>EducationPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\EducationPanel.ascx.designer.cs">
+      <DependentUpon>EducationPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\AwardsPanel.ascx.cs">
+      <DependentUpon>AwardsPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\AwardsPanel.ascx.designer.cs">
+      <DependentUpon>AwardsPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\HobbiesPanel.ascx.cs">
+      <DependentUpon>HobbiesPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\HobbiesPanel.ascx.designer.cs">
+      <DependentUpon>HobbiesPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\UsersPanel.ascx.cs">
+      <DependentUpon>UsersPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\UsersPanel.ascx.designer.cs">
+      <DependentUpon>UsersPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\AdminProfilePanel.ascx.cs">
+      <DependentUpon>AdminProfilePanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\AdminProfilePanel.ascx.designer.cs">
+      <DependentUpon>AdminProfilePanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Admin.Master.cs">
+      <DependentUpon>Admin.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Admin.Master.designer.cs">
+      <DependentUpon>Admin.Master</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Profile.aspx.cs">
+      <DependentUpon>Profile.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Profile.aspx.designer.cs">
+      <DependentUpon>Profile.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Profile.aspx.cs">
-      <DependentUpon>Profile.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Profile.aspx.designer.cs">
-      <DependentUpon>Profile.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="SignIn.aspx.cs">
-      <DependentUpon>SignIn.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="SignIn.aspx.designer.cs">
-      <DependentUpon>SignIn.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="SignUp.aspx.cs">
-      <DependentUpon>SignUp.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="SignUp.aspx.designer.cs">
-      <DependentUpon>SignUp.aspx</DependentUpon>
-    </Compile>
+    <Compile Include="Services\UserService.cs" />
     <Compile Include="Site.Master.cs">
       <DependentUpon>Site.Master</DependentUpon>
     </Compile>
@@ -132,7 +337,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <Content Include="Pages\Admin\Admin.Master" />
     <Content Include="Site.Master" />
+    <None Include="Properties\PublishProfiles\site91643-WebDeploy.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -141,10 +348,21 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Admin\" />
     <Folder Include="App_Data\" />
+    <Folder Include="Assets\" />
+    <Folder Include="Assets\Images\" />
+    <Folder Include="Assets\Images\icons\" />
+    <Folder Include="Auth\" />
+    <Folder Include="Content\" />
     <Folder Include="Controllers\" />
-    <Folder Include="Images\" />
+    <Folder Include="Data\" />
+    <Folder Include="Helpers\" />
     <Folder Include="Models\" />
+    <Folder Include="Pages\" />
+    <Folder Include="Pages\Admin\" />
+    <Folder Include="Scripts\" />
+    <Folder Include="Services\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -7,7 +7,7 @@
       <!-- Left Sidebar / Header Section -->
       <aside class="account-top-bar">
         <div class="account-top-bar-header">
-          <a href="Default.aspx" class="back-portfolio-link">&larr; Back to Portfolio</a>
+          <a href="<%= ResolveUrl("~/Default.aspx") %>" class="back-portfolio-link">&larr; Back to Portfolio</a>
           <div class="account-title-group">
             <div class="field-label">ACCOUNT / SETTINGS</div>
             <h1 class="account-page-title">Profile Settings</h1>
@@ -16,7 +16,7 @@
 
         <div class="account-avatar-wrapper">
           <div class="avatar-preview-container">
-            <img id="avatarPreview" src="Images/pixelart_portrait.png" alt="Profile Avatar" class="account-avatar-img">
+            <img id="avatarPreview" src="<%= ResolveUrl("~/Assets/Images/pixelart_portrait.png") %>" alt="Profile Avatar" class="account-avatar-img">
             <label for="avatarUpload" class="avatar-edit-overlay" title="Change Avatar">
               <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -48,7 +48,7 @@
 
         <!-- Sign Out Button -->
         <div class="signout-section">
-          <a href="SignIn.aspx" class="signout-btn" id="signoutBtn" title="Sign out of your session">
+          <a href="<%= ResolveUrl("~/Auth/SignIn.aspx") %>" class="signout-btn" id="signoutBtn" title="Sign out of your session">
             <svg class="signout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
@@ -113,7 +113,7 @@
               <div class="field">
                 <label for="password">NEW PASSWORD</label>
                 <div class="input-row">
-                  <input type="password" id="password" name="password" placeholder="••••••••" minlength="8">
+                  <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="new-password" minlength="8">
                 </div>
                 <div class="strength" id="strengthMeter" data-level="0">
                   <i></i><i></i><i></i>
@@ -125,9 +125,28 @@
               <div class="field">
                 <label for="confirm">CONFIRM NEW PASSWORD</label>
                 <div class="input-row">
-                  <input type="password" id="confirm" name="confirm" placeholder="••••••••">
+                  <input type="password" id="confirm" name="confirm" placeholder="••••••••" autocomplete="new-password">
                 </div>
                 <div class="field-error">Passwords don't match.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Section 3: Admin Security Queue - Password Removal Requests -->
+          <div class="form-section" id="adminQueueSection">
+            <div class="section-header">
+              <div class="field-label" style="color: var(--cyan); margin-bottom: 4px;">ADMIN PRIVILEGE / SECURITY QUEUE</div>
+              <h3 class="section-title">Password Removal Requests</h3>
+              <p class="section-desc">Manage user requests to clear account passwords. When removed, the user receives authorization to create a new password.</p>
+            </div>
+
+            <div id="adminRequestsList" class="admin-requests-container">
+              <!-- Dynamically populated by Scripts.js or fallback -->
+              <div class="empty-requests-msg" id="emptyRequestsMsg">
+                <span class="pulse-indicator"></span>
+                <span>No pending password removal requests at this time.</span>
               </div>
             </div>
           </div>
