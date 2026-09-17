@@ -50,11 +50,169 @@
   --sidebar-w-col: 68px;
 }
 
-@media (pointer: fine) {
-  body, a, button, input, textarea, label, select, [role="button"], .nav-item, .sidebar-toggle-btn, .admin-logout-btn, .btn, .data-table tr {
-    cursor: none !important;
+/* -------------------------------------------------------------
+   RESET / BASE
+   ------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth !important;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--f-sans);
+  font-size: var(--t-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100svh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+::selection {
+  background: var(--blue);
+  color: #050608;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
-  input, textarea { caret-color: var(--blue); }
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 1px solid var(--blue-light);
+  outline-offset: 3px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* -------------------------------------------------------------
+   SHARED UTILITIES
+   ------------------------------------------------------------- */
+.wrap {
+  max-width: var(--col-max);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.wrap-wide {
+  max-width: var(--col-wide);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.field-label,
+.kicker {
+  font-family: var(--f-display);
+  font-variation-settings: "ELSH" 1;
+  font-size: var(--t-xxs);
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-label::before,
+.kicker::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  background: var(--blue);
+  flex: none;
+}
+
+.grad-text {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.accent {
+  color: var(--cyan);
+}
+
+.pulse-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+/* Custom Inverting Cursor */
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 999999;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  mix-blend-mode: difference;
+}
+
+.custom-cursor.is-visible {
+  opacity: 1;
+}
+
+.custom-cursor-circle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--blue);
+  box-shadow: 0 0 12px rgba(61, 127, 255, 0.5);
+  transform: translate(-50%, -50%);
+  will-change: transform;
 }
 
 /* -------------------------------------------------------------
@@ -411,9 +569,6 @@
   }
 }
 
-.field {
-  margin-bottom: 20px;
-}
 
 .field label {
   display: block;
@@ -425,6 +580,10 @@
 }
 
 .field .input-row {
+  position: relative;
+}
+
+.field {
   position: relative;
 }
 
@@ -448,37 +607,58 @@
   color: var(--text-dim);
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: none;
-  border-color: var(--blue-light);
+  transition: border-color 0.2s ease;
 }
 
 .field .input-row::after {
   content: "";
   position: absolute;
   left: 0;
-  bottom: -1px;
   height: 1px;
+  bottom: -1px;
   width: 0%;
   background: var(--grad);
   transition: width 0.3s ease;
 }
 
-.field .input-row.focused::after {
+.field .input-row.focused::after,
+.field .input-row:focus-within::after {
+  width: 100%;
+}
+
+/* Support inputs directly inside .field without .input-row wrapper */
+.field:not(:has(.input-row)):has(> input)::after,
+.field:not(:has(.input-row)):has(> select)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  background: var(--grad);
+  transition: width 0.3s ease;
+  pointer-events: none;
+}
+
+.field:not(:has(.input-row)):has(> input:focus)::after,
+.field:not(:has(.input-row)):has(> select:focus)::after,
+.field:not(:has(.input-row)).focused::after {
   width: 100%;
 }
 
 textarea {
   width: 100%;
-  border: 1px solid var(--line);
+  border: none;
+  outline: none;
+  border-bottom: 1px solid var(--line);
   background: var(--bg-1);
   border-radius: var(--radius);
   color: var(--text);
   font-family: var(--f-sans);
   font-size: var(--t-sm);
   padding: 9px 12px;
-  resize: vertical;
-  min-height: 84px;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -486,7 +666,6 @@ textarea {
 textarea:focus {
   outline: none;
   border-color: var(--blue-light);
-  box-shadow: 0 0 0 1px rgba(61, 127, 255, 0.2);
 }
 
 .hero-txtarea{
@@ -653,21 +832,6 @@ textarea:focus {
   }
 }
 
-.add-form input,
-.add-form select {
-  width: 100%;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  color: var(--text);
-  font-family: var(--f-sans);
-  font-size: var(--t-sm);
-  padding: 9px 12px;
-  border-radius: var(--radius);
-}
-
-.add-form .field {
-  margin-bottom: 0;
-}
 
 .data-table-wrap {
   overflow-x: auto;
@@ -824,10 +988,10 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
-  border: 1px solid var(--line);
+  border: none;
+  outline: none;
+  border-bottom: 1px solid var(--line);
   padding: 8px 12px;
-  border-radius: var(--radius);
   min-height: 42px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
@@ -836,13 +1000,12 @@ textarea:focus {
 
 .chips-container:focus-within {
   border-color: var(--blue-light);
-  box-shadow: 0 0 0 1px rgba(61, 127, 255, 0.2);
 }
 
 #heroNameChips,
-#expTagChips {
-  min-height: 84px;
+#expTagChips, #projectTagChips {
   justify-content: space-between;
+  min-height: 67px;
 }
 
 .chips-list {
@@ -997,6 +1160,23 @@ textarea:focus {
 .input-date-wrap input {
   padding-right: 32px !important;
   cursor: pointer;
+  width: 100%;
+}
+
+.input-date-wrap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 0%;
+  background: var(--grad);
+  transition: width 0.3s ease;
+  pointer-events: none;
+}
+
+.input-date-wrap:focus-within::after,
+.input-date-wrap.focused::after {
   width: 100%;
 }
 

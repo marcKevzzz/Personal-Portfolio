@@ -9,9 +9,14 @@
 
 namespace _24_1639DelMundoPersonalPortfolio
 {
-
-
     public partial class NewPassword
     {
+        protected global::System.Web.UI.WebControls.Panel pnlAlert;
+        protected global::System.Web.UI.WebControls.Literal litAlertIcon;
+        protected global::System.Web.UI.WebControls.Literal litAlertMsg;
+        protected global::System.Web.UI.WebControls.TextBox resetEmail;
+        protected global::System.Web.UI.WebControls.TextBox password;
+        protected global::System.Web.UI.WebControls.TextBox confirm;
+        protected global::System.Web.UI.WebControls.Button setNewPasswordBtn;
     }
 }

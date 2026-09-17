@@ -7,53 +7,61 @@
   <!-- ============ BRAND PANEL ============ -->
   <div class="brand-panel">
     <div class="grid-bg"></div>
-    <div class="brand-mark"><span class="dot"></span>KEVS</div>
+    <div class="brand-mark "><span class="dot"></span>KEVS</div>
 
     <div class="brand-copy">
-      <h1>Welcome<br>back to the <span class="accent">system</span>.</h1>
-      <p>Sign in to pick up where you left off &mdash; projects, datasets, and everything
+      <h1 class="">Welcome<br>back to the <span class="accent">system</span>.</h1>
+      <p class="">Sign in to pick up where you left off &mdash; projects, datasets, and everything
       structured in between.</p>
     </div>
 
-    <div class="brand-foot">KEVS &mdash; 2026 / SESSION AUTH</div>
+    <div class="brand-foot ">KEVS &mdash; 2026 / SESSION AUTH</div>
   </div>
 
   <!-- ============ FORM PANEL ============ -->
   <div class="form-panel">
     <div class="form-card">
-      <div class="field-label kicker">AUTH / SIGN IN</div>
-      <h2>Sign in</h2>
-      <p class="sub">Don't have an account? <a href="SignUp.aspx">Create one</a></p>
+      <div class="field-label kicker ">AUTH / SIGN IN</div>
+      <h2 class="">Sign in</h2>
+      <p class="sub ">Don't have an account? <a href="SignUp.aspx">Create one</a></p>
+
+      <asp:Panel ID="pnlAlert" runat="server" Visible="false" CssClass="save-toast " style="margin-bottom: 20px;">
+        <asp:Literal ID="litAlertIcon" runat="server">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </asp:Literal>
+        <asp:Literal ID="litAlertMsg" runat="server"></asp:Literal>
+      </asp:Panel>
 
       <div id="signinForm" novalidate>
-        <div class="field">
+        <div class="field ">
           <label for="email">Email</label>
           <div class="input-row">
-            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+            <asp:TextBox ID="email" runat="server" ClientIDMode="Static" TextMode="Email" placeholder="you@example.com" autocomplete="email" />
           </div>
           <div class="field-error">Enter a valid email address.</div>
         </div>
 
-        <div class="field">
+        <div class="field ">
           <label for="password">Password</label>
           <div class="input-row">
-            <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required minlength="8">
+            <asp:TextBox ID="password" runat="server" ClientIDMode="Static" TextMode="Password" placeholder="••••••••" autocomplete="current-password" />
           </div>
           <div class="field-error">Password must be at least 8 characters.</div>
         </div>
 
-        <div class="row-between">
+        <div class="row-between ">
           <label class="checkbox-row">
-            <input type="checkbox" name="remember">
-            Remember me
+            <asp:CheckBox ID="remember" runat="server" ClientIDMode="Static" Text="Remember me" />
           </label>
           <a href="javascript:void(0)" id="forgotPasswordLink">Forgot password?</a>
         </div>
 
-        <button type="button" class="submit" id="signInBtn"><span>Sign in</span></button>
+        <asp:Button ID="signInBtn" runat="server" ClientIDMode="Static" CssClass="submit " Text="Sign in" OnClick="btnSignIn_Click" UseSubmitBehavior="true" />
       </div>
 
-      <p class="foot-note">Protected by standard session auth &mdash; KEVS 2026</p>
+      <p class="foot-note ">Protected by standard session auth &mdash; KEVS 2026</p>
     </div>
   </div>
 
@@ -77,7 +85,7 @@
         <div class="field" style="margin-top: 16px;">
           <label for="forgotEmail">Account Email</label>
           <div class="input-row">
-            <input type="email" id="forgotEmail" name="forgotEmail" placeholder="you@example.com" autocomplete="email" required>
+            <asp:TextBox ID="forgotEmail" runat="server" ClientIDMode="Static" TextMode="Email" placeholder="you@example.com" autocomplete="email" />
           </div>
           <div class="field-error" id="forgotEmailError">Enter the registered email for this account.</div>
         </div>
@@ -85,15 +93,13 @@
         <div class="field" style="margin-top: 12px;">
           <label for="forgotReason">Request Note (Optional)</label>
           <div class="input-row">
-            <input type="text" id="forgotReason" name="forgotReason" placeholder="e.g. Forgotten password, request removal">
+            <asp:TextBox ID="forgotReason" runat="server" ClientIDMode="Static" placeholder="e.g. Forgotten password, request removal" />
           </div>
         </div>
 
         <div class="modal-footer" style="margin-top: 24px;">
           <button type="button" class="modal-btn-cancel" id="cancelForgotBtn">Cancel</button>
-          <button type="button" class="modal-btn-accept submit" id="submitForgotReqBtn">
-            <span>Submit Request to Admin</span>
-          </button>
+          <asp:Button ID="submitForgotReqBtn" runat="server" ClientIDMode="Static" CssClass="modal-btn-accept submit" Text="Submit Request to Admin" OnClick="btnSubmitForgotReq_Click" />
         </div>
       </div>
 

@@ -16,7 +16,23 @@ document.addEventListener("DOMContentLoaded", function () {
   initAdminLogout();
   initTableActions();
   initAddFormActions();
+  initInputFocus();
 });
+
+/* -------------------------------------------------------------
+   INPUT UNDERLINE FOCUS STATE (ADMIN)
+   ------------------------------------------------------------- */
+function initInputFocus() {
+  document.querySelectorAll(".field input, .field select, .input-row input, .input-row select").forEach(function (input) {
+    var row = input.closest(".input-row") || input.closest(".field");
+    input.addEventListener("focus", function () {
+      if (row) row.classList.add("focused");
+    });
+    input.addEventListener("blur", function () {
+      if (row) row.classList.remove("focused");
+    });
+  });
+}
 
 /* -------------------------------------------------------------
    CUSTOM INVERTING CURSOR (ADMIN)
@@ -453,20 +469,21 @@ function initAdminLogout() {
 
   logoutBtn.addEventListener("click", function (e) {
     e.preventDefault();
-    var baseUrl = logoutBtn.getAttribute("data-redirect") || "../../Auth/SignIn.aspx";
+    var baseUrl = logoutBtn.getAttribute("data-redirect") || "../../Auth/SignIn.aspx?logout=true";
 
-    AdminModal.confirm({
-      title: "Log Out",
-      message: "Are you sure you want to terminate your administrative session?",
-      confirmText: "Log Out",
-      type: "danger",
-      onConfirm: function () {
-        AdminToast.info("Logging out of Admin Console...", "Signing Out");
-        setTimeout(function () {
+    if (typeof AdminModal !== "undefined" && AdminModal.confirm) {
+      AdminModal.confirm({
+        title: "Log Out",
+        message: "Are you sure you want to terminate your administrative session?",
+        confirmText: "Log Out",
+        type: "danger",
+        onConfirm: function () {
           window.location.href = baseUrl;
-        }, 600);
-      }
-    });
+        }
+      });
+    } else {
+      window.location.href = baseUrl;
+    }
   });
 }
 

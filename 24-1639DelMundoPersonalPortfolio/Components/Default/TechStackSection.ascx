@@ -26,7 +26,7 @@
           <div class="tech-card" data-label="TypeScript">
             <img src="Assets/Icons/typescript.svg" alt="TypeScript" class="tech-icon" />
           </div>
-          <div class="tech-card" data-label="Tailwind CSS">
+          <div class="tech-card" data-label="Tailwind CSS" title="Tailwind CSS" >
             <img src="Assets/Icons/tailwindcss.svg" alt="Tailwind CSS" class="tech-icon" />
           </div>
         </div>

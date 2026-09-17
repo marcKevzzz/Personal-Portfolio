@@ -5,8 +5,8 @@
     <p class="admin-sub">Professional roles and positions. Tags can be added interactively.</p>
 
     <div class="add-form">
-        <div class="field field-col-3"><label>Role</label><input type="text" placeholder="Front-End Developer" /></div>
-        <div class="field field-col-3"><label>Company</label><input type="text" placeholder="Company / Organization" /></div>
+        <div class="field field-col-3"><label>Role</label><div class="input-row"><input type="text" placeholder="Front-End Developer" /></div></div>
+        <div class="field field-col-3"><label>Company</label><div class="input-row"><input type="text" placeholder="Company / Organization" /></div></div>
         <div class="field field-col-3">
             <label>Period (Date Range)</label>
             <div class="input-date-wrap">

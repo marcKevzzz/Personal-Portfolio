@@ -5,10 +5,10 @@
     <p class="admin-sub">Segments range from 0–8, displayed as stepped signal bars on the landing page.</p>
 
     <div class="add-form">
-        <div class="field"><label>Skill name</label><input type="text" placeholder="Frontend Development" /></div>
-        <div class="field"><label>Level</label><input type="text" placeholder="ADVANCED" /></div>
-        <div class="field"><label>Segments (0-8)</label><input type="text" placeholder="7" /></div>
-        <div class="field"><label>Context</label><input type="text" placeholder="Applied in..." /></div>
+        <div class="field"><label>Skill name</label><div class="input-row"><input type="text" placeholder="Frontend Development" /></div></div>
+        <div class="field"><label>Level</label><div class="input-row"><input type="text" placeholder="ADVANCED" /></div></div>
+        <div class="field"><label>Segments (0-8)</label><div class="input-row"><input type="text" placeholder="7" /></div></div>
+        <div class="field"><label>Context</label><div class="input-row"><input type="text" placeholder="Applied in..." /></div></div>
         <button type="button" class="btn btn-primary">Add Skill</button>
     </div>
 

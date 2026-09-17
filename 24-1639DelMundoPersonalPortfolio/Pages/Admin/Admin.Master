@@ -11,7 +11,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Pixel&display=swap" rel="stylesheet">
     
-    <link href="<%= ResolveUrl("~/Content/Site.css") %>" rel="stylesheet" />
     <link href="<%= ResolveUrl("~/Content/Admin.css") %>" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
@@ -147,7 +146,7 @@
 
                 <!-- Sidebar Footer with Logout Button -->
                 <div class="admin-nav-foot">
-                    <button type="button" id="btnLogout" class="admin-logout-btn" data-redirect="<%= ResolveUrl("~/Auth/SignIn.aspx") %>" title="Log out">
+                    <button type="button" id="btnLogout" class="admin-logout-btn" data-redirect="<%= ResolveUrl("~/Auth/SignIn.aspx?logout=true") %>" title="Log out">
                         <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                             <polyline points="16 17 21 12 16 7"></polyline>

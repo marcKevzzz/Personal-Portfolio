@@ -5,7 +5,7 @@
     <p class="admin-sub">Personal interests displayed in chips on the portfolio page.</p>
 
     <div class="add-form">
-        <div class="field"><label>New hobby</label><input type="text" placeholder="Basketball" /></div>
+        <div class="field"><label>New hobby</label><div class="input-row"><input type="text" placeholder="Basketball" /></div></div>
         <button type="button" class="btn btn-primary">Add Hobby</button>
     </div>
 

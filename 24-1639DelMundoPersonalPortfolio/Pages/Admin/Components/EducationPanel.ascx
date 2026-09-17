@@ -17,9 +17,9 @@
                 </svg>
             </div>
         </div>
-        <div class="field"><label>Title</label><input type="text" placeholder="Collegiate Level" /></div>
-        <div class="field"><label>Subtitle</label><input type="text" placeholder="B.S. Information Technology" /></div>
-        <div class="field"><label>Organization</label><input type="text" placeholder="Quezon City University" /></div>
+        <div class="field"><label>Title</label><div class="input-row"><input type="text" placeholder="Collegiate Level" /></div></div>
+        <div class="field"><label>Subtitle</label><div class="input-row"><input type="text" placeholder="B.S. Information Technology" /></div></div>
+        <div class="field"><label>Organization</label><div class="input-row"><input type="text" placeholder="Quezon City University" /></div></div>
         <button type="button" class="btn btn-primary">Add Education</button>
     </div>
 

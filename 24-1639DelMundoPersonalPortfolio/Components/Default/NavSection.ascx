@@ -8,13 +8,17 @@
 <div id="progress"></div>
 
 <nav class="index-nav" aria-label="Section index">
-  <a href="Pages/Profile.aspx" class="nav-profile-btn" aria-label="Account Profile">
-    <svg class="profile-icon-svg" viewBox="0 0 24 24" fill="currentColor">
-      <rect x="9" y="4" width="6" height="6" />
-      <rect x="11" y="10" width="2" height="2" />
-      <rect x="6" y="12" width="12" height="3" />
-      <rect x="4" y="15" width="16" height="5" />
-    </svg>
+  <a href="<%= ResolveUrl("~/Pages/Profile.aspx") %>" class="nav-profile-btn" aria-label="Account Profile">
+    <% if (!string.IsNullOrEmpty(ProfileAvatarUrl)) { %>
+      <img src="<%= ResolveUrl(ProfileAvatarUrl) %>" class="nav-avatar-img" alt="Profile Avatar" />
+    <% } else { %>
+      <svg class="profile-icon-svg" viewBox="0 0 24 24" fill="currentColor">
+        <rect x="9" y="4" width="6" height="6" />
+        <rect x="11" y="10" width="2" height="2" />
+        <rect x="6" y="12" width="12" height="3" />
+        <rect x="4" y="15" width="16" height="5" />
+      </svg>
+    <% } %>
   </a>
   <a href="#hero" data-label="Intro"><span>Intro</span></a>
   <a href="#info" data-label="Info"><span>Info</span></a>

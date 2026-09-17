@@ -5,9 +5,9 @@
     <p class="admin-sub">Grouped by category — items with the same group render together on the public page.</p>
 
     <div class="add-form">
-        <div class="field"><label>Group</label><input type="text" placeholder="Frontend" /></div>
-        <div class="field"><label>Label</label><input type="text" placeholder="HTML5" /></div>
-        <div class="field"><label>Icon path</label><input type="text" placeholder="Assets/Icons/html5.svg" /></div>
+        <div class="field"><label>Group</label><div class="input-row"><input type="text" placeholder="Frontend" /></div></div>
+        <div class="field"><label>Label</label><div class="input-row"><input type="text" placeholder="HTML5" /></div></div>
+        <div class="field"><label>Icon path</label><div class="input-row"><input type="text" placeholder="Assets/Icons/html5.svg" /></div></div>
         <button type="button" class="btn btn-primary">Add Tech Item</button>
     </div>
 

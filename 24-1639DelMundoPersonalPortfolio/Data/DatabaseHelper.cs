@@ -11,7 +11,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
     /// </summary>
     public static class DatabaseHelper
     {
-        private static readonly string ConnectionString = 
+        private static readonly string ConnectionString =
+            ConfigurationManager.ConnectionStrings["PortfolioDB"]?.ConnectionString ??
             ConfigurationManager.ConnectionStrings["PortfolioDb"]?.ConnectionString;
 
         /// <summary>
@@ -21,7 +22,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
         {
             if (string.IsNullOrEmpty(ConnectionString))
             {
-                throw new InvalidOperationException("Connection string 'PortfolioDb' is missing or not configured in Web.config.");
+                throw new InvalidOperationException("Connection string 'PortfolioDB' is missing or not configured in Web.config.");
             }
 
             var connection = new SqlConnection(ConnectionString);
@@ -32,12 +33,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
         /// <summary>
         /// Executes a non-query command (INSERT, UPDATE, DELETE) and returns rows affected.
         /// </summary>
-        public static int ExecuteNonQuery(string query, CommandType commandType = CommandType.Text, params SqlParameter[] parameters)
+        public static int ExecuteNonQuery(string query, params SqlParameter[] parameters)
         {
             using (var conn = GetOpenConnection())
             using (var cmd = new SqlCommand(query, conn))
             {
-                cmd.CommandType = commandType;
                 if (parameters != null && parameters.Length > 0)
                 {
                     cmd.Parameters.AddRange(parameters);
@@ -49,12 +49,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
         /// <summary>
         /// Executes a query and returns a single scalar value.
         /// </summary>
-        public static object ExecuteScalar(string query, CommandType commandType = CommandType.Text, params SqlParameter[] parameters)
+        public static object ExecuteScalar(string query, params SqlParameter[] parameters)
         {
             using (var conn = GetOpenConnection())
             using (var cmd = new SqlCommand(query, conn))
             {
-                cmd.CommandType = commandType;
                 if (parameters != null && parameters.Length > 0)
                 {
                     cmd.Parameters.AddRange(parameters);
@@ -66,12 +65,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
         /// <summary>
         /// Executes a query and fills a DataTable with the results.
         /// </summary>
-        public static DataTable ExecuteDataTable(string query, CommandType commandType = CommandType.Text, params SqlParameter[] parameters)
+        public static DataTable ExecuteDataTable(string query, params SqlParameter[] parameters)
         {
             using (var conn = GetOpenConnection())
             using (var cmd = new SqlCommand(query, conn))
             {
-                cmd.CommandType = commandType;
                 if (parameters != null && parameters.Length > 0)
                 {
                     cmd.Parameters.AddRange(parameters);
@@ -84,6 +82,14 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
                     return table;
                 }
             }
+        }
+
+        /// <summary>
+        /// Alias for ExecuteDataTable for compatibility.
+        /// </summary>
+        public static DataTable ExecuteQuery(string query, params SqlParameter[] parameters)
+        {
+            return ExecuteDataTable(query, parameters);
         }
     }
 }

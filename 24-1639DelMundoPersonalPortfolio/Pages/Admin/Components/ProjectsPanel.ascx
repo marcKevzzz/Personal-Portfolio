@@ -5,9 +5,9 @@
     <p class="admin-sub">Manage portfolio showcase projects and technology tags.</p>
 
     <div class="add-form">
-        <div class="field"><label>Project Title</label><input type="text" placeholder="e.g. Samson Dental Center" /></div>
-        <div class="field"><label>Image path</label><input type="text" placeholder="Assets/Images/samsondentalcenter.png" /></div>
-        <div class="field"><label>Project URL / Repo</label><input type="text" placeholder="https://github.com/..." /></div>
+        <div class="field"><label>Project Title</label><div class="input-row"><input type="text" placeholder="e.g. Samson Dental Center" /></div></div>
+        <div class="field"><label>Image path</label><div class="input-row"><input type="text" placeholder="Assets/Images/samsondentalcenter.png" /></div></div>
+        <div class="field"><label>Project URL / Repo</label><div class="input-row"><input type="text" placeholder="https://github.com/..." /></div></div>
         <div class="field" style="grid-column: 1 / -1;">
             <label>Tags </label>
             <div class="chips-container" id="projectTagChips" data-input-target="hidProjectTags">

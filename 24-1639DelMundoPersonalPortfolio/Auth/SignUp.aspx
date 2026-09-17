@@ -7,51 +7,62 @@
   <!-- ============ BRAND PANEL ============ -->
   <div class="brand-panel">
     <div class="grid-bg"></div>
-    <div class="brand-mark"><span class="dot"></span>KEVS</div>
+    <div class="brand-mark "><span class="dot"></span>KEVS</div>
 
     <div class="brand-copy">
-      <h1>Set up<br>your <span class="accent">account</span>.</h1>
-      <p>A few fields and you're in &mdash; same system, same structure, your own workspace.</p>
+      <h1 class="">Set up<br>your <span class="accent">account</span>.</h1>
+      <p class="">A few fields and you're in &mdash; same system, same structure, your own workspace.</p>
     </div>
 
-    <div class="brand-foot">KEVS &mdash; 2026 / SESSION AUTH</div>
+    <div class="brand-foot ">KEVS &mdash; 2026 / SESSION AUTH</div>
   </div>
 
   <!-- ============ FORM PANEL ============ -->
   <div class="form-panel">
     <div class="form-card">
-      <div class="field-label kicker">AUTH / SIGN UP</div>
-      <h2>Create account</h2>
-      <p class="sub">Already have one? <a href="SignIn.aspx">Sign in</a></p>
+      <div class="field-label kicker ">AUTH / SIGN UP</div>
+      <h2 class="">Create account</h2>
+      <p class="sub ">Already have one? <a href="SignIn.aspx">Sign in</a></p>
 
-      <div id="signUpSuccessToast" class="save-toast" style="display: none; margin-bottom: 20px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span>Account created successfully! Redirecting to sign in...</span>
-      </div>
+      <asp:Panel ID="pnlAlert" runat="server" Visible="false" CssClass="save-toast" style="margin-bottom: 20px;">
+        <asp:Literal ID="litAlertIcon" runat="server">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </asp:Literal>
+        <asp:Literal ID="litAlertMsg" runat="server"></asp:Literal>
+      </asp:Panel>
 
       <div id="signupForm" novalidate>
-        <div class="field">
-          <label for="name">Full name</label>
-          <div class="input-row">
-            <input type="text" id="name" name="name" placeholder="Your name" autocomplete="name" required>
+        <div class="fields-row">
+          <div class="field ">
+            <label for="firstName">First name</label>
+            <div class="input-row">
+              <asp:TextBox ID="firstName" runat="server" ClientIDMode="Static" placeholder="First name" autocomplete="given-name" />
+            </div>
+            <div class="field-error">Enter first name.</div>
           </div>
-          <div class="field-error">Enter your name.</div>
+          <div class="field ">
+            <label for="lastName">Last name</label>
+            <div class="input-row">
+              <asp:TextBox ID="lastName" runat="server" ClientIDMode="Static" placeholder="Last name" autocomplete="family-name" />
+            </div>
+            <div class="field-error">Enter last name.</div>
+          </div>
         </div>
 
-        <div class="field">
+        <div class="field ">
           <label for="email">Email</label>
           <div class="input-row">
-            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+            <asp:TextBox ID="email" runat="server" ClientIDMode="Static" TextMode="Email" placeholder="you@example.com" autocomplete="email" />
           </div>
           <div class="field-error">Enter a valid email address.</div>
         </div>
 
-        <div class="field">
+        <div class="field ">
           <label for="password">Password</label>
           <div class="input-row">
-            <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="new-password" required minlength="8">
+            <asp:TextBox ID="password" runat="server" ClientIDMode="Static" TextMode="Password" placeholder="••••••••" autocomplete="new-password" />
           </div>
           <div class="strength" id="strengthMeter" data-level="0">
             <i></i><i></i><i></i>
@@ -59,18 +70,18 @@
           <div class="field-error">Password must be at least 8 characters.</div>
         </div>
 
-        <div class="field">
+        <div class="field ">
           <label for="confirm">Confirm password</label>
           <div class="input-row">
-            <input type="password" id="confirm" name="confirm" placeholder="••••••••" autocomplete="new-password" required>
+            <asp:TextBox ID="confirm" runat="server" ClientIDMode="Static" TextMode="Password" placeholder="••••••••" autocomplete="new-password" />
           </div>
           <div class="field-error">Passwords don't match.</div>
         </div>
 
-        <button type="button" class="submit" id="createAccountBtn"><span>Create account</span></button>
+        <button type="button" class="submit " id="createAccountBtn"><span>Create account</span></button>
       </div>
 
-      <p class="foot-note">By clicking Create account, the Terms &amp; Conditions modal will appear for your review.</p>
+      <p class="foot-note ">By clicking Create account, the Terms &amp; Conditions modal will appear for your review.</p>
     </div>
   </div>
   </div>
@@ -113,9 +124,7 @@
 
       <div class="modal-footer">
         <button type="button" class="modal-btn-cancel" id="declineTermsBtn">Decline</button>
-        <button type="button" class="modal-btn-accept submit" id="acceptTermsBtn" disabled>
-          <span>I Agree &amp; Continue</span>
-        </button>
+        <asp:Button ID="acceptTermsBtn" runat="server" ClientIDMode="Static" CssClass="modal-btn-accept submit" Text="I Agree &amp; Continue" OnClick="btnAcceptTerms_Click" Enabled="false" UseSubmitBehavior="true" />
       </div>
     </div>
   </div>
