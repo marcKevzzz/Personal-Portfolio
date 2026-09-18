@@ -160,6 +160,7 @@ function initSignIn() {
     if (el) {
       el.addEventListener("keydown", function (e) {
         if (e.key === "Enter" && signInBtn) {
+          e.preventDefault();
           signInBtn.click();
         }
       });

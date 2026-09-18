@@ -9,5 +9,10 @@ namespace _24_1639DelMundoPersonalPortfolio
         {
             // Code that runs on application startup
         }
+
+        void Session_Start(object sender, EventArgs e)
+        {
+            // Initializes ASP.NET session ID on first request
+        }
     }
 }

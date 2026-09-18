@@ -13,15 +13,15 @@ namespace _24_1639DelMundoPersonalPortfolio
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Request.QueryString["logout"] == "true")
-            {
-                AuthHelper.Logout();
-                ShowAlert("You have been signed out successfully.", isError: false);
-                return;
-            }
-
             if (!IsPostBack)
             {
+                if (Request.QueryString["logout"] == "true")
+                {
+                    AuthHelper.Logout();
+                    ShowAlert("You have been signed out successfully.", isError: false);
+                    return;
+                }
+
                 if (Request.QueryString["registered"] == "true")
                 {
                     ShowAlert("Account created successfully! Please sign in.", isError: false);
@@ -159,15 +159,39 @@ namespace _24_1639DelMundoPersonalPortfolio
                 bool isRemember = remember != null && remember.Checked;
                 AuthHelper.SetUserSession(user, isRemember);
 
-                // 5. Redirect based on role
+                // 5. Redirect based on role and returnUrl
+                string returnUrl = Request.QueryString["returnUrl"];
+                bool hasReturnUrl = !string.IsNullOrEmpty(returnUrl)
+                    && (returnUrl.StartsWith("/") || returnUrl.StartsWith("~"))
+                    && !returnUrl.StartsWith("//")
+                    && !returnUrl.Contains("://");
+
                 if (string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase))
                 {
-                    Response.Redirect("~/Pages/Admin/Admin.aspx?login=true");
+                    if (hasReturnUrl && returnUrl.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        Response.Redirect(returnUrl);
+                    }
+                    else
+                    {
+                        Response.Redirect("~/Pages/Admin/Admin.aspx?login=true");
+                    }
                 }
                 else
                 {
-                    Response.Redirect("~/Default.aspx?login=true");
+                    if (hasReturnUrl && returnUrl.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        Response.Redirect(returnUrl);
+                    }
+                    else
+                    {
+                        Response.Redirect("~/Default.aspx?login=true");
+                    }
                 }
+            }
+            catch (System.Threading.ThreadAbortException)
+            {
+                // Normal on Response.Redirect terminating the thread
             }
             catch (Exception ex)
             {

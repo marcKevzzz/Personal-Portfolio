@@ -2,6 +2,7 @@ using System;
 
 namespace _24_1639DelMundoPersonalPortfolio.Models
 {
+    [Serializable]
     public class User
     {
         public int UserId { get; set; }

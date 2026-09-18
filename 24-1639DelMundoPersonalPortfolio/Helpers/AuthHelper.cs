@@ -2,6 +2,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using _24_1639DelMundoPersonalPortfolio.Data;
 using _24_1639DelMundoPersonalPortfolio.Models;
 
 namespace _24_1639DelMundoPersonalPortfolio.Helpers
@@ -48,12 +49,16 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
             return string.Equals(hashedInput, storedHash, StringComparison.OrdinalIgnoreCase);
         }
 
+        public const string AuthCookieName = "KEVS_AUTH_TOKEN";
+
         /// <summary>
         /// Sets user session data upon successful login with configurable expiration based on rememberMe.
+        /// Also sets an encrypted auth cookie so sessions survive AppPool recycles on cloud hosting.
         /// </summary>
         public static void SetUserSession(User user, bool rememberMe = false)
         {
-            var session = HttpContext.Current?.Session;
+            var context = HttpContext.Current;
+            var session = context?.Session;
             if (session != null && user != null)
             {
                 // Remember Me: 14 days (20,160 mins), Standard: 4 hours (240 mins)
@@ -65,10 +70,51 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
                 session[SessionRoleKey] = user.Role;
                 session[SessionUserKey] = user;
             }
+
+            SetAuthCookie(user, rememberMe);
         }
 
         /// <summary>
-        /// Clears active session and logs out the current user.
+        /// Sets an encrypted authentication cookie using FormsAuthenticationTicket.
+        /// </summary>
+        private static void SetAuthCookie(User user, bool rememberMe)
+        {
+            try
+            {
+                var context = HttpContext.Current;
+                if (context == null || user == null) return;
+
+                var ticket = new System.Web.Security.FormsAuthenticationTicket(
+                    1,
+                    user.Email,
+                    DateTime.UtcNow,
+                    rememberMe ? DateTime.UtcNow.AddDays(14) : DateTime.UtcNow.AddHours(8),
+                    rememberMe,
+                    $"{user.UserId}|{user.Role}"
+                );
+
+                string encrypted = System.Web.Security.FormsAuthentication.Encrypt(ticket);
+                var cookie = new HttpCookie(AuthCookieName, encrypted)
+                {
+                    HttpOnly = true,
+                    Path = "/"
+                };
+
+                if (rememberMe)
+                {
+                    cookie.Expires = ticket.Expiration;
+                }
+
+                context.Response.Cookies.Set(cookie);
+            }
+            catch
+            {
+                // Cookie generation failed non-critically
+            }
+        }
+
+        /// <summary>
+        /// Clears active session and logs out the current user, removing all cookies.
         /// </summary>
         public static void Logout()
         {
@@ -79,24 +125,103 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
                 session.Abandon();
             }
 
-            var response = HttpContext.Current?.Response;
-            if (response != null && HttpContext.Current?.Request?.Cookies["ASP.NET_SessionId"] != null)
+            var context = HttpContext.Current;
+            if (context?.Response != null)
             {
-                var cookie = new HttpCookie("ASP.NET_SessionId", "")
+                if (context.Request?.Cookies["ASP.NET_SessionId"] != null)
                 {
-                    Expires = DateTime.UtcNow.AddYears(-1)
-                };
-                response.Cookies.Add(cookie);
+                    var sessionCookie = new HttpCookie("ASP.NET_SessionId", "")
+                    {
+                        Expires = DateTime.UtcNow.AddYears(-1),
+                        Path = "/"
+                    };
+                    context.Response.Cookies.Set(sessionCookie);
+                }
+
+                if (context.Request?.Cookies[AuthCookieName] != null)
+                {
+                    var authCookie = new HttpCookie(AuthCookieName, "")
+                    {
+                        Expires = DateTime.UtcNow.AddYears(-1),
+                        Path = "/"
+                    };
+                    context.Response.Cookies.Set(authCookie);
+                }
             }
         }
 
         /// <summary>
-        /// Checks if a user is currently logged into the session.
+        /// Checks if a user is currently logged into the session, or restores it via auth cookie if session was dropped.
         /// </summary>
         public static bool IsAuthenticated()
         {
             var context = HttpContext.Current;
-            return context?.Session?[SessionUserKey] != null || context?.Session?[SessionEmailKey] != null;
+            if (context?.Session?[SessionUserKey] != null || context?.Session?[SessionEmailKey] != null)
+                return true;
+
+            return TryRestoreSessionFromCookie();
+        }
+
+        /// <summary>
+        /// Attempts to restore session state from the encrypted authentication cookie if IIS recycled the app pool.
+        /// </summary>
+        public static bool TryRestoreSessionFromCookie()
+        {
+            try
+            {
+                var context = HttpContext.Current;
+                var cookie = context?.Request?.Cookies[AuthCookieName];
+                if (cookie == null || string.IsNullOrEmpty(cookie.Value))
+                    return false;
+
+                var ticket = System.Web.Security.FormsAuthentication.Decrypt(cookie.Value);
+                if (ticket == null || ticket.Expired || string.IsNullOrEmpty(ticket.Name))
+                    return false;
+
+                string emailVal = ticket.Name.Trim().ToLowerInvariant();
+
+                string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, profile_image, is_active, created_at 
+                                 FROM users_tbl 
+                                 WHERE LOWER(email) = LOWER(@Email);";
+
+                var dt = DatabaseHelper.ExecuteQuery(query, new System.Data.SqlClient.SqlParameter("@Email", emailVal));
+                if (dt == null || dt.Rows.Count == 0)
+                    return false;
+
+                var row = dt.Rows[0];
+                bool isActive = Convert.ToBoolean(row["is_active"]);
+                if (!isActive) return false;
+
+                var user = new User
+                {
+                    UserId = Convert.ToInt32(row["user_id"]),
+                    FirstName = row["first_name"] != DBNull.Value ? row["first_name"].ToString() : "",
+                    LastName = row["last_name"] != DBNull.Value ? row["last_name"].ToString() : "",
+                    Email = emailVal,
+                    PasswordHash = row["password_hash"] != DBNull.Value ? row["password_hash"].ToString() : "",
+                    Role = row["user_role"] != DBNull.Value ? row["user_role"].ToString() : "User",
+                    ProfileImage = row["profile_image"] != DBNull.Value ? row["profile_image"].ToString() : null,
+                    IsActive = isActive,
+                    CreatedAt = Convert.ToDateTime(row["created_at"])
+                };
+
+                var session = context.Session;
+                if (session != null)
+                {
+                    session.Timeout = ticket.IsPersistent ? 20160 : 240;
+                    session[SessionUserIdKey] = user.UserId;
+                    session[SessionEmailKey] = user.Email;
+                    session[SessionNameKey] = $"{user.FirstName} {user.LastName}".Trim();
+                    session[SessionRoleKey] = user.Role;
+                    session[SessionUserKey] = user;
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -104,6 +229,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
         /// </summary>
         public static bool IsAdmin()
         {
+            if (!IsAuthenticated()) return false;
             var context = HttpContext.Current;
             var role = context?.Session?[SessionRoleKey] as string;
             return string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase);
@@ -114,6 +240,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
         /// </summary>
         public static string GetCurrentRole()
         {
+            if (!IsAuthenticated()) return string.Empty;
             var context = HttpContext.Current;
             return context?.Session?[SessionRoleKey] as string ?? string.Empty;
         }
@@ -123,6 +250,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
         /// </summary>
         public static User GetCurrentUser()
         {
+            if (!IsAuthenticated()) return null;
             var context = HttpContext.Current;
             return context?.Session?[SessionUserKey] as User;
         }
@@ -132,6 +260,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
         /// </summary>
         public static string GetCurrentUserName()
         {
+            if (!IsAuthenticated()) return string.Empty;
             var context = HttpContext.Current;
             return context?.Session?[SessionNameKey] as string ?? string.Empty;
         }
@@ -141,6 +270,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
         /// </summary>
         public static string GetCurrentEmail()
         {
+            if (!IsAuthenticated()) return string.Empty;
             var context = HttpContext.Current;
             return context?.Session?[SessionEmailKey] as string ?? string.Empty;
         }
