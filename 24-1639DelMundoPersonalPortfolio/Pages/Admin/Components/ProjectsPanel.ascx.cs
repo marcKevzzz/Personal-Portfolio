@@ -47,6 +47,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnAddProject_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(txtProjectTitle.Text))
+            {
+                Page.ClientScript.RegisterStartupScript(GetType(), "projWarn", "if(window.AdminToast) AdminToast.warning('Please enter a project title.', 'Validation Error');", true);
+                return;
+            }
+
             int projId = int.TryParse(hidEditingProjectId.Value, out int id) ? id : 0;
             var currentData = PortfolioService.GetPortfolioData();
             
@@ -63,11 +69,44 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                     : 1;
             }
 
+            string finalImagePath = "Assets/Images/samsondentalcenter.png";
+            if (projId > 0 && !string.IsNullOrWhiteSpace(hidExistingImagePath.Value))
+            {
+                finalImagePath = hidExistingImagePath.Value.Trim();
+            }
+
+            if (fuProjectImage.HasFile)
+            {
+                try
+                {
+                    string ext = System.IO.Path.GetExtension(fuProjectImage.FileName).ToLowerInvariant();
+                    string[] allowedExts = { ".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif" };
+                    if (allowedExts.Contains(ext))
+                    {
+                        string targetDir = Server.MapPath("~/Assets/Images/");
+                        if (!System.IO.Directory.Exists(targetDir))
+                        {
+                            System.IO.Directory.CreateDirectory(targetDir);
+                        }
+                        string rawName = System.IO.Path.GetFileNameWithoutExtension(fuProjectImage.FileName);
+                        string cleanName = System.Text.RegularExpressions.Regex.Replace(rawName, @"[^a-zA-Z0-9_\-]", "_");
+                        string fileName = $"{cleanName}_{DateTime.UtcNow.Ticks}{ext}";
+                        string fullPath = System.IO.Path.Combine(targetDir, fileName);
+                        fuProjectImage.SaveAs(fullPath);
+                        finalImagePath = "Assets/Images/" + fileName;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ProjectsPanel] Image upload error: " + ex.Message);
+                }
+            }
+
             var proj = new ProjectDto
             {
                 ProjectId = projId,
                 Title = txtProjectTitle.Text.Trim(),
-                ImagePath = string.IsNullOrWhiteSpace(txtProjectImagePath.Text) ? "Assets/Images/samsondentalcenter.png" : txtProjectImagePath.Text.Trim(),
+                ImagePath = finalImagePath,
                 ProjectUrl = txtProjectUrl.Text.Trim(),
                 Tags = hidProjectTags.Value.Trim(),
                 SortOrder = sort,
@@ -107,10 +146,20 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 {
                     hidEditingProjectId.Value = item.ProjectId.ToString();
                     txtProjectTitle.Text = item.Title;
-                    txtProjectImagePath.Text = item.ImagePath;
+                    hidExistingImagePath.Value = item.ImagePath ?? "";
                     txtProjectUrl.Text = item.ProjectUrl;
                     hidProjectTags.Value = item.Tags;
                     RenderChips(item.Tags);
+
+                    if (!string.IsNullOrWhiteSpace(item.ImagePath))
+                    {
+                        projectFormImgPreview.Src = ResolveUrl("~/" + item.ImagePath.TrimStart('~', '/'));
+                        projectImgPreviewBox.Style["display"] = "flex";
+                    }
+                    else
+                    {
+                        projectImgPreviewBox.Style["display"] = "none";
+                    }
 
                     btnAddProject.Text = "Update Project";
                     btnAddProject.Attributes["data-confirm-title"] = "Update Project";
@@ -129,7 +178,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
         {
             hidEditingProjectId.Value = "0";
             txtProjectTitle.Text = "";
-            txtProjectImagePath.Text = "";
+            hidExistingImagePath.Value = "";
             txtProjectUrl.Text = "";
             hidProjectTags.Value = "HTML5,CSS3,JavaScript";
             RenderChips("HTML5,CSS3,JavaScript");
@@ -137,6 +186,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             btnAddProject.Attributes["data-confirm-title"] = "Add Project";
             btnAddProject.Attributes["data-confirm-msg"] = "Are you sure you want to add this project?";
             btnCancelProjectEdit.Visible = false;
+            projectImgPreviewBox.Style["display"] = "none";
         }
     }
 }

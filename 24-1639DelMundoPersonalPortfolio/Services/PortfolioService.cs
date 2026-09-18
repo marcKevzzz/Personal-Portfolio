@@ -1109,7 +1109,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                             LastName = row["last_name"]?.ToString() ?? "",
                             Email = row["email"]?.ToString() ?? "",
                             Role = row.Table.Columns.Contains("user_role") && row["user_role"] != DBNull.Value ? row["user_role"].ToString() : "User",
-                            ProfileImage = row.Table.Columns.Contains("avatar_url") && row["avatar_url"] != DBNull.Value ? row["avatar_url"].ToString() : "",
+                            ProfileImage = row.Table.Columns.Contains("profile_image") && row["profile_image"] != DBNull.Value ? row["profile_image"].ToString() : (row.Table.Columns.Contains("avatar_url") && row["avatar_url"] != DBNull.Value ? row["avatar_url"].ToString() : ""),
                             IsActive = row["is_active"] != DBNull.Value && Convert.ToBoolean(row["is_active"]),
                             CreatedAt = row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : DateTime.UtcNow
                         });
@@ -1173,7 +1173,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
         {
             try
             {
-                string query;
                 var paramList = new List<System.Data.SqlClient.SqlParameter>
                 {
                     new System.Data.SqlClient.SqlParameter("@FirstName", firstName ?? "Admin"),
@@ -1182,23 +1181,126 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                     new System.Data.SqlClient.SqlParameter("@UserId", userId)
                 };
 
+                var updates = new List<string>
+                {
+                    "first_name = @FirstName",
+                    "last_name = @LastName",
+                    "email = @Email"
+                };
+
                 if (!string.IsNullOrWhiteSpace(newPassword))
                 {
                     string hash = Helpers.AuthHelper.HashPassword(newPassword);
-                    query = "UPDATE users_tbl SET first_name = @FirstName, last_name = @LastName, email = @Email, password_hash = @PasswordHash WHERE user_id = @UserId";
+                    updates.Add("password_hash = @PasswordHash");
                     paramList.Add(new System.Data.SqlClient.SqlParameter("@PasswordHash", hash));
                 }
-                else
+
+                if (!string.IsNullOrWhiteSpace(avatarPath))
                 {
-                    query = "UPDATE users_tbl SET first_name = @FirstName, last_name = @LastName, email = @Email WHERE user_id = @UserId";
+                    updates.Add("profile_image = @ProfileImage");
+                    paramList.Add(new System.Data.SqlClient.SqlParameter("@ProfileImage", avatarPath));
                 }
 
+                string query = $"UPDATE users_tbl SET {string.Join(", ", updates)} WHERE user_id = @UserId";
                 DatabaseHelper.ExecuteNonQuery(query, paramList.ToArray());
                 return true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[PortfolioService] UpdateAdminCredentials error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static List<PasswordResetRequestDto> GetPasswordResetRequests()
+        {
+            var list = new List<PasswordResetRequestDto>();
+            try
+            {
+                string query = @"SELECT r.reset_id, r.user_id, r.email, r.reason, r.status, r.created_at,
+                                        u.first_name, u.last_name
+                                 FROM password_resets_tbl r
+                                 LEFT JOIN users_tbl u ON r.user_id = u.user_id
+                                 ORDER BY r.reset_id DESC";
+                DataTable dt = DatabaseHelper.ExecuteDataTable(query);
+                if (dt != null)
+                {
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        string fName = row["first_name"] != DBNull.Value ? row["first_name"].ToString() : "";
+                        string lName = row["last_name"] != DBNull.Value ? row["last_name"].ToString() : "";
+                        string fullName = $"{fName} {lName}".Trim();
+                        if (string.IsNullOrEmpty(fullName)) fullName = row["email"].ToString();
+
+                        list.Add(new PasswordResetRequestDto
+                        {
+                            ResetId = Convert.ToInt32(row["reset_id"]),
+                            UserId = row["user_id"] != DBNull.Value ? (int?)Convert.ToInt32(row["user_id"]) : null,
+                            UserName = fullName,
+                            Email = row["email"]?.ToString() ?? "",
+                            Reason = row["reason"] != DBNull.Value ? row["reason"].ToString() : "",
+                            Status = (row["status"]?.ToString() ?? "pending").Trim().ToLowerInvariant(),
+                            CreatedAt = row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PortfolioService] GetPasswordResetRequests error: {ex.Message}");
+            }
+            return list;
+        }
+
+        public static bool ApprovePasswordResetRequest(int resetId)
+        {
+            try
+            {
+                string query = "UPDATE password_resets_tbl SET status = 'password_removed' WHERE reset_id = @ResetId";
+                DatabaseHelper.ExecuteNonQuery(query, new System.Data.SqlClient.SqlParameter("@ResetId", resetId));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PortfolioService] ApprovePasswordResetRequest error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static bool RejectPasswordResetRequest(int resetId)
+        {
+            try
+            {
+                string query = "UPDATE password_resets_tbl SET status = 'expired' WHERE reset_id = @ResetId";
+                DatabaseHelper.ExecuteNonQuery(query, new System.Data.SqlClient.SqlParameter("@ResetId", resetId));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PortfolioService] RejectPasswordResetRequest error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static bool AdminResetUserPassword(int userId)
+        {
+            try
+            {
+                string userEmailQuery = "SELECT email FROM users_tbl WHERE user_id = @UserId";
+                object emailObj = DatabaseHelper.ExecuteScalar(userEmailQuery, new System.Data.SqlClient.SqlParameter("@UserId", userId));
+                if (emailObj == null) return false;
+
+                string email = emailObj.ToString();
+                string insertQuery = @"INSERT INTO password_resets_tbl (user_id, email, reason, status, created_at)
+                                       VALUES (@UserId, @Email, 'Direct Admin Password Reset', 'password_removed', GETDATE())";
+                DatabaseHelper.ExecuteNonQuery(insertQuery,
+                    new System.Data.SqlClient.SqlParameter("@UserId", userId),
+                    new System.Data.SqlClient.SqlParameter("@Email", email));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PortfolioService] AdminResetUserPassword error: {ex.Message}");
                 return false;
             }
         }

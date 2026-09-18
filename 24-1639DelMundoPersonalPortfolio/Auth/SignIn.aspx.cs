@@ -40,6 +40,24 @@ namespace _24_1639DelMundoPersonalPortfolio
                         email.Text = resetEmail;
                     }
                 }
+                else if (Request.QueryString["req"] == "sent")
+                {
+                    ShowAlert("Password removal request submitted to the administrator. Once approved, you can create a new password.", isError: false);
+                    string reqEmail = Request.QueryString["email"];
+                    if (!string.IsNullOrEmpty(reqEmail))
+                    {
+                        email.Text = reqEmail;
+                    }
+                }
+                else if (Request.QueryString["req"] == "pending")
+                {
+                    ShowAlert("A password removal request is already pending administrator approval for this account.", isError: false);
+                    string reqEmail = Request.QueryString["email"];
+                    if (!string.IsNullOrEmpty(reqEmail))
+                    {
+                        email.Text = reqEmail;
+                    }
+                }
 
                 // If already logged in, redirect to appropriate destination
                 if (AuthHelper.IsAuthenticated())
@@ -61,9 +79,9 @@ namespace _24_1639DelMundoPersonalPortfolio
             string emailVal = (email.Text ?? "").Trim().ToLowerInvariant();
             string passVal = (password.Text ?? "").Trim();
 
-            if (string.IsNullOrEmpty(emailVal) || string.IsNullOrEmpty(passVal))
+            if (string.IsNullOrEmpty(emailVal))
             {
-                ShowAlert("Please provide both email and password.", isError: true);
+                ShowAlert("Please enter your email address.", isError: true);
                 return;
             }
 
@@ -91,24 +109,29 @@ namespace _24_1639DelMundoPersonalPortfolio
                 }
 
                 int userId = Convert.ToInt32(row["user_id"]);
-                string storedHash = row["password_hash"].ToString();
-                string userRole = row["user_role"].ToString();
-                string firstName = row["first_name"].ToString();
-                string lastName = row["last_name"].ToString();
+                string storedHash = row["password_hash"] != DBNull.Value ? row["password_hash"].ToString() : "";
+                string userRole = row["user_role"] != DBNull.Value ? row["user_role"].ToString() : "User";
+                string firstName = row["first_name"] != DBNull.Value ? row["first_name"].ToString() : "";
+                string lastName = row["last_name"] != DBNull.Value ? row["last_name"].ToString() : "";
                 string profileImage = row["profile_image"] != DBNull.Value ? row["profile_image"].ToString() : null;
 
                 // 2. Check if password was removed by Admin for password reset
-                string checkReqQuery = @"SELECT TOP 1 status 
+                string checkReqQuery = @"SELECT TOP 1 reset_id, status 
                                          FROM password_resets_tbl 
-                                         WHERE LOWER(email) = LOWER(@Email) 
+                                         WHERE LOWER(email) = LOWER(@Email) AND status = 'password_removed'
                                          ORDER BY reset_id DESC;";
 
-                object statusObj = DatabaseHelper.ExecuteScalar(checkReqQuery, new SqlParameter("@Email", emailVal));
-                string latestStatus = statusObj?.ToString();
-
-                if (string.Equals(latestStatus, "password_removed", StringComparison.OrdinalIgnoreCase))
+                var dtReq = DatabaseHelper.ExecuteQuery(checkReqQuery, new SqlParameter("@Email", emailVal));
+                if (dtReq != null && dtReq.Rows.Count > 0)
                 {
-                    Response.Redirect("~/Auth/NewPassword.aspx?email=" + Server.UrlEncode(emailVal));
+                    Response.Redirect("~/Auth/NewPassword.aspx?email=" + Server.UrlEncode(emailVal) + "&approved=true");
+                    return;
+                }
+
+                // If not approved for reset, password is required
+                if (string.IsNullOrEmpty(passVal))
+                {
+                    ShowAlert("Please provide both email and password.", isError: true);
                     return;
                 }
 
@@ -177,6 +200,30 @@ namespace _24_1639DelMundoPersonalPortfolio
 
                 int userId = Convert.ToInt32(userObj);
 
+                // Check for existing pending or approved requests to prevent duplicates
+                string checkExistingQuery = @"SELECT TOP 1 reset_id, status 
+                                             FROM password_resets_tbl 
+                                             WHERE LOWER(email) = LOWER(@Email) AND status IN ('pending', 'password_removed')
+                                             ORDER BY reset_id DESC;";
+
+                var dtExisting = DatabaseHelper.ExecuteQuery(checkExistingQuery, new SqlParameter("@Email", reqEmail));
+                if (dtExisting != null && dtExisting.Rows.Count > 0)
+                {
+                    string existingStatus = (dtExisting.Rows[0]["status"]?.ToString() ?? "").Trim().ToLowerInvariant();
+                    if (existingStatus == "password_removed")
+                    {
+                        // Already approved by admin! Redirect directly to set new password
+                        Response.Redirect("~/Auth/NewPassword.aspx?email=" + Server.UrlEncode(reqEmail) + "&approved=true");
+                        return;
+                    }
+                    else if (existingStatus == "pending")
+                    {
+                        // Already pending! Redirect with pending alert (PRG pattern prevents resubmission on refresh)
+                        Response.Redirect("~/Auth/SignIn.aspx?req=pending&email=" + Server.UrlEncode(reqEmail));
+                        return;
+                    }
+                }
+
                 // Insert into password_resets_tbl
                 string insertQuery = @"INSERT INTO password_resets_tbl 
                                        (user_id, email, reason, status, created_at)
@@ -192,7 +239,12 @@ namespace _24_1639DelMundoPersonalPortfolio
 
                 DatabaseHelper.ExecuteNonQuery(insertQuery, parameters);
 
-                ShowAlert("Password removal request submitted to the administrator. Once approved, you can create a new password.", isError: false);
+                // Post-Redirect-Get: Redirect to GET so refreshing browser does NOT resubmit request!
+                Response.Redirect("~/Auth/SignIn.aspx?req=sent&email=" + Server.UrlEncode(reqEmail));
+            }
+            catch (System.Threading.ThreadAbortException)
+            {
+                // Normal on Response.Redirect
             }
             catch (Exception ex)
             {

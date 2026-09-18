@@ -10,7 +10,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
         protected global::System.Web.UI.WebControls.TextBox txtRoleTitle;
         protected global::System.Web.UI.WebControls.TextBox txtFocusArea;
         protected global::System.Web.UI.WebControls.TextBox txtBasedIn;
-        protected global::System.Web.UI.WebControls.TextBox txtAvatarPath;
+        protected global::System.Web.UI.WebControls.FileUpload fuProfileAvatar;
+        protected global::System.Web.UI.WebControls.HiddenField hidExistingAvatarPath;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl profileAvatarPreviewBox;
         protected global::System.Web.UI.WebControls.Image imgProfileAvatarThumb;
         protected global::System.Web.UI.WebControls.TextBox txtFullName;
         protected global::System.Web.UI.WebControls.TextBox txtLocationAddress;

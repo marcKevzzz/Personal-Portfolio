@@ -47,6 +47,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnAddExp_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(txtExpRole.Text) || string.IsNullOrWhiteSpace(txtExpCompany.Text))
+            {
+                Page.ClientScript.RegisterStartupScript(GetType(), "expWarn", "if(window.AdminToast) AdminToast.warning('Please enter both role title and company name.', 'Validation Error');", true);
+                return;
+            }
+
             int expId = int.TryParse(hidEditingExpId.Value, out int id) ? id : 0;
 
             var exp = new ExperienceDto

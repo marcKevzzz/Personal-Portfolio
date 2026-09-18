@@ -17,6 +17,11 @@ namespace _24_1639DelMundoPersonalPortfolio
                 {
                     resetEmail.Text = emailParam;
                 }
+
+                if (Request.QueryString["approved"] == "true")
+                {
+                    ShowAlert("Your password removal request was approved by the administrator! Please create your new password below.", isError: false);
+                }
             }
         }
 

@@ -95,6 +95,34 @@
     <Content Include="Components\Default\AwardsSection.ascx" />
     <Content Include="Components\Default\HobbiesSection.ascx" />
     <Content Include="Components\Default\ContactSection.ascx" />
+    <Content Include="Assets\Icons\csharp.svg" />
+    <Content Include="Assets\Icons\css3.svg" />
+    <Content Include="Assets\Icons\figma.svg" />
+    <Content Include="Assets\Icons\git.svg" />
+    <Content Include="Assets\Icons\github.svg" />
+    <Content Include="Assets\Icons\gsap.svg" />
+    <Content Include="Assets\Icons\html5.svg" />
+    <Content Include="Assets\Icons\js.svg" />
+    <Content Include="Assets\Icons\json.svg" />
+    <Content Include="Assets\Icons\motion.svg" />
+    <Content Include="Assets\Icons\mysql.svg" />
+    <Content Include="Assets\Icons\netcore.svg" />
+    <Content Include="Assets\Icons\nodejs.svg" />
+    <Content Include="Assets\Icons\postgresql.svg" />
+    <Content Include="Assets\Icons\tailwindcss.svg" />
+    <Content Include="Assets\Icons\threejs.svg" />
+    <Content Include="Assets\Icons\typescript.svg" />
+    <Content Include="Assets\Icons\visualstudio.svg" />
+    <Content Include="Assets\Icons\vscode.svg" />
+    <Content Include="Assets\Icons\webgpu.svg" />
+    <Content Include="Assets\Images\cpu_scheduler.png" />
+    <Content Include="Assets\Images\mlbb_mayhem.png" />
+    <Content Include="Assets\Images\payroll.png" />
+    <Content Include="Assets\Images\pixelart_portrait.png" />
+    <Content Include="Assets\Images\reviewbot.png" />
+    <Content Include="Assets\Images\samsondentalcenter.png" />
+    <Content Include="Assets\Images\tower_of_hanoi.png" />
+    <Content Include="Assets\UserImages\user_1_639252182237359074.jpg" />
     <Content Include="Content\Admin.css" />
     <Content Include="Content\Auth.css" />
     <Content Include="Content\Site.css" />
@@ -335,6 +363,7 @@
     <Compile Include="Services\UserService.cs" />
     <Compile Include="Site.Master.cs">
       <DependentUpon>Site.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Site.Master.designer.cs">
       <DependentUpon>Site.Master</DependentUpon>
@@ -355,19 +384,8 @@
   <ItemGroup>
     <Folder Include="Admin\" />
     <Folder Include="App_Data\" />
-    <Folder Include="Assets\" />
-    <Folder Include="Assets\Images\" />
     <Folder Include="Assets\Images\icons\" />
-    <Folder Include="Auth\" />
-    <Folder Include="Content\" />
     <Folder Include="Controllers\" />
-    <Folder Include="Data\" />
-    <Folder Include="Helpers\" />
-    <Folder Include="Models\" />
-    <Folder Include="Pages\" />
-    <Folder Include="Pages\Admin\" />
-    <Folder Include="Scripts\" />
-    <Folder Include="Services\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

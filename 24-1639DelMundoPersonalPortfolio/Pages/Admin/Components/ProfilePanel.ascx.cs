@@ -27,8 +27,16 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             txtRoleTitle.Text = p.RoleTitle ?? "Web Developer";
             txtFocusArea.Text = p.FocusArea ?? "Interfaces & Data Systems";
             txtBasedIn.Text = p.BasedIn ?? "Quezon City";
-            txtAvatarPath.Text = p.AvatarPath ?? "Assets/Images/pixelart_portrait.png";
-            imgProfileAvatarThumb.ImageUrl = ResolveUrl("~/" + (p.AvatarPath ?? "Assets/Images/pixelart_portrait.png").TrimStart('~', '/'));
+            hidExistingAvatarPath.Value = p.AvatarPath ?? "";
+            if (!string.IsNullOrWhiteSpace(p.AvatarPath))
+            {
+                imgProfileAvatarThumb.ImageUrl = ResolveUrl("~/" + p.AvatarPath.TrimStart('~', '/'));
+                profileAvatarPreviewBox.Style["display"] = "flex";
+            }
+            else
+            {
+                profileAvatarPreviewBox.Style["display"] = "none";
+            }
             txtFullName.Text = p.FullName ?? "Marc Kevin Del Mundo";
             txtLocationAddress.Text = p.LocationAddress ?? "B2 L6 Emerald St. Novaliches Proper, Q.C.";
             txtAge.Text = p.Age.ToString();
@@ -60,10 +68,16 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnSaveProfile_Click(object sender, EventArgs e)
         {
+            string fullName = txtFullName.Text.Trim();
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                Page.ClientScript.RegisterStartupScript(GetType(), "profileWarn", "if(window.AdminToast) AdminToast.warning('Please enter your full name.', 'Validation Error');", true);
+                return;
+            }
+
             int age = int.TryParse(txtAge.Text, out int a) ? a : 19;
             int exp = int.TryParse(txtExperienceYears.Text, out int ex) ? ex : 3;
 
-            string fullName = txtFullName.Text.Trim();
             string firstName = fullName;
             string lastName = "";
             int lastSpace = fullName.LastIndexOf(' ');
@@ -71,6 +85,45 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             {
                 firstName = fullName.Substring(0, lastSpace);
                 lastName = fullName.Substring(lastSpace + 1);
+            }
+
+            string avatarPath = hidExistingAvatarPath.Value?.Trim() ?? "";
+            if (fuProfileAvatar.HasFile)
+            {
+                try
+                {
+                    string ext = System.IO.Path.GetExtension(fuProfileAvatar.FileName).ToLowerInvariant();
+                    string[] allowed = { ".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif" };
+                    if (System.Array.IndexOf(allowed, ext) >= 0)
+                    {
+                        string targetDir = Server.MapPath("~/Assets/Images/");
+                        if (!System.IO.Directory.Exists(targetDir))
+                        {
+                            System.IO.Directory.CreateDirectory(targetDir);
+                        }
+                        string rawName = System.IO.Path.GetFileNameWithoutExtension(fuProfileAvatar.FileName);
+                        string cleanName = System.Text.RegularExpressions.Regex.Replace(rawName, @"[^a-zA-Z0-9_\-]", "_");
+                        string fileName = $"profile_avatar_{cleanName}_{DateTime.UtcNow.Ticks}{ext}";
+                        string fullPath = System.IO.Path.Combine(targetDir, fileName);
+                        fuProfileAvatar.SaveAs(fullPath);
+                        avatarPath = "Assets/Images/" + fileName;
+                        hidExistingAvatarPath.Value = avatarPath;
+                    }
+                }
+                catch (Exception uploadEx)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ProfilePanel] Avatar upload error: " + uploadEx.Message);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(avatarPath))
+            {
+                imgProfileAvatarThumb.ImageUrl = ResolveUrl("~/" + avatarPath.TrimStart('~', '/'));
+                profileAvatarPreviewBox.Style["display"] = "flex";
+            }
+            else
+            {
+                profileAvatarPreviewBox.Style["display"] = "none";
             }
 
             var profile = new ProfileDto
@@ -83,7 +136,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 RoleTitle = txtRoleTitle.Text.Trim(),
                 FocusArea = txtFocusArea.Text.Trim(),
                 BasedIn = txtBasedIn.Text.Trim(),
-                AvatarPath = txtAvatarPath.Text.Trim(),
+                AvatarPath = avatarPath,
                 LocationAddress = txtLocationAddress.Text.Trim(),
                 Age = age,
                 ExperienceYears = exp,

@@ -27,6 +27,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnAddAward_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(txtAwardTitle.Text))
+            {
+                Page.ClientScript.RegisterStartupScript(GetType(), "awardWarn", "if(window.AdminToast) AdminToast.warning('Please enter an award or recognition title.', 'Validation Error');", true);
+                return;
+            }
+
             int awardId = int.TryParse(hidEditingAwardId.Value, out int id) ? id : 0;
             var currentData = PortfolioService.GetPortfolioData();
 

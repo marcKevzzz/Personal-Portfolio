@@ -27,6 +27,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnAddEducation_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(txtEduTitle.Text) || string.IsNullOrWhiteSpace(txtEduInstitution.Text))
+            {
+                Page.ClientScript.RegisterStartupScript(GetType(), "eduWarn", "if(window.AdminToast) AdminToast.warning('Please enter both degree/title and institution.', 'Validation Error');", true);
+                return;
+            }
+
             int eduId = int.TryParse(hidEditingEduId.Value, out int id) ? id : 0;
             var currentData = PortfolioService.GetPortfolioData();
 

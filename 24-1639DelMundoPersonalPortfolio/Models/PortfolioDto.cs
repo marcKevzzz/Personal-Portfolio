@@ -108,4 +108,15 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
+
+    public class PasswordResetRequestDto
+    {
+        public int ResetId { get; set; }
+        public int? UserId { get; set; }
+        public string UserName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Reason { get; set; } = "";
+        public string Status { get; set; } = "pending";
+        public DateTime CreatedAt { get; set; }
+    }
 }

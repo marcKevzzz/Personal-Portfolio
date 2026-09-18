@@ -17,7 +17,7 @@ namespace _24_1639DelMundoPersonalPortfolio
                 ucEducationPanel?.BindEducations();
                 ucAwardsPanel?.BindAwards();
                 ucHobbiesPanel?.BindHobbies();
-                ucUsersPanel?.BindUsers();
+                ucUsersPanel?.BindAll();
                 ucAdminProfilePanel?.LoadAdminDetails();
             }
         }
