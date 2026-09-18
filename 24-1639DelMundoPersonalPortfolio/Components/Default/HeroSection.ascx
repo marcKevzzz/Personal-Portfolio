@@ -8,22 +8,26 @@
       <div class="hero-left">
         <div class="hero-kicker">PERSONAL PORTFOLIO</div>
         <h1 class="hero-name" id="heroName">
-          <span class="hero-name-primary" id="heroDynamicName"><span class="glyph-char">K</span><span class="glyph-char">e</span><span class="glyph-char">v</span><span class="glyph-char">s</span></span>
-          <span class="hero-name-sub" id="heroSubline"><span class="accent glyph">/</span><span class="glyph"> </span><span class="glyph">b</span><span class="glyph">u</span><span class="glyph">i</span><span class="glyph">l</span><span class="glyph">d</span><span class="glyph">s</span><span class="glyph"> </span><span class="glyph">i</span><span class="glyph">n</span><span class="glyph">t</span><span class="glyph">e</span><span class="glyph">r</span><span class="glyph">f</span><span class="glyph">a</span><span class="glyph">c</span><span class="glyph">e</span><span class="glyph">s</span></span>
+          <span class="hero-name-primary" id="heroDynamicName" runat="server" clientidmode="Static">
+            <asp:Literal ID="litHeroDynamicName" runat="server" />
+          </span>
+          <span class="hero-name-sub" id="heroSubline">
+            <asp:Literal ID="litHeroSubline" runat="server" />
+          </span>
         </h1>
-        <p class="hero-role">
-          Web developer working across front-end interfaces and the structured data systems behind them &mdash;
-          from motion-driven product pages to large-scale JSON datasets.
+        <p class="hero-role" id="heroRoleSummary">
+          <asp:Literal ID="litHeroRoleSummary" runat="server" />
         </p>
         <div class="hero-meta">
-          <div>ROLE<strong>Web Developer</strong></div>
-          <div>FOCUS<strong>Interfaces &amp; Data Systems</strong></div>
-          <div>BASED IN<strong>Quezon City</strong></div>
+          <div>ROLE<strong id="heroMetaRole"><asp:Literal ID="litRoleTitle" runat="server" /></strong></div>
+          <div>FOCUS<strong id="heroMetaFocus"><asp:Literal ID="litFocusArea" runat="server" /></strong></div>
+          <div>BASED IN<strong id="heroMetaBasedIn"><asp:Literal ID="litBasedIn" runat="server" /></strong></div>
         </div>
       </div>
 
-      <!-- Replace this div with <img src="your-photo.jpg" alt="Kevs" class="avatar-img"> once a photo is ready -->
-      <div class="avatar" id="avatar"><img class="avatar-img" src="Assets/Images/pixelart_portrait.png" /></div>
+      <div class="avatar" id="avatar">
+        <asp:Image ID="imgAvatar" runat="server" CssClass="avatar-img" ClientIDMode="Static" />
+      </div>
     </div>
   </div>
 

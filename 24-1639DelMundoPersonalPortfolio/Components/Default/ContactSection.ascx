@@ -7,9 +7,9 @@
     <h2 class="contact-cta reveal">Let's build<br>something <span class="accent">structured</span>.</h2>
  
     <div class="contact-links">
-      <a href="mailto:delmundo.marckevin.ferolino@gmail.com" class="reveal">[ Email ]</a>
-      <a href="https://github.com/marcKevzzz" class="reveal">[ Github ]</a>
-      <a href="https://www.linkedin.com/in/del-mundo-marc-kevin-f-ba5050436/" class="reveal">[ LinkedIn ]</a>
+      <asp:HyperLink ID="contactEmailLink" runat="server" ClientIDMode="Static" CssClass="reveal">[ Email ]</asp:HyperLink>
+      <asp:HyperLink ID="contactGithubLink" runat="server" ClientIDMode="Static" CssClass="reveal" Target="_blank" rel="noopener noreferrer">[ Github ]</asp:HyperLink>
+      <asp:HyperLink ID="contactLinkedinLink" runat="server" ClientIDMode="Static" CssClass="reveal" Target="_blank" rel="noopener noreferrer">[ LinkedIn ]</asp:HyperLink>
     </div>
   </div>
 </section>

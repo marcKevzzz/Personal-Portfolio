@@ -6,23 +6,19 @@
     <div class="field-label reveal">06 / EDUCATION</div>
     <h2 class="section-title reveal">Background</h2>
  
-    <div class="edu-list">
-      <div class="list-line reveal">
-        <span class="yr">2024 &mdash; Present</span>
-        <div>
-          <div class="ttl">Collegiate Level</div>
-          <div class="sub">Bachelor of Science in Information Technology</div>
-        </div>
-        <span class="org">Quezon City University</span>
-      </div>
-      <div class="list-line reveal">
-        <span class="yr">June &mdash; 2024</span>
-        <div>
-          <div class="ttl">Senior High School</div>
-          <div class="sub">Information and Communication Technology</div>
-        </div>
-        <span class="org">Gardner College Diliman</span>
-      </div>
+    <div class="edu-list" id="eduList">
+      <asp:Repeater ID="rptEducations" runat="server">
+        <ItemTemplate>
+          <div class="list-line reveal">
+            <span class="yr"><%# Server.HtmlEncode(Eval("YearPeriod").ToString()) %></span>
+            <div>
+              <div class="ttl"><%# Server.HtmlEncode(Eval("Title").ToString()) %></div>
+              <div class="sub"><%# Server.HtmlEncode(Eval("Subtitle").ToString()) %></div>
+            </div>
+            <span class="org"><%# Server.HtmlEncode(Eval("InstitutionName").ToString()) %></span>
+          </div>
+        </ItemTemplate>
+      </asp:Repeater>
     </div>
   </div>
 </section>

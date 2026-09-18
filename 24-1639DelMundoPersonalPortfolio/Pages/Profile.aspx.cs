@@ -12,8 +12,6 @@ namespace _24_1639DelMundoPersonalPortfolio
 {
     public partial class AccountProfile : System.Web.UI.Page
     {
-        private const string DefaultAvatarPath = "~/Assets/Images/pixelart_portrait.png";
-
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!AuthHelper.IsAuthenticated())
@@ -71,8 +69,17 @@ namespace _24_1639DelMundoPersonalPortfolio
                 litStatusText.Text = isActive ? "Active Account" : "Deactivated";
                 litMemberSince.Text = createdAt.ToString("MMMM yyyy");
 
-                string avatarUrl = !string.IsNullOrEmpty(profileImg) ? profileImg : DefaultAvatarPath;
-                imgAvatarPreview.ImageUrl = ResolveUrl(avatarUrl);
+                if (!string.IsNullOrEmpty(profileImg))
+                {
+                    imgAvatarPreview.ImageUrl = ResolveUrl(profileImg);
+                    imgAvatarPreview.Style["display"] = "block";
+                    avatarSvgPlaceholder.Style["display"] = "none";
+                }
+                else
+                {
+                    imgAvatarPreview.Style["display"] = "none";
+                    avatarSvgPlaceholder.Style["display"] = "flex";
+                }
 
                 phAdminLink.Visible = AuthHelper.IsAdmin();
 
@@ -221,6 +228,8 @@ namespace _24_1639DelMundoPersonalPortfolio
                     {
                         currentUser.ProfileImage = relativeImagePath;
                         imgAvatarPreview.ImageUrl = ResolveUrl(relativeImagePath);
+                        imgAvatarPreview.Style["display"] = "block";
+                        avatarSvgPlaceholder.Style["display"] = "none";
                     }
                     if (!string.IsNullOrEmpty(newPasswordHash))
                     {

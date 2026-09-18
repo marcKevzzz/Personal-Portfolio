@@ -6,11 +6,12 @@
     <div class="field-label reveal">08 / HOBBIES</div>
     <h2 class="section-title reveal">Off the clock</h2>
  
-    <div class="chip-row">
-      <span class="chip real reveal">Reading Manhwa, Manhua &amp; Manga</span>
-      <span class="chip real reveal">Online Games</span>
-      <span class="chip real reveal">Coding</span>
-      <span class="chip real reveal">Basketball</span>
+    <div class="chip-row" id="hobbiesList">
+      <asp:Repeater ID="rptHobbies" runat="server">
+        <ItemTemplate>
+          <span class="chip real reveal"><%# Server.HtmlEncode(Eval("HobbyName").ToString()) %></span>
+        </ItemTemplate>
+      </asp:Repeater>
     </div>
   </div>
 </section>

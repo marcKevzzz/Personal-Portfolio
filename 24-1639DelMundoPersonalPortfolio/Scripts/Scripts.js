@@ -237,9 +237,31 @@ function initPortfolio() {
     gsap.to(".hero-meta", { opacity: 1, y: 0, duration: 0.6, delay: 0.6 });
   };
 
-  /* Component-level stagger reveal (stays visible once revealed) */
+  /* Hero grid parallax pointer interaction */
+  var heroGrid = document.getElementById("heroGrid");
+  if (!reduceMotion && heroGrid) {
+    var heroEl = document.getElementById("hero");
+    if (heroEl) {
+      heroEl.addEventListener("mousemove", function (e) {
+        var x = (e.clientX / window.innerWidth - 0.5) * 14;
+        var y = (e.clientY / window.innerHeight - 0.5) * 14;
+        gsap.to(heroGrid, { x: x, y: y, duration: 0.6, ease: "power2.out" });
+      });
+    }
+  }
+
+  initScrollTriggersAndReveals();
+  initBentoProjectHover();
+}
+
+/* Reusable binding for dynamically added / updated DOM elements */
+function initScrollTriggersAndReveals() {
+  if (typeof ScrollTrigger === "undefined") return;
+
+  // Component-level stagger reveal
   document.querySelectorAll(".reveal").forEach(function (el) {
-    if (el.closest("#hero")) return;
+    if (el.closest("#hero") || el.dataset.revealBound === "true") return;
+    el.dataset.revealBound = "true";
 
     gsap.set(el, { opacity: 0, y: 20 });
 
@@ -267,9 +289,12 @@ function initPortfolio() {
     });
   });
 
-  /* Skill bar fill on scroll */
+  // Skill bar fill on scroll
   document.querySelectorAll(".skill-fill").forEach(function (bar) {
-    var val = bar.getAttribute("data-val");
+    if (bar.dataset.skillBound === "true") return;
+    bar.dataset.skillBound = "true";
+
+    var val = bar.getAttribute("data-val") || "0";
     var sec = bar.closest("section");
     ScrollTrigger.create({
       trigger: sec || bar,
@@ -281,22 +306,14 @@ function initPortfolio() {
       },
     });
   });
+}
 
-  /* Hero grid parallax pointer interaction */
-  var heroGrid = document.getElementById("heroGrid");
-  if (!reduceMotion && heroGrid) {
-    var heroEl = document.getElementById("hero");
-    if (heroEl) {
-      heroEl.addEventListener("mousemove", function (e) {
-        var x = (e.clientX / window.innerWidth - 0.5) * 14;
-        var y = (e.clientY / window.innerHeight - 0.5) * 14;
-        gsap.to(heroGrid, { x: x, y: y, duration: 0.6, ease: "power2.out" });
-      });
-    }
-  }
-
-  /* Bento Project tile content hover transition */
+/* Bento Project tile content hover transition */
+function initBentoProjectHover() {
   document.querySelectorAll(".tile").forEach(function (tile) {
+    if (tile.dataset.hoverBound === "true") return;
+    tile.dataset.hoverBound = "true";
+
     tile.addEventListener("mouseenter", function () {
       var content = tile.querySelector(".tile-content");
       if (content) {
@@ -348,6 +365,7 @@ function initSmoothScroll() {
    ============================================================= */
 function initCustomCursor() {
   var cursor = document.getElementById("customCursor");
+  var avatar = document.getElementById("avatar");
   if (!cursor) return;
 
   if (window.matchMedia && !window.matchMedia("(pointer: fine)").matches) {
@@ -355,16 +373,24 @@ function initCustomCursor() {
     return;
   }
 
-  var avatar = document.getElementById("avatar");
-  var xTo = gsap.quickTo(cursor, "x", { duration: 0.25, ease: "power2.out" });
-  var yTo = gsap.quickTo(cursor, "y", { duration: 0.25, ease: "power2.out" });
-  var isVisible = false;
+  var mouseX = window.innerWidth / 2;
+  var mouseY = window.innerHeight / 2;
   var isHovered = false;
   var isFocused = false;
+  var isVisible = false;
+
+  cursor.style.opacity = "0";
+
+  gsap.set(cursor, { xPercent: -50, yPercent: -50 });
+
+  var xTo = gsap.quickTo(cursor, "x", { duration: 0.08, ease: "power3.out" });
+  var yTo = gsap.quickTo(cursor, "y", { duration: 0.08, ease: "power3.out" });
 
   window.addEventListener("mousemove", function (e) {
-    xTo(e.clientX);
-    yTo(e.clientY);
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    xTo(mouseX);
+    yTo(mouseY);
     if (!isVisible) {
       cursor.style.opacity = "1";
       isVisible = true;
@@ -460,14 +486,19 @@ function initCustomCursor() {
 /* =============================================================
    HERO BINARY DECODE ROTATOR
    ============================================================= */
-function initBinaryDecoder() {
+function initBinaryDecoder(customTitles) {
   var container = document.getElementById("heroDynamicName");
   if (!container) return;
 
-  var titles = ["Del Mundo", "Marc Kevin", "Kevs"];
+  if ((!customTitles || !customTitles.length) && container.getAttribute("data-names")) {
+    var raw = container.getAttribute("data-names");
+    customTitles = raw.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+
+  var titles = (customTitles && customTitles.length) ? customTitles : ["Del Mundo", "Marc Kevin", "Kevs"];
   var currentIndex = -1;
   var isDecoding = false;
-  var currentText = container.textContent.trim() || "Kevs";
+  var currentText = container.textContent.trim() || titles[titles.length - 1] || "Kevs";
   var timer = null;
   var animFrame = null;
 
@@ -578,6 +609,417 @@ function initBinaryDecoder() {
 }
 
 /* =============================================================
+   DYNAMIC DATABASE DATA FETCHING, CACHING & RENDERING
+   ============================================================= */
+var PORTFOLIO_CACHE_KEY = "portfolio_db_cache_v2";
+var PORTFOLIO_CACHE_TTL = 30 * 60 * 1000; // 30 minutes client cache
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function getCachedPortfolioData() {
+  try {
+    var raw = sessionStorage.getItem(PORTFOLIO_CACHE_KEY);
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    if (parsed && parsed.timestamp && (Date.now() - parsed.timestamp < PORTFOLIO_CACHE_TTL)) {
+      return parsed.data;
+    }
+  } catch (e) {
+    console.warn("[Portfolio Cache] Error reading cache:", e);
+  }
+  return null;
+}
+
+function savePortfolioDataToCache(data) {
+  try {
+    sessionStorage.setItem(PORTFOLIO_CACHE_KEY, JSON.stringify({
+      timestamp: Date.now(),
+      data: data
+    }));
+  } catch (e) {
+    console.warn("[Portfolio Cache] Error saving cache:", e);
+  }
+}
+
+function renderPortfolioData(data) {
+  if (!data) return;
+
+  if (data.Profile) {
+    renderHero(data.Profile);
+    renderBasicInfo(data.Profile);
+    renderContact(data.Profile);
+  }
+
+  if (data.TechStacks && data.TechStacks.length) {
+    renderTechStacks(data.TechStacks);
+  }
+
+  if (data.Skills && data.Skills.length) {
+    renderSkills(data.Skills);
+  }
+
+  if (data.Experiences && data.Experiences.length) {
+    renderExperiences(data.Experiences);
+  }
+
+  if (data.Projects && data.Projects.length) {
+    renderProjects(data.Projects);
+  }
+
+  if (data.Educations && data.Educations.length) {
+    renderEducations(data.Educations);
+  }
+
+  if (data.Awards && data.Awards.length) {
+    renderAwards(data.Awards);
+  }
+
+  if (data.Hobbies && data.Hobbies.length) {
+    renderHobbies(data.Hobbies);
+  }
+
+  // Refresh interactive bindings and GSAP triggers for dynamically injected elements
+  initScrollTriggersAndReveals();
+  initBentoProjectHover();
+  if (typeof ScrollTrigger !== "undefined") {
+    ScrollTrigger.refresh();
+  }
+}
+
+function renderHero(profile) {
+  if (!profile) return;
+
+  if (profile.HeroSubline) {
+    var sublineEl = document.getElementById("heroSubline");
+    if (sublineEl) {
+      var glyphs = '<span class="accent glyph">/</span>';
+      var text = " " + profile.HeroSubline.replace(/^\/+/, "").trim();
+      for (var i = 0; i < text.length; i++) {
+        glyphs += '<span class="glyph">' + (text[i] === " " ? "\u00A0" : escapeHtml(text[i])) + '</span>';
+      }
+      sublineEl.innerHTML = glyphs;
+    }
+  }
+
+  if (profile.RoleSummary) {
+    var summaryEl = document.getElementById("heroRoleSummary");
+    if (summaryEl) summaryEl.textContent = profile.RoleSummary;
+  }
+
+  if (profile.RoleTitle) {
+    var roleEl = document.getElementById("heroMetaRole");
+    if (roleEl) roleEl.textContent = profile.RoleTitle;
+  }
+
+  if (profile.FocusArea) {
+    var focusEl = document.getElementById("heroMetaFocus");
+    if (focusEl) focusEl.textContent = profile.FocusArea;
+  }
+
+  if (profile.BasedIn) {
+    var basedEl = document.getElementById("heroMetaBasedIn");
+    if (basedEl) basedEl.textContent = profile.BasedIn;
+  }
+
+  if (profile.AvatarPath) {
+    var avatarImg = document.getElementById("heroAvatarImg");
+    if (avatarImg) {
+      avatarImg.src = profile.AvatarPath;
+      avatarImg.alt = profile.FullName || "Portrait";
+    }
+  }
+}
+
+function renderBasicInfo(profile) {
+  if (!profile) return;
+
+  var nameEl = document.getElementById("infoName");
+  if (nameEl && profile.FullName) nameEl.textContent = profile.FullName;
+
+  var locEl = document.getElementById("infoLocation");
+  if (locEl && profile.LocationAddress) locEl.textContent = profile.LocationAddress;
+
+  var ageEl = document.getElementById("infoAge");
+  if (ageEl && profile.Age !== undefined && profile.Age !== null) {
+    ageEl.textContent = profile.Age + " years old";
+  }
+
+  var expEl = document.getElementById("infoExperience");
+  if (expEl && profile.ExperienceYears !== undefined && profile.ExperienceYears !== null) {
+    expEl.textContent = profile.ExperienceYears + " years of coding";
+  }
+}
+
+function renderTechStacks(techStacks) {
+  var container = document.getElementById("techStackGroups");
+  if (!container || !techStacks || !techStacks.length) return;
+
+  var groupsOrder = ["Frontend", "3D & Motion", "Backend & Database", "Tools & DevOps"];
+  var grouped = {};
+  groupsOrder.forEach(function (g) { grouped[g] = []; });
+
+  techStacks.forEach(function (item) {
+    var g = item.GroupName || "Frontend";
+    if (!grouped[g]) grouped[g] = [];
+    grouped[g].push(item);
+  });
+
+  var html = "";
+  groupsOrder.forEach(function (gName) {
+    var items = grouped[gName] || [];
+    if (!items.length) return;
+
+    html += '<div class="stack-group reveal">' +
+      '<div class="stack-group-head"><h4>' + escapeHtml(gName) + '</h4></div>' +
+      '<div class="tech-icons-grid">';
+
+    items.forEach(function (item) {
+      html += '<div class="tech-card" data-label="' + escapeHtml(item.Label) + '" title="' + escapeHtml(item.Label) + '">' +
+        '<img src="' + escapeHtml(item.IconPath) + '" alt="' + escapeHtml(item.Label) + '" class="tech-icon" />' +
+      '</div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function renderSkills(skills) {
+  var list = document.getElementById("skillsList");
+  if (!list || !skills || !skills.length) return;
+
+  var html = "";
+  skills.forEach(function (s) {
+    var val = s.ProficiencyVal;
+    html += '<div class="skill-row reveal">' +
+      '<span class="skill-name">' + escapeHtml(s.SkillName) + '</span>' +
+      '<div class="skill-track"><div class="skill-fill" data-val="' + val + '"></div></div>' +
+      '<span class="skill-val">' + val + '</span>' +
+    '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+function renderExperiences(experiences) {
+  var list = document.getElementById("expList");
+  if (!list || !experiences || !experiences.length) return;
+
+  var html = "";
+  experiences.forEach(function (exp) {
+    var tagsHtml = "";
+    if (exp.Tags) {
+      var tags = exp.Tags.split(",");
+      tags.forEach(function (t) {
+        var trimmed = t.trim();
+        if (trimmed) {
+          tagsHtml += "<span>" + escapeHtml(trimmed) + "</span>";
+        }
+      });
+    }
+
+    html += '<div class="exp-card reveal">' +
+      '<div class="exp-header">' +
+        '<div class="exp-role-group">' +
+          '<h3 class="exp-role">' + escapeHtml(exp.RoleTitle) + '</h3>' +
+          '<span class="exp-company">' + escapeHtml(exp.CompanyName) + '</span>' +
+        '</div>' +
+        '<span class="exp-period">' + escapeHtml(exp.PeriodRange) + '</span>' +
+      '</div>' +
+      (exp.DescriptionText ? '<p class="exp-desc">' + escapeHtml(exp.DescriptionText) + '</p>' : '') +
+      (tagsHtml ? '<div class="exp-tags">' + tagsHtml + '</div>' : '') +
+    '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+function renderProjects(projects) {
+  var bento = document.getElementById("projectsBento");
+  if (!bento || !projects || !projects.length) return;
+
+  var totalCount = projects.length;
+  var html = "";
+
+  projects.forEach(function (proj, idx) {
+    var spanClass = "span-6";
+
+    // If total projects is odd and this is the last project, span the full 12-column row
+    if (totalCount % 2 !== 0 && idx === totalCount - 1) {
+      spanClass = "span-12";
+    } else {
+      var rowIndex = Math.floor(idx / 2);
+      var isSecondInRow = (idx % 2 === 1);
+
+      // Alternating 2-column row patterns:
+      // Even rows (0, 2, 4...): col 7 + col 5
+      // Odd rows (1, 3, 5...): col 6 + col 6
+      if (rowIndex % 2 === 0) {
+        spanClass = isSecondInRow ? "span-5" : "span-7";
+      } else {
+        spanClass = "span-6";
+      }
+    }
+    var pNum = "P." + (idx + 1 < 10 ? "0" + (idx + 1) : idx + 1);
+    var tagsHtml = "";
+    if (proj.Tags) {
+      var tags = proj.Tags.split(",");
+      tags.forEach(function (t) {
+        var trimmed = t.trim();
+        if (trimmed) {
+          tagsHtml += "<span>" + escapeHtml(trimmed) + "</span>";
+        }
+      });
+    }
+
+    var linkHref = proj.ProjectUrl || "#";
+    var imgPath = proj.ImagePath || "Assets/Images/samsondentalcenter.png";
+
+    html += '<a href="' + escapeHtml(linkHref) + '" target="_blank" rel="noopener noreferrer" class="tile ' + spanClass + ' reveal">' +
+      '<div class="tile-thumb">' +
+        '<img src="' + escapeHtml(imgPath) + '" alt="' + escapeHtml(proj.Title) + '" loading="lazy" />' +
+      '</div>' +
+      '<span class="tile-num">' + pNum + '</span>' +
+      '<div class="tile-arrow" title="Open repository in new tab">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<line x1="7" y1="17" x2="17" y2="7"></line>' +
+          '<polyline points="7 7 17 7 17 17"></polyline>' +
+        '</svg>' +
+      '</div>' +
+      '<div class="tile-content">' +
+        '<div class="tile-body-top">' +
+          '<h3>' + escapeHtml(proj.Title) + '</h3>' +
+        '</div>' +
+        '<div class="tile-meta">' + tagsHtml + '</div>' +
+      '</div>' +
+    '</a>';
+  });
+
+  bento.innerHTML = html;
+}
+
+function renderEducations(educations) {
+  var list = document.getElementById("eduList");
+  if (!list || !educations || !educations.length) return;
+
+  var html = "";
+  educations.forEach(function (edu) {
+    html += '<div class="list-line reveal">' +
+      '<span class="yr">' + escapeHtml(edu.YearPeriod) + '</span>' +
+      '<div>' +
+        '<div class="ttl">' + escapeHtml(edu.Title) + '</div>' +
+        '<div class="sub">' + escapeHtml(edu.Subtitle) + '</div>' +
+      '</div>' +
+      '<span class="org">' + escapeHtml(edu.InstitutionName) + '</span>' +
+    '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+function renderAwards(awards) {
+  var list = document.getElementById("awardList");
+  if (!list || !awards || !awards.length) return;
+
+  var html = "";
+  awards.forEach(function (award) {
+    html += '<div class="list-line reveal">' +
+      '<span class="yr">' + escapeHtml(award.AwardYear) + '</span>' +
+      '<div>' +
+        '<div class="ttl">' + escapeHtml(award.Title) + '</div>' +
+        '<div class="sub">' + escapeHtml(award.Subtitle) + '</div>' +
+      '</div>' +
+      '<span class="org">' + escapeHtml(award.OrganizationName) + '</span>' +
+    '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+function renderHobbies(hobbies) {
+  var list = document.getElementById("hobbiesList");
+  if (!list || !hobbies || !hobbies.length) return;
+
+  var html = "";
+  hobbies.forEach(function (h) {
+    html += '<span class="chip real reveal">' + escapeHtml(h.HobbyName) + '</span>';
+  });
+
+  list.innerHTML = html;
+}
+
+function renderContact(profile) {
+  if (!profile) return;
+
+  var emailLink = document.getElementById("contactEmailLink");
+  if (emailLink && profile.Email) {
+    emailLink.href = "mailto:" + profile.Email;
+  }
+  var gitLink = document.getElementById("contactGithubLink");
+  if (gitLink && profile.GithubUrl) {
+    gitLink.href = profile.GithubUrl;
+  }
+
+  var inLink = document.getElementById("contactLinkedinLink");
+  if (inLink && profile.LinkedinUrl) {
+    inLink.href = profile.LinkedinUrl;
+  }
+}
+
+function loadPortfolioData(forceRefresh, onDataReady) {
+  var cached = !forceRefresh ? getCachedPortfolioData() : null;
+  if (cached) {
+    renderPortfolioData(cached);
+    if (onDataReady) onDataReady(cached, true /* fromCache */);
+    return;
+  }
+
+  fetch("Default.aspx/GetPortfolioData", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    body: JSON.stringify({ forceRefresh: !!forceRefresh })
+  })
+    .then(function (res) {
+      if (!res.ok) throw new Error("Network response was not ok: " + res.statusText);
+      return res.json();
+    })
+    .then(function (json) {
+      var data = json.d || json;
+      if (data) {
+        savePortfolioDataToCache(data);
+        renderPortfolioData(data);
+      }
+      if (onDataReady) onDataReady(data, false /* fromCache */);
+    })
+    .catch(function (err) {
+      console.warn("[Portfolio] Failed to fetch data from backend, using fallback DOM:", err);
+      if (onDataReady) onDataReady(null, false);
+    });
+}
+
+// Global utility for manual refresh / cache invalidation
+window.refreshPortfolioData = function (force) {
+  sessionStorage.removeItem(PORTFOLIO_CACHE_KEY);
+  loadPortfolioData(force !== false, function (data) {
+    if (data && typeof Toast !== "undefined") {
+      Toast.success("Portfolio data updated from database.", "Cache Refreshed");
+    }
+  });
+};
+
+/* =============================================================
    ACCOUNT PROFILE PAGE
    ============================================================= */
 function initProfile() {
@@ -618,37 +1060,32 @@ function initPreloader(onComplete) {
 
   var counterObj = { val: 0 };
 
-  // Master GSAP Timeline: Loading count -> Fade Out -> Landing Page Entrance
-  var masterTl = gsap.timeline({
-    onComplete: function () {
-      preloader.classList.add("is-hidden");
-      document.body.style.overflow = "";
-      if (typeof ScrollTrigger !== "undefined") {
-        ScrollTrigger.refresh();
-      }
-    },
-  });
-
-  // Timeline Step 1: Count up 0 -> 100
-  masterTl.to(counterObj, {
+  gsap.to(counterObj, {
     val: 100,
-    duration: 1.2,
-    ease: "power2.out",
+    duration: 0.75,
+    ease: "power2.inOut",
     onUpdate: function () {
       counter.textContent = Math.floor(counterObj.val);
     },
-  });
-
-  // Hold count 100 for a fraction of a second
-  masterTl.to({}, { duration: 0.1 });
-
-  // Timeline Step 2: Cross-fade preloader out and trigger landing page entrance
-  masterTl.to(preloader, {
-    opacity: 0,
-    duration: 0.6,
-    ease: "power2.inOut",
-    onStart: function () {
-      if (onComplete) onComplete();
+    onComplete: function () {
+      counter.textContent = "100";
+      // Smoothly cross-fade preloader overlay out
+      gsap.to(preloader, {
+        opacity: 0,
+        duration: 0.5,
+        ease: "power2.inOut",
+        delay: 0.05,
+        onStart: function () {
+          if (onComplete) onComplete();
+        },
+        onComplete: function () {
+          preloader.classList.add("is-hidden");
+          document.body.style.overflow = "";
+          if (typeof ScrollTrigger !== "undefined") {
+            ScrollTrigger.refresh();
+          }
+        },
+      });
     },
   });
 }
@@ -665,9 +1102,10 @@ document.addEventListener("DOMContentLoaded", function () {
     window.scrollTo(0, 0);
 
     initPortfolio();
-    initBinaryDecoder();
     initSmoothScroll();
     initPreloader(function () {
+      initBinaryDecoder();
+
       if (window.playHeroEntrance) {
         window.playHeroEntrance();
       }

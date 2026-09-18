@@ -2,23 +2,41 @@
 
 <div class="admin-panel" data-panel="hobbies">
     <h2>Hobbies</h2>
-    <p class="admin-sub">Personal interests displayed in chips on the portfolio page.</p>
+    <p class="admin-sub">Personal interests and recreational tags displayed on the public page.</p>
 
     <div class="add-form">
-        <div class="field"><label>New hobby</label><div class="input-row"><input type="text" placeholder="Basketball" /></div></div>
-        <button type="button" class="btn btn-primary">Add Hobby</button>
+        <div class="field" style="flex: 1;">
+            <label>New Hobby Name</label>
+            <div class="input-row">
+                <asp:TextBox ID="txtHobbyName" runat="server" placeholder="e.g. Basketball, Reading Manhwa" required="required" />
+            </div>
+        </div>
+        <div style="display: flex; align-items: flex-end;">
+            <asp:Button ID="btnAddHobby" runat="server" Text="Add Hobby" CssClass="btn btn-primary" OnClick="btnAddHobby_Click" data-confirm-title="Add Hobby" data-confirm-msg="Are you sure you want to add this hobby?" data-confirm-btn="Add Hobby" />
+        </div>
     </div>
 
     <div class="data-table-wrap">
         <table class="data-table">
             <thead>
-                <tr><th>Hobby</th><th>Action</th></tr>
+                <tr>
+                    <th style="width: 40px; text-align: center;">#</th>
+                    <th>Hobby</th>
+                    <th>Action</th>
+                </tr>
             </thead>
             <tbody>
-                <tr><td>Reading Manhwa, Manhua &amp; Manga</td><td><a href="javascript:void(0)" class="danger">Remove</a></td></tr>
-                <tr><td>Online Games</td><td><a href="javascript:void(0)" class="danger">Remove</a></td></tr>
-                <tr><td>Coding</td><td><a href="javascript:void(0)" class="danger">Remove</a></td></tr>
-                <tr><td>Basketball</td><td><a href="javascript:void(0)" class="danger">Remove</a></td></tr>
+                <asp:Repeater ID="rptHobbiesTable" runat="server" OnItemCommand="rptHobbiesTable_ItemCommand">
+                    <ItemTemplate>
+                        <tr>
+                            <td class="table-row-index"><%# Container.ItemIndex + 1 %></td>
+                            <td><strong><%# Eval("HobbyName") %></strong></td>
+                            <td>
+                                <asp:LinkButton ID="btnDelete" runat="server" CssClass="danger" CommandName="DeleteHobby" CommandArgument='<%# Eval("HobbyId") %>' data-confirm-title="Remove Hobby" data-confirm-msg='<%# "Are you sure you want to remove \"" + Eval("HobbyName") + "\"?" %>' data-confirm-type="danger" data-confirm-btn="Remove">Remove</asp:LinkButton>
+                            </td>
+                        </tr>
+                    </ItemTemplate>
+                </asp:Repeater>
             </tbody>
         </table>
     </div>

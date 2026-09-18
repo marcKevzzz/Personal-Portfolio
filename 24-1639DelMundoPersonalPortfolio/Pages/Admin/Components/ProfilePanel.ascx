@@ -7,81 +7,109 @@
     <div class="admin-fieldgroup">
         <div class="field">
             <label>Hero kicker</label>
-            <div class="input-row"><input type="text" value="PERSONAL PORTFOLIO" /></div>
+            <div class="input-row">
+                <asp:TextBox ID="txtHeroKicker" runat="server" Text="PERSONAL PORTFOLIO" />
+            </div>
         </div>
         <div class="field">
             <label>Hero subline</label>
-            <div class="input-row"><input type="text" value="/ builds interfaces" /></div>
+            <div class="input-row">
+                <asp:TextBox ID="txtHeroSubline" runat="server" Text="builds interfaces" />
+            </div>
         </div>
     </div>
     <div class="admin-fieldgroup">
         <div class="field">
             <label>Hero names / aliases (Hit Enter or comma to add)</label>
-            <div class="chips-container" id="heroNameChips" data-input-target="hidHeroNames">
-                <div class="chips-list">
-                    <span class="chip-tag"><span>Kevs</span><span class="chip-remove" title="Remove">&times;</span></span>
-                    <span class="chip-tag"><span>Marc Kevin</span><span class="chip-remove" title="Remove">&times;</span></span>
-                    <span class="chip-tag"><span>Software Engineer</span><span class="chip-remove" title="Remove">&times;</span></span>
-                </div>
+            <div class="chips-container" id="heroNameChips" data-input-target="ctl00_AdminMainContent_ucProfilePanel_hidHeroNames">
+                <asp:Literal ID="litHeroChips" runat="server" />
                 <input type="text" class="chip-input" placeholder="Type name & hit Enter..." />
             </div>
-            <input type="hidden" id="hidHeroNames" value="Kevs,Marc Kevin,Software Engineer" />
+            <asp:HiddenField ID="hidHeroNames" runat="server" Value="Kevs,Marc Kevin,Del Mundo" />
         </div>
         <div class="field">
             <label>Role summary paragraph</label>
-            <textarea class="hero-txtarea" rows="3">Web developer working across front-end interfaces and the structured data systems behind them — from motion-driven product pages to large-scale JSON datasets.</textarea>
+            <asp:TextBox ID="txtRoleSummary" runat="server" TextMode="MultiLine" Rows="3" CssClass="hero-txtarea" />
         </div>
     </div>
     <div class="admin-fieldgroup">
         <div class="field">
-            <label>Role</label>
-            <div class="input-row"><input type="text" value="Web Developer" /></div>
+            <label>Role title</label>
+            <div class="input-row">
+                <asp:TextBox ID="txtRoleTitle" runat="server" Text="Web Developer" />
+            </div>
         </div>
         <div class="field">
-            <label>Focus</label>
-            <div class="input-row"><input type="text" value="Interfaces & Data Systems" /></div>
+            <label>Focus area</label>
+            <div class="input-row">
+                <asp:TextBox ID="txtFocusArea" runat="server" Text="Interfaces & Data Systems" />
+            </div>
         </div>
         <div class="field">
             <label>Based in</label>
-            <div class="input-row"><input type="text" value="Quezon City" /></div>
+            <div class="input-row">
+                <asp:TextBox ID="txtBasedIn" runat="server" Text="Quezon City" />
+            </div>
         </div>
         <div class="field">
-            <label>Avatar image path</label>
-            <div class="input-row"><input type="text" value="Assets/Images/pixelart_portrait.png" /></div>
+            <label>Avatar image path &amp; preview</label>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div class="input-row" style="flex: 1;">
+                    <asp:TextBox ID="txtAvatarPath" runat="server" Text="Assets/Images/pixelart_portrait.png" />
+                </div>
+                <div style="width: 36px; height: 36px; border: 1px solid var(--line); background: var(--bg-3); flex: none; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 4px;">
+                    <asp:Image ID="imgProfileAvatarThumb" runat="server" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='Assets/Images/pixelart_portrait.png';" />
+                </div>
+            </div>
         </div>
     </div>
     <div class="admin-fieldgroup">
         <div class="field">
             <label>Full name</label>
-            <div class="input-row"><input type="text" value="Del Mundo, Marc Kevin F." /></div>
+            <div class="input-row">
+                <asp:TextBox ID="txtFullName" runat="server" Text="Marc Kevin Del Mundo" />
+            </div>
         </div>
         <div class="field">
-            <label>Location</label>
-            <div class="input-row"><input type="text" value="B2 L6 Emerald St. Novaliches Proper, Q.C." /></div>
+            <label>Location address</label>
+            <div class="input-row">
+                <asp:TextBox ID="txtLocationAddress" runat="server" Text="B2 L6 Emerald St. Novaliches Proper, Q.C." />
+            </div>
         </div>
         <div class="field">
             <label>Age</label>
-            <div class="input-row"><input type="text" value="19 years old" /></div>
+            <div class="input-row">
+                <asp:TextBox ID="txtAge" runat="server" TextMode="Number" min="0" max="150" Text="19" />
+            </div>
         </div>
         <div class="field">
-            <label>Experience</label>
-            <div class="input-row"><input type="text" value="3 years of coding" /></div>
+            <label>Experience (Years)</label>
+            <div class="input-row">
+                <asp:TextBox ID="txtExperienceYears" runat="server" TextMode="Number" min="0" max="100" Text="3" />
+            </div>
         </div>
     </div>
     <div class="admin-fieldgroup three-col">
         <div class="field">
             <label>Email</label>
-            <div class="input-row"><input type="text" value="delmundo.marckevin.ferolino@gmail.com" /></div>
+            <div class="input-row">
+                <asp:TextBox ID="txtEmail" runat="server" TextMode="Email" Text="delmundo.marckevin.ferolino@gmail.com" />
+            </div>
         </div>
         <div class="field">
             <label>GitHub URL</label>
-            <div class="input-row"><input type="text" value="https://github.com/marcKevzzz" /></div>
+            <div class="input-row">
+                <asp:TextBox ID="txtGithubUrl" runat="server" Text="https://github.com/marcKevzzz" />
+            </div>
         </div>
         <div class="field">
             <label>LinkedIn URL</label>
-            <div class="input-row"><input type="text" value="https://linkedin.com/in/..." /></div>
+            <div class="input-row">
+                <asp:TextBox ID="txtLinkedinUrl" runat="server" Text="https://www.linkedin.com/in/del-mundo-marc-kevin-f-ba5050436" />
+            </div>
         </div>
     </div>
 
-    <button type="button" id="btnSaveProfile" class="btn btn-primary">Save Profile Settings</button>
+    <asp:Button ID="btnSaveProfile" runat="server" Text="Save Profile Settings" CssClass="btn btn-primary" OnClick="btnSaveProfile_Click" data-confirm-title="Save Profile" data-confirm-msg="Are you sure you want to update your public profile and hero data?" data-confirm-btn="Save Profile" />
 </div>
+

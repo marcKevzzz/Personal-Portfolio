@@ -6,14 +6,19 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
 {
     public partial class NavSection : UserControl
     {
-        public string ProfileAvatarUrl { get; set; }
-
         protected void Page_Load(object sender, EventArgs e)
         {
             var user = AuthHelper.GetCurrentUser();
             if (user != null && !string.IsNullOrEmpty(user.ProfileImage))
             {
-                ProfileAvatarUrl = user.ProfileImage;
+                imgNavAvatar.ImageUrl = ResolveUrl("~/" + user.ProfileImage.TrimStart('~', '/'));
+                imgNavAvatar.Visible = true;
+                phNavSvg.Visible = false;
+            }
+            else
+            {
+                imgNavAvatar.Visible = false;
+                phNavSvg.Visible = true;
             }
         }
     }

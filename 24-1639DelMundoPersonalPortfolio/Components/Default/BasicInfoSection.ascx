@@ -9,19 +9,19 @@
     <div class="info-grid">
       <div class="info-row reveal">
         <span class="field-label">Name</span>
-        <p>Del Mundo, Marc Kevin F.</p>
+        <p id="infoName"><asp:Literal ID="litName" runat="server" /></p>
       </div>
       <div class="info-row reveal">
         <span class="field-label">Location</span>
-        <p class="placeholder">B2 L6 Emerald St. Novaliches Proper, Q.C.</p>
+        <p class="placeholder" id="infoLocation"><asp:Literal ID="litLocation" runat="server" /></p>
       </div>
       <div class="info-row reveal">
         <span class="field-label">Age</span>
-        <p class="placeholder">19 years old</p>
+        <p class="placeholder" id="infoAge"><asp:Literal ID="litAge" runat="server" /></p>
       </div>
       <div class="info-row reveal">
         <span class="field-label">Experience</span>
-        <p>3 years of coding</p>
+        <p id="infoExperience"><asp:Literal ID="litExperience" runat="server" /></p>
       </div>
     </div>
   </div>

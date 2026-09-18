@@ -39,8 +39,8 @@ BEGIN
         based_in NVARCHAR(150) DEFAULT 'Quezon City',
         avatar_path NVARCHAR(255) DEFAULT 'Assets/Images/pixelart_portrait.png',
         location_address NVARCHAR(255) DEFAULT 'B2 L6 Emerald St. Novaliches Proper, Q.C.',
-        age NVARCHAR(50) DEFAULT '19 years old',
-        experience_years NVARCHAR(50) DEFAULT '3 years of coding',
+        age INT DEFAULT 19,
+        experience_years INT DEFAULT 3,
         email NVARCHAR(150) DEFAULT 'delmundo.marckevin.ferolino@gmail.com',
         github_url NVARCHAR(255) DEFAULT 'https://github.com/marcKevzzz',
         linkedin_url NVARCHAR(255) DEFAULT 'https://www.linkedin.com/in/del-mundo-marc-kevin-f-ba5050436',
@@ -149,7 +149,3 @@ BEGIN
 END
 GO
 
-ALTER TABLE users_tbl
-ADD CONSTRAINT CK_users_tbl_user_role 
-CHECK (user_role IN ('Admin', 'User'));
-GO

@@ -238,6 +238,8 @@
     <Compile Include="Helpers\AuthHelper.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\Enums.cs" />
+    <Compile Include="Models\PortfolioDto.cs" />
+    <Compile Include="Services\PortfolioService.cs" />
     <Compile Include="Pages\Admin\Admin.aspx.cs">
       <DependentUpon>Admin.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

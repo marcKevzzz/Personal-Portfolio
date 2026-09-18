@@ -11,13 +11,46 @@ document.addEventListener("DOMContentLoaded", function () {
   initInputChips();
   initAdminDatePickers();
   initAdminAvatarUpload();
+  initImageLivePreviews();
   initAdminProfile();
-  initSaveProfile();
   initAdminLogout();
-  initTableActions();
-  initAddFormActions();
   initInputFocus();
 });
+
+/* -------------------------------------------------------------
+   IMAGE LIVE PREVIEW LISTENERS (ADMIN)
+   ------------------------------------------------------------- */
+function initImageLivePreviews() {
+  function formatImgUrl(path) {
+    if (!path) return "";
+    var clean = path.trim();
+    if (clean.startsWith("http://") || clean.startsWith("https://") || clean.startsWith("data:")) {
+      return clean;
+    }
+    clean = clean.replace(/^(\~|\/)/, "");
+    return "../../" + clean;
+  }
+
+  // Profile Avatar live preview
+  var txtAvatar = document.getElementById("ctl00_AdminMainContent_ucProfilePanel_txtAvatarPath") || document.querySelector("input[id*='txtAvatarPath']");
+  var imgAvatar = document.getElementById("ctl00_AdminMainContent_ucProfilePanel_imgProfileAvatarThumb") || document.querySelector("img[id*='imgProfileAvatarThumb']");
+  if (txtAvatar && imgAvatar) {
+    txtAvatar.addEventListener("input", function () {
+      var src = formatImgUrl(txtAvatar.value);
+      if (src) imgAvatar.src = src;
+    });
+  }
+
+  // Project Image live preview
+  var txtProjImg = document.getElementById("ctl00_AdminMainContent_ucProjectsPanel_txtProjectImagePath") || document.querySelector("input[id*='txtProjectImagePath']");
+  var imgProj = document.getElementById("projectFormImgPreview");
+  if (txtProjImg && imgProj) {
+    txtProjImg.addEventListener("input", function () {
+      var src = formatImgUrl(txtProjImg.value);
+      if (src) imgProj.src = src;
+    });
+  }
+}
 
 /* -------------------------------------------------------------
    INPUT UNDERLINE FOCUS STATE (ADMIN)
@@ -384,6 +417,7 @@ function initAdminDatePickers() {
 function initAdminAvatarUpload() {
   var uploadInput = document.getElementById("adminAvatarUpload");
   var previewImg = document.getElementById("adminAvatarPreview");
+  var svgPlaceholder = document.getElementById("adminAvatarSvgPlaceholder");
   if (!uploadInput || !previewImg) return;
 
   uploadInput.addEventListener("change", function (e) {
@@ -392,6 +426,8 @@ function initAdminAvatarUpload() {
       var reader = new FileReader();
       reader.onload = function (evt) {
         previewImg.src = evt.target.result;
+        previewImg.style.display = "block";
+        if (svgPlaceholder) svgPlaceholder.style.display = "none";
       };
       reader.readAsDataURL(file);
     }
@@ -488,199 +524,143 @@ function initAdminLogout() {
 }
 
 /* -------------------------------------------------------------
-   TABLE ACTIONS (EDIT, DELETE & USER STATUS MODALS)
+   FORM & INPUT VALIDATION ENGINE
    ------------------------------------------------------------- */
-function initTableActions() {
-  // Delegate delete actions
-  document.addEventListener("click", function (e) {
-    var deleteLink = e.target.closest(".data-table td a.danger:not(.user-status-toggle)");
-    if (deleteLink) {
-      e.preventDefault();
-      var row = deleteLink.closest("tr");
-      var label = row ? row.querySelector("td")?.textContent?.trim() || "item" : "item";
+function validateAdminForm(trigger) {
+  var container = trigger.closest(".add-form, .admin-profile-card, .admin-panel, form");
+  if (!container) return { valid: true };
 
-      AdminModal.confirm({
-        title: "Delete Record",
-        message: "Are you sure you want to delete <strong>\"" + label + "\"</strong>? This action cannot be undone.",
-        confirmText: "Delete",
-        type: "danger",
-        onConfirm: function () {
-          if (row) {
-            if (typeof gsap !== "undefined") {
-              gsap.to(row, {
-                opacity: 0,
-                x: -20,
-                duration: 0.25,
-                onComplete: function () {
-                  row.remove();
-                }
-              });
-            } else {
-              row.remove();
-            }
-          }
-          AdminToast.success("Record has been permanently deleted.", "Deleted");
-        }
-      });
-      return;
+  // Clear previous error highlights
+  container.querySelectorAll(".input-error, .has-error").forEach(function (el) {
+    el.classList.remove("input-error", "has-error");
+  });
+
+  var inputs = container.querySelectorAll("input:not([type='hidden']), textarea, select");
+  var firstInvalid = null;
+  var errorMsg = "";
+
+  for (var i = 0; i < inputs.length; i++) {
+    var inp = inputs[i];
+    if (inp.disabled || inp.offsetParent === null) continue;
+
+    var val = inp.value.trim();
+    var labelElem = inp.closest(".field") ? inp.closest(".field").querySelector("label") : null;
+    var fieldName = labelElem ? labelElem.textContent.replace(/[\*\:]/g, "").trim() : (inp.placeholder || "Field");
+
+    var isRequired = inp.hasAttribute("required") || inp.getAttribute("aria-required") === "true";
+    var isAddFormBtn = trigger.classList.contains("btn-primary") && trigger.closest(".add-form");
+
+    if ((isRequired || (isAddFormBtn && !inp.classList.contains("chip-input") && !inp.id.includes("SvgCode") && !inp.id.includes("Url") && !inp.id.includes("Description"))) && !val) {
+      firstInvalid = inp;
+      errorMsg = "Please fill out \"" + fieldName + "\" before proceeding.";
+      break;
     }
 
-    // Delegate edit actions
-    var editLink = e.target.closest(".data-table td a:not(.danger):not(.user-status-toggle)");
-    if (editLink) {
-      e.preventDefault();
-      var editRow = editLink.closest("tr");
-      var editLabel = editRow ? editRow.querySelector("td")?.textContent?.trim() || "item" : "item";
-      AdminToast.info("Editing enabled for \"" + editLabel + "\".", "Edit Mode");
-      return;
-    }
-
-    // Delegate user status toggles
-    var toggleBtn = e.target.closest(".user-status-toggle");
-    if (toggleBtn) {
-      e.preventDefault();
-      var userRow = toggleBtn.closest("tr");
-      var pill = userRow ? userRow.querySelector(".status-pill") : null;
-      var userName = userRow ? userRow.querySelector("td")?.textContent?.trim() || "User" : "User";
-
-      if (!pill) return;
-
-      var isCurrentlyActive = pill.classList.contains("active");
-
-      if (isCurrentlyActive) {
-        AdminModal.confirm({
-          title: "Deactivate User",
-          message: "Are you sure you want to deactivate <strong>" + userName + "</strong>? They will be unable to access their account.",
-          confirmText: "Deactivate",
-          type: "danger",
-          onConfirm: function () {
-            pill.classList.remove("active");
-            pill.classList.add("inactive");
-            pill.textContent = "DEACTIVATED";
-            toggleBtn.textContent = "Reactivate";
-            toggleBtn.classList.remove("danger");
-            AdminToast.warning("User " + userName + " has been deactivated.", "Account Deactivated");
-          }
-        });
-      } else {
-        AdminModal.confirm({
-          title: "Reactivate User",
-          message: "Restore sign-in access for <strong>" + userName + "</strong>?",
-          confirmText: "Reactivate",
-          type: "primary",
-          onConfirm: function () {
-            pill.classList.remove("inactive");
-            pill.classList.add("active");
-            pill.textContent = "ACTIVE";
-            toggleBtn.textContent = "Deactivate";
-            toggleBtn.classList.add("danger");
-            AdminToast.success("User " + userName + " has been reactivated.", "Account Active");
-          }
-        });
+    if (inp.type === "number" && val !== "") {
+      var num = parseFloat(val);
+      var min = inp.hasAttribute("min") ? parseFloat(inp.getAttribute("min")) : null;
+      var max = inp.hasAttribute("max") ? parseFloat(inp.getAttribute("max")) : null;
+      if (isNaN(num)) {
+        firstInvalid = inp;
+        errorMsg = "\"" + fieldName + "\" must be a valid number.";
+        break;
+      }
+      if (min !== null && num < min) {
+        firstInvalid = inp;
+        errorMsg = "\"" + fieldName + "\" cannot be less than " + min + ".";
+        break;
+      }
+      if (max !== null && num > max) {
+        firstInvalid = inp;
+        errorMsg = "\"" + fieldName + "\" cannot be greater than " + max + ".";
+        break;
       }
     }
-  });
+
+    if ((inp.type === "email" || inp.id.toLowerCase().indexOf("email") >= 0) && val !== "") {
+      var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(val)) {
+        firstInvalid = inp;
+        errorMsg = "Please enter a valid email address.";
+        break;
+      }
+    }
+  }
+
+  // Check password matching if in admin profile
+  var newPw = container.querySelector("#txtAdminNewPassword, #adminNewPassword");
+  var confirmPw = container.querySelector("#txtAdminConfirmPassword, #adminConfirmPassword");
+  if (newPw && confirmPw && newPw.value.trim() !== "") {
+    if (newPw.value.trim().length < 8) {
+      firstInvalid = newPw;
+      errorMsg = "New password must be at least 8 characters long.";
+    } else if (newPw.value !== confirmPw.value) {
+      firstInvalid = confirmPw;
+      errorMsg = "Passwords do not match. Please retype your new password.";
+    }
+  }
+
+  if (firstInvalid) {
+    firstInvalid.classList.add("input-error");
+    var parentField = firstInvalid.closest(".field") || firstInvalid.closest(".input-row");
+    if (parentField) parentField.classList.add("has-error");
+    firstInvalid.focus();
+    if (typeof AdminToast !== "undefined") {
+      AdminToast.warning(errorMsg, "Validation Error");
+    }
+    return { valid: false, message: errorMsg };
+  }
+
+  return { valid: true };
 }
 
 /* -------------------------------------------------------------
-   ADD FORM ACTIONS (DYNAMIC ROW INSERTION & VALIDATION)
+   UNIVERSAL MODAL CONFIRMATION INTERCEPTOR
    ------------------------------------------------------------- */
-function initAddFormActions() {
-  document.querySelectorAll(".admin-panel").forEach(function (panel) {
-    var panelName = panel.getAttribute("data-panel");
-    var addBtn = panel.querySelector(".add-form .btn-primary");
-    var tableBody = panel.querySelector(".data-table tbody");
-    if (!addBtn || !tableBody) return;
+document.addEventListener("click", function (e) {
+  var trigger = e.target.closest("[data-confirm-title], [data-confirm-msg], .needs-confirm");
+  if (trigger && !trigger.dataset.confirmed) {
+    var type = trigger.getAttribute("data-confirm-type") || (trigger.classList.contains("btn-danger") || trigger.classList.contains("danger") ? "danger" : "primary");
 
-    addBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      var form = addBtn.closest(".add-form");
-      var inputs = form.querySelectorAll("input:not([type='hidden']), textarea, select");
-      var values = [];
-      var hasValue = false;
-
-      inputs.forEach(function (input) {
-        var v = input.value.trim();
-        if (v) hasValue = true;
-        values.push(v);
-      });
-
-      if (!hasValue) {
-        AdminToast.warning("Please fill out the form fields before adding.", "Required Fields");
+    // Perform validation on Add/Save/Update actions before opening modal
+    if (type !== "danger") {
+      var valResult = validateAdminForm(trigger);
+      if (!valResult.valid) {
+        e.preventDefault();
+        e.stopPropagation();
         return;
       }
+    }
 
-      // Format row according to panel
-      var tr = document.createElement("tr");
-      var actionsTd = '<td><a href="javascript:void(0)">Edit</a><a href="javascript:void(0)" class="danger">Delete</a></td>';
+    e.preventDefault();
+    e.stopPropagation();
 
-      if (panelName === "techstack") {
-        var group = values[0] || "General";
-        var label = values[1] || "Item";
-        var icon = values[2] || "Assets/Icons/default.svg";
-        tr.innerHTML = "<td>" + group + "</td><td>" + label + "</td><td>" + icon + "</td>" + actionsTd;
-      } else if (panelName === "skills") {
-        var skill = values[0] || "Skill";
-        var level = values[1] || "INTERMEDIATE";
-        var segs = values[2] || "5";
-        var ctx = values[3] || "General";
-        tr.innerHTML = "<td>" + skill + "</td><td>" + level + "</td><td>" + segs + "</td><td>" + ctx + "</td>" + actionsTd;
-      } else if (panelName === "experience") {
-        var role = values[0] || "Role";
-        var comp = values[1] || "Company";
-        var per = values[2] || "2026";
-        var tags = values[3] || "Web";
-        var desc = values[4] || "Description of position";
-        tr.innerHTML = "<td>" + role + "</td><td>" + comp + "</td><td>" + per + "</td><td>" + desc + "</td><td>" + tags + "</td>" + actionsTd;
-      } else if (panelName === "projects") {
-        var title = values[0] || "Project";
-        var img = values[1] || "Assets/Images/default.png";
-        var pTags = values[3] || "HTML, CSS";
-        tr.innerHTML = "<td>" + title + "</td><td>" + img + "</td><td>" + pTags + "</td>" + actionsTd;
-      } else if (panelName === "education") {
-        var yr = values[0] || "2024 — 2026";
-        var deg = values[1] || "Degree";
-        var sub = values[2] || "Field";
-        var org = values[3] || "University";
-        tr.innerHTML = "<td>" + yr + "</td><td>" + deg + "</td><td>" + sub + "</td><td>" + org + "</td>" + actionsTd;
-      } else if (panelName === "awards") {
-        var aYr = values[0] || "2026";
-        var aTit = values[1] || "Award";
-        var aSub = values[2] || "Recognition";
-        var aOrg = values[3] || "Organization";
-        tr.innerHTML = "<td>" + aYr + "</td><td>" + aTit + "</td><td>" + aSub + "</td><td>" + aOrg + "</td>" + actionsTd;
-      } else if (panelName === "hobbies") {
-        var hobby = values[0] || "New Hobby";
-        tr.innerHTML = "<td>" + hobby + '</td><td><a href="javascript:void(0)" class="danger">Remove</a></td>';
-      }
+    var title = trigger.getAttribute("data-confirm-title") || "Confirm Action";
+    var msg = trigger.getAttribute("data-confirm-msg") || "Are you sure you want to proceed?";
+    var confirmText = trigger.getAttribute("data-confirm-btn") || (type === "danger" ? "Delete" : "Save Changes");
 
-      tableBody.appendChild(tr);
-
-      // Animate new row
-      if (typeof gsap !== "undefined") {
-        gsap.fromTo(tr, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.3 });
-      }
-
-      // Reset form inputs (except date pickers' flatpickr instances if any)
-      inputs.forEach(function (inp) {
-        if (!inp.classList.contains("chip-input")) {
-          inp.value = "";
+    AdminModal.confirm({
+      title: title,
+      message: msg,
+      confirmText: confirmText,
+      type: type,
+      onConfirm: function () {
+        trigger.dataset.confirmed = "true";
+        var href = trigger.getAttribute("href");
+        if (href && href.indexOf("__doPostBack") >= 0) {
+          eval(href.replace(/^javascript:/i, ""));
+        } else {
+          trigger.click();
         }
-      });
-
-      // Clear chips if present
-      var chipsList = form.querySelector(".chips-list");
-      if (chipsList) chipsList.innerHTML = "";
-      var hiddenTarget = form.querySelector(".chips-container")?.getAttribute("data-input-target");
-      if (hiddenTarget) {
-        var hInp = document.getElementById(hiddenTarget);
-        if (hInp) hInp.value = "";
+        setTimeout(function () { delete trigger.dataset.confirmed; }, 1500);
       }
-
-      AdminToast.success("New entry added to " + (panel.querySelector("h2")?.textContent || "table") + ".", "Record Added");
     });
-  });
-}
+  }
+}, true);
+
+
+
+
 
 /* =============================================================
    REUSABLE TOAST NOTIFICATION SYSTEM

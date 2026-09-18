@@ -6,39 +6,19 @@
     <div class="field-label reveal">07 / AWARDS</div>
     <h2 class="section-title reveal">Recognition</h2>
  
-    <div class="award-list">
-      <div class="list-line reveal">
-        <span class="yr">2026</span>
-        <div>
-          <div class="ttl">DevCup 2026 Competition</div>
-          <div class="sub">2nd Place QCU</div>
-        </div>
-        <span class="org">Quezon City University</span>
-      </div>
-      <div class="list-line reveal">
-        <span class="yr">2025</span>
-        <div>
-          <div class="ttl">Code Quest 2025</div>
-          <div class="sub">Certificate of Participation</div>
-        </div>
-        <span class="org">Quezon City University</span>
-      </div>
-      <div class="list-line reveal">
-        <span class="yr">2026</span>
-        <div>
-          <div class="ttl">AWS Learning Club QCU</div>
-          <div class="sub">Operational Member</div>
-        </div>
-        <span class="org">AWS Learning Club</span>
-      </div>
-      <div class="list-line reveal">
-        <span class="yr">2025</span>
-        <div>
-          <div class="ttl">The Hour of Code</div>
-          <div class="sub">Certificate of Completion</div>
-        </div>
-        <span class="org">ASEAN Youth Organization</span>
-      </div>
+    <div class="award-list" id="awardList">
+      <asp:Repeater ID="rptAwards" runat="server">
+        <ItemTemplate>
+          <div class="list-line reveal">
+            <span class="yr"><%# Server.HtmlEncode(Eval("AwardYear").ToString()) %></span>
+            <div>
+              <div class="ttl"><%# Server.HtmlEncode(Eval("Title").ToString()) %></div>
+              <div class="sub"><%# Server.HtmlEncode(Eval("Subtitle").ToString()) %></div>
+            </div>
+            <span class="org"><%# Server.HtmlEncode(Eval("OrganizationName").ToString()) %></span>
+          </div>
+        </ItemTemplate>
+      </asp:Repeater>
     </div>
   </div>
 </section>

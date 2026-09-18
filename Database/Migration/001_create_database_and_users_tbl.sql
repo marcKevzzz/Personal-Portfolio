@@ -25,6 +25,7 @@ BEGIN
         password_hash NVARCHAR(256) NOT NULL,
         user_role NVARCHAR(50) DEFAULT 'User' CHECK (user_role IN ('Admin', 'User')),
         is_active BIT DEFAULT 1,
+        profile_image NVARCHAR(500) NULL,
         created_at DATETIME DEFAULT GETDATE()
     );
 END

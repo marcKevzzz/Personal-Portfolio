@@ -8,18 +8,17 @@
 <div id="progress"></div>
 
 <nav class="index-nav" aria-label="Section index">
-  <a href="<%= ResolveUrl("~/Pages/Profile.aspx") %>" class="nav-profile-btn" aria-label="Account Profile">
-    <% if (!string.IsNullOrEmpty(ProfileAvatarUrl)) { %>
-      <img src="<%= ResolveUrl(ProfileAvatarUrl) %>" class="nav-avatar-img" alt="Profile Avatar" />
-    <% } else { %>
+  <asp:HyperLink ID="lnkNavProfile" runat="server" NavigateUrl="~/Pages/Profile.aspx" CssClass="nav-profile-btn" aria-label="Account Profile">
+    <asp:Image ID="imgNavAvatar" runat="server" CssClass="nav-avatar-img" AlternateText="Profile Avatar" Visible="false" />
+    <asp:PlaceHolder ID="phNavSvg" runat="server" Visible="true">
       <svg class="profile-icon-svg" viewBox="0 0 24 24" fill="currentColor">
         <rect x="9" y="4" width="6" height="6" />
         <rect x="11" y="10" width="2" height="2" />
         <rect x="6" y="12" width="12" height="3" />
         <rect x="4" y="15" width="16" height="5" />
       </svg>
-    <% } %>
-  </a>
+    </asp:PlaceHolder>
+  </asp:HyperLink>
   <a href="#hero" data-label="Intro"><span>Intro</span></a>
   <a href="#info" data-label="Info"><span>Info</span></a>
   <a href="#stack" data-label="Stack"><span>Stack</span></a>

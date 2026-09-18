@@ -73,8 +73,8 @@ Single-row configuration table storing the hero section and public profile metad
 | `based_in` | `NVARCHAR(150)` | Yes | `'Quezon City'` | City / location |
 | `avatar_path` | `NVARCHAR(255)` | Yes | `'Assets/Images/pixelart_portrait.png'` | Profile portrait image path |
 | `location_address` | `NVARCHAR(255)` | Yes | `'B2 L6 Emerald St. Novaliches Proper, Q.C.'` | Full address |
-| `age_text` | `NVARCHAR(50)` | Yes | `'19 years old'` | Age string |
-| `experience_years` | `NVARCHAR(50)` | Yes | `'3 years of coding'` | Years of experience |
+| `age` | `INT` | Yes | `19` | Age in years |
+| `experience_years` | `INT` | Yes | `3` | Years of experience |
 | `email` | `NVARCHAR(150)` | Yes | `'delmundo.marckevin.ferolino@gmail.com'` | Contact email |
 | `github_url` | `NVARCHAR(255)` | Yes | `'https://github.com/marcKevzzz'` | GitHub profile URL |
 | `linkedin_url` | `NVARCHAR(255)` | Yes | — | LinkedIn profile URL |

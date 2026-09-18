@@ -17,6 +17,11 @@ namespace _24_1639DelMundoPersonalPortfolio
         protected global::System.Web.UI.WebControls.Image imgAvatarPreview;
 
         /// <summary>
+        /// avatarSvgPlaceholder control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl avatarSvgPlaceholder;
+
+        /// <summary>
         /// avatarUpload control.
         /// </summary>
         protected global::System.Web.UI.WebControls.FileUpload avatarUpload;

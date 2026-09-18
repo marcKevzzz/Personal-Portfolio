@@ -7,7 +7,19 @@ namespace _24_1639DelMundoPersonalPortfolio
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Future session check or backend MSSQL queries can be hooked here
+            if (!IsPostBack)
+            {
+                ucProfilePanel?.LoadProfileData();
+                ucTechStackPanel?.BindTechStack();
+                ucSkillsPanel?.BindSkills();
+                ucExperiencePanel?.BindExperiences();
+                ucProjectsPanel?.BindProjects();
+                ucEducationPanel?.BindEducations();
+                ucAwardsPanel?.BindAwards();
+                ucHobbiesPanel?.BindHobbies();
+                ucUsersPanel?.BindUsers();
+                ucAdminProfilePanel?.LoadAdminDetails();
+            }
         }
     }
 }
