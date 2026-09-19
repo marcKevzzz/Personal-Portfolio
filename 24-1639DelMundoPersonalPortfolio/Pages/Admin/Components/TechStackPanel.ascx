@@ -27,7 +27,7 @@
         <div class="field">
             <label>Paste SVG Tag Text (Optional — Auto-saved as SVG in Assets/Icons)</label>
             <div class="input-row">
-                <asp:TextBox ID="txtTechSvgCode" runat="server" TextMode="MultiLine" Rows="1" CssClass="tech-svg-input" placeholder="<svg viewBox='0 0 24 24' ...>...</svg>" />
+                <asp:TextBox ID="txtTechSvgCode" runat="server" ClientIDMode="Static" TextMode="MultiLine" Rows="1" CssClass="tech-svg-input" placeholder="<svg viewBox='0 0 24 24' ...>...</svg>" />
             </div>
         </div>
         <div style="grid-column: 1 / -1; display: flex; gap: 12px; align-items: center;">
@@ -54,7 +54,7 @@
                             <td class="table-row-index"><%# Container.ItemIndex + 1 %></td>
                             <td>
                                 <div class="tech-table-icon-wrap">
-                                    <img src='<%# ResolveUrl("~/" + ((string)Eval("IconPath")).TrimStart('~', '/')) %>' alt='<%# Eval("Label") %>' class="tech-table-icon" onerror="this.src='../../Assets/Icons/csharp.svg';" />
+                                    <img src='<%# ResolveUrl("~/" + ((string)Eval("IconPath")).TrimStart('~', '/')) %>' alt='<%# Eval("Label") %>' class="tech-table-icon" onerror="this.src='/Assets/Icons/csharp.svg';" />
                                 </div>
                             </td>
                             <td><strong><%# Eval("Label") %></strong></td>

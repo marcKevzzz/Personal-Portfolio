@@ -610,12 +610,28 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         #region CRUD Operations for Admin Console
 
+        public static string CleanMojibake(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return text.Replace("â€”", "—")
+                       .Replace("â€“", "–")
+                       .Replace("âˆ’", "−")
+                       .Replace("â€™", "'")
+                       .Replace("â€œ", "\"")
+                       .Replace("â€", "\"")
+                       .Replace("?\"", "—")
+                       .Replace("?", "—");
+        }
+
         public static bool SaveProfile(ProfileDto profile)
         {
             if (!AuthHelper.IsAdmin()) return false;
             if (profile == null) return false;
             try
             {
+                profile.HeroSubline = CleanMojibake(profile.HeroSubline);
+                profile.RoleSummary = CleanMojibake(profile.RoleSummary);
+
                 int count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM profile_tbl") ?? 0);
                 string query;
                 if (count > 0)
@@ -679,23 +695,37 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             if (item == null) return false;
             try
             {
-                // If raw SVG markup was provided, write to Assets/Icons
-                if (!string.IsNullOrWhiteSpace(svgContent) && svgContent.Trim().IndexOf("<svg", StringComparison.OrdinalIgnoreCase) >= 0)
+                // If raw or base64-encoded SVG markup was provided, decode and write to Assets/Icons
+                if (!string.IsNullOrWhiteSpace(svgContent))
                 {
-                    string safeName = System.Text.RegularExpressions.Regex.Replace(item.Label ?? "icon", @"[^a-zA-Z0-9_\-]", "").ToLowerInvariant();
-                    if (string.IsNullOrEmpty(safeName)) safeName = "tech_" + DateTime.Now.Ticks;
-                    string fileName = $"{safeName}.svg";
-
-                    string iconsDir = HttpContext.Current?.Server.MapPath("~/Assets/Icons");
-                    if (!string.IsNullOrEmpty(iconsDir))
+                    string rawSvg = svgContent.Trim();
+                    if (rawSvg.StartsWith("base64:", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (!System.IO.Directory.Exists(iconsDir))
+                        try
                         {
-                            System.IO.Directory.CreateDirectory(iconsDir);
+                            byte[] bytes = Convert.FromBase64String(rawSvg.Substring(7));
+                            rawSvg = System.Text.Encoding.UTF8.GetString(bytes);
                         }
-                        string fullPath = System.IO.Path.Combine(iconsDir, fileName);
-                        System.IO.File.WriteAllText(fullPath, svgContent.Trim(), System.Text.Encoding.UTF8);
-                        item.IconPath = $"Assets/Icons/{fileName}";
+                        catch { }
+                    }
+
+                    if (rawSvg.IndexOf("<svg", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        string safeName = System.Text.RegularExpressions.Regex.Replace(item.Label ?? "icon", @"[^a-zA-Z0-9_\-]", "").ToLowerInvariant();
+                        if (string.IsNullOrEmpty(safeName)) safeName = "tech_" + DateTime.Now.Ticks;
+                        string fileName = $"{safeName}.svg";
+
+                        string iconsDir = HttpContext.Current?.Server.MapPath("~/Assets/Icons");
+                        if (!string.IsNullOrEmpty(iconsDir))
+                        {
+                            if (!System.IO.Directory.Exists(iconsDir))
+                            {
+                                System.IO.Directory.CreateDirectory(iconsDir);
+                            }
+                            string fullPath = System.IO.Path.Combine(iconsDir, fileName);
+                            System.IO.File.WriteAllText(fullPath, rawSvg.Trim(), System.Text.Encoding.UTF8);
+                            item.IconPath = $"Assets/Icons/{fileName}";
+                        }
                     }
                 }
 
@@ -818,6 +848,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             if (exp == null) return false;
             try
             {
+                exp.PeriodRange = CleanMojibake(exp.PeriodRange);
+                exp.DescriptionText = CleanMojibake(exp.DescriptionText);
                 string query;
                 if (exp.ExpId > 0)
                 {
@@ -940,6 +972,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             if (edu == null) return false;
             try
             {
+                edu.YearPeriod = CleanMojibake(edu.YearPeriod);
+                edu.Title = CleanMojibake(edu.Title);
+                edu.Subtitle = CleanMojibake(edu.Subtitle);
                 string query;
                 if (edu.EduId > 0)
                 {

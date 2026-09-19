@@ -596,15 +596,23 @@ button:focus-visible {
 .field input[type="number"],   
 .field select {
   width: 100%;
-  background: transparent;
+  background: var(--bg-1);
   border: none;
   border-bottom: 1px solid var(--line);
   border-radius: var(--radius);
   color: var(--text);
   font-family: var(--f-sans);
   font-size: var(--t-sm);
-  padding: 8px 2px;
+  padding: 8px 4px;
+  cursor: pointer;
   transition: border-color 0.2s ease;
+}
+
+.field select option,
+select option {
+  background-color: #0f131a !important;
+  color: #eef1f7 !important;
+  padding: 8px 12px;
 }
 
 .field input[type="number"],

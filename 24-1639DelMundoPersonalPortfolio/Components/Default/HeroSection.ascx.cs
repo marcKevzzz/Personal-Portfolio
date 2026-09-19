@@ -40,7 +40,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
             {
                 if (c == ' ')
                 {
-                    sb.Append("<span class=\"glyph-char glyph-space\">&nbsp;</span> ");
+                    sb.Append("<span class=\"glyph-char glyph-space\">&nbsp;</span>");
                 }
                 else
                 {
@@ -55,12 +55,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
             string subline = string.IsNullOrWhiteSpace(ProfileData?.HeroSubline) ? "builds interfaces" : ProfileData.HeroSubline;
             subline = subline.TrimStart('/', ' ');
             var sb = new StringBuilder();
-            sb.Append("<span class=\"accent glyph\">/</span><span class=\"glyph glyph-space\">&nbsp;</span> ");
+            sb.Append("<span class=\"accent glyph\">/</span><span class=\"glyph glyph-space\">&nbsp;</span>");
             foreach (char c in subline)
             {
                 if (c == ' ')
                 {
-                    sb.Append("<span class=\"glyph glyph-space\">&nbsp;</span> ");
+                    sb.Append("<span class=\"glyph glyph-space\">&nbsp;</span>");
                 }
                 else
                 {

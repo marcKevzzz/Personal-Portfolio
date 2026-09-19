@@ -47,6 +47,9 @@ function initImageLivePreviews() {
           if (boxProfileAvatar) boxProfileAvatar.style.display = "flex";
         };
         reader.readAsDataURL(file);
+        if (typeof AdminToast !== "undefined") {
+          AdminToast.info("Avatar image selected: " + file.name + ". Click Save Profile to apply.", "Avatar Ready");
+        }
       } else {
         if (!hidExistingAvatar || !hidExistingAvatar.value) {
           if (boxProfileAvatar) boxProfileAvatar.style.display = "none";
@@ -71,6 +74,9 @@ function initImageLivePreviews() {
           if (boxProjImg) boxProjImg.style.display = "flex";
         };
         reader.readAsDataURL(file);
+        if (typeof AdminToast !== "undefined") {
+          AdminToast.info("Project image selected: " + file.name + ". Click Add/Update Project to save.", "Image Ready");
+        }
       } else {
         if (!hidExistingProjImg || !hidExistingProjImg.value) {
           if (boxProjImg) boxProjImg.style.display = "none";
@@ -360,6 +366,10 @@ function initAdminNavigation() {
       }
     }
 
+    if (panelName !== "techstack") {
+      safeEncodeSvgCode();
+    }
+
     localStorage.setItem("admin_active_panel", panelName);
   }
 
@@ -383,7 +393,16 @@ function initAdminNavigation() {
 function initInputChips() {
   document.querySelectorAll(".chips-container").forEach(function (container) {
     var hiddenId = container.getAttribute("data-input-target");
-    var hiddenInput = hiddenId ? document.getElementById(hiddenId) : null;
+    var getHidden = function () {
+      return hiddenId
+        ? (document.getElementById(hiddenId) ||
+           container.querySelector("#" + hiddenId) ||
+           container.parentElement.querySelector("#" + hiddenId) ||
+           document.querySelector("input[id$='" + hiddenId + "']") ||
+           document.querySelector("input[name$='" + hiddenId + "']"))
+        : null;
+    };
+    var hiddenInput = getHidden();
     var chipInput = container.querySelector(".chip-input");
     var chipsList = container.querySelector(".chips-list");
 
@@ -398,12 +417,14 @@ function initInputChips() {
     }
 
     function syncHidden() {
-      if (!hiddenInput) return;
+      var hInp = getHidden();
+      if (!hInp) return;
       var tags = [];
       chipsList.querySelectorAll(".chip-tag span:first-child").forEach(function (t) {
-        tags.push(t.textContent.trim());
+        var txt = t.textContent.trim();
+        if (txt) tags.push(txt);
       });
-      hiddenInput.value = tags.join(",");
+      hInp.value = tags.join(",");
     }
 
     function addChip(text) {
@@ -423,6 +444,9 @@ function initInputChips() {
       chipsList.appendChild(tag);
       syncHidden();
     }
+
+    // Initial sync so hidden field immediately matches rendered chips
+    syncHidden();
 
     container.addEventListener("click", function (e) {
       if (e.target && e.target.classList.contains("chip-remove")) {
@@ -463,6 +487,50 @@ function initInputChips() {
       });
     }
   });
+}
+
+function commitAllChips() {
+  document.querySelectorAll(".chips-container").forEach(function (container) {
+    var chipInput = container.querySelector(".chip-input");
+    var chipsList = container.querySelector(".chips-list");
+    var hiddenId = container.getAttribute("data-input-target");
+    var hInp = hiddenId
+      ? (document.getElementById(hiddenId) ||
+         container.querySelector("#" + hiddenId) ||
+         container.parentElement.querySelector("#" + hiddenId) ||
+         document.querySelector("input[id$='" + hiddenId + "']") ||
+         document.querySelector("input[name$='" + hiddenId + "']"))
+      : null;
+
+    if (chipInput && chipInput.value.trim()) {
+      var val = chipInput.value.replace(/,/g, "").trim();
+      if (val && chipsList) {
+        var tag = document.createElement("span");
+        tag.className = "chip-tag";
+        tag.innerHTML = "<span>" + val + "</span><span class=\"chip-remove\" title=\"Remove\">&times;</span>";
+        chipsList.appendChild(tag);
+        chipInput.value = "";
+      }
+    }
+
+    if (hInp && chipsList) {
+      var tags = [];
+      chipsList.querySelectorAll(".chip-tag span:first-child").forEach(function (t) {
+        var txt = t.textContent.trim();
+        if (txt) tags.push(txt);
+      });
+      hInp.value = tags.join(",");
+    }
+  });
+}
+
+function safeEncodeSvgCode() {
+  var txtSvg = document.getElementById("txtTechSvgCode") || document.querySelector("textarea[id*='txtTechSvgCode']");
+  if (txtSvg && txtSvg.value && txtSvg.value.trim().indexOf("<") >= 0 && !txtSvg.value.startsWith("base64:")) {
+    try {
+      txtSvg.value = "base64:" + btoa(unescape(encodeURIComponent(txtSvg.value.trim())));
+    } catch (err) {}
+  }
 }
 
 /* -------------------------------------------------------------
@@ -513,6 +581,9 @@ function initAdminAvatarUpload() {
         if (svgPlaceholder) svgPlaceholder.style.display = "none";
       };
       reader.readAsDataURL(file);
+      if (typeof AdminToast !== "undefined") {
+        AdminToast.info("Admin avatar selected: " + file.name + ". Click Save Changes to apply.", "Avatar Ready");
+      }
     }
   });
 }
@@ -625,6 +696,23 @@ function validateAdminForm(trigger) {
     var isRequired = inp.hasAttribute("required") || inp.getAttribute("aria-required") === "true";
     var isAddFormBtn = trigger.classList.contains("btn-primary") && trigger.closest(".add-form");
 
+    // Special handling for file uploads
+    if (inp.type === "file") {
+      var fieldWrap = inp.closest(".field") || inp.parentElement;
+      var previewBox = fieldWrap ? fieldWrap.querySelector("[id*='Preview'], [id*='preview'], img") : null;
+      var hiddenExisting = fieldWrap ? fieldWrap.querySelector("input[id*='Existing'], input[id*='existing'], input[id*='hidExisting']") : null;
+      var hasExisting = (hiddenExisting && hiddenExisting.value && hiddenExisting.value.trim() !== "") ||
+                        (previewBox && previewBox.offsetParent !== null && previewBox.style.display !== "none");
+      var hasFiles = inp.files && inp.files.length > 0;
+      if (isRequired && !hasExisting && !hasFiles) {
+        firstInvalid = inp;
+        errorMsg = "Please choose a file for \"" + fieldName + "\".";
+        break;
+      }
+      // Never block if optional or existing image preview is present
+      continue;
+    }
+
     if ((isRequired || (isAddFormBtn && !inp.classList.contains("chip-input") && !inp.id.includes("SvgCode") && !inp.id.includes("Url") && !inp.id.includes("Description"))) && !val) {
       firstInvalid = inp;
       errorMsg = "Please fill out \"" + fieldName + "\" before proceeding.";
@@ -695,6 +783,9 @@ function validateAdminForm(trigger) {
 document.addEventListener("click", function (e) {
   var trigger = e.target.closest("[data-confirm-title], [data-confirm-msg], .needs-confirm");
   if (trigger && !trigger.dataset.confirmed) {
+    commitAllChips();
+    safeEncodeSvgCode();
+
     var type = trigger.getAttribute("data-confirm-type") || (trigger.classList.contains("btn-danger") || trigger.classList.contains("danger") ? "danger" : "primary");
 
     // Perform validation on Add/Save/Update actions before opening modal
@@ -720,6 +811,8 @@ document.addEventListener("click", function (e) {
       confirmText: confirmText,
       type: type,
       onConfirm: function () {
+        commitAllChips();
+        safeEncodeSvgCode();
         trigger.dataset.confirmed = "true";
         var href = trigger.getAttribute("href");
         if (href && href.indexOf("__doPostBack") >= 0) {
@@ -732,6 +825,12 @@ document.addEventListener("click", function (e) {
     });
   }
 }, true);
+
+// Global safety listener on any form submit to ensure chips and SVGs are prepared
+document.addEventListener("submit", function () {
+  commitAllChips();
+  safeEncodeSvgCode();
+});
 
 
 

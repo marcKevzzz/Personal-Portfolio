@@ -21,11 +21,11 @@
     <div class="admin-fieldgroup">
         <div class="field">
             <label>Hero names / aliases (Hit Enter or comma to add)</label>
-            <div class="chips-container" id="heroNameChips" data-input-target="ctl00_AdminMainContent_ucProfilePanel_hidHeroNames">
+            <div class="chips-container" id="heroNameChips" data-input-target="hidHeroNames">
                 <asp:Literal ID="litHeroChips" runat="server" />
                 <input type="text" class="chip-input" placeholder="Type name & hit Enter..." />
             </div>
-            <asp:HiddenField ID="hidHeroNames" runat="server" Value="Kevs,Marc Kevin,Del Mundo" />
+            <asp:HiddenField ID="hidHeroNames" runat="server" ClientIDMode="Static" Value="Kevs,Marc Kevin,Del Mundo" />
         </div>
         <div class="field">
             <label>Role summary paragraph</label>
@@ -56,10 +56,10 @@
             <div style="display: flex; gap: 12px; align-items: center;">
                 <div class="input-row" style="flex: 1; border: none;">
                     <asp:FileUpload ID="fuProfileAvatar" runat="server" accept="image/*" CssClass="admin-file-input" />
-                    <asp:HiddenField ID="hidExistingAvatarPath" runat="server" Value="" />
+                    <asp:HiddenField ID="hidExistingAvatarPath" runat="server" ClientIDMode="Static" Value="" />
                 </div>
                 <div id="profileAvatarPreviewBox" runat="server" style="width: 36px; height: 36px; border: 1px solid var(--line); background: var(--bg-3); flex: none; display: none; align-items: center; justify-content: center; overflow: hidden; border-radius: 4px;">
-                    <asp:Image ID="imgProfileAvatarThumb" runat="server" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='Assets/Images/pixelart_portrait.png';" />
+                    <asp:Image ID="imgProfileAvatarThumb" runat="server" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/Assets/Images/pixelart_portrait.png';" />
                 </div>
             </div>
         </div>

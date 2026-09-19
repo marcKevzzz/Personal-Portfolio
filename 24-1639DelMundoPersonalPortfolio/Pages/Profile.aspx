@@ -263,6 +263,9 @@
                 if (svgPlaceholder) svgPlaceholder.style.display = "none";
               };
               reader.readAsDataURL(file);
+              if (typeof Toast !== "undefined") {
+                Toast.info("Avatar photo selected: " + file.name + ". Click Save Changes to apply.", "Avatar Ready");
+              }
             }
           });
         }

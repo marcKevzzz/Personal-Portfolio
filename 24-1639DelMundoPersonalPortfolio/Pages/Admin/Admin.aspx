@@ -1,4 +1,4 @@
-<%@ Page Title="Admin Console" Language="C#" MasterPageFile="~/Pages/Admin/Admin.Master" AutoEventWireup="true" CodeBehind="Admin.aspx.cs" Inherits="_24_1639DelMundoPersonalPortfolio.Admin" %>
+<%@ Page Title="Admin Console" Language="C#" MasterPageFile="~/Pages/Admin/Admin.Master" AutoEventWireup="true" CodeBehind="Admin.aspx.cs" Inherits="_24_1639DelMundoPersonalPortfolio.Admin" ValidateRequest="false" %>
 
 <%@ Register Src="~/Pages/Admin/Components/ProfilePanel.ascx" TagPrefix="admin" TagName="ProfilePanel" %>
 <%@ Register Src="~/Pages/Admin/Components/TechStackPanel.ascx" TagPrefix="admin" TagName="TechStackPanel" %>

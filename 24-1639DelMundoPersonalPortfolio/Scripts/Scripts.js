@@ -510,7 +510,6 @@ function initBinaryDecoder(customTitles) {
         spaceSpan.className = "glyph-char glyph-space";
         spaceSpan.innerHTML = "&nbsp;";
         container.appendChild(spaceSpan);
-        container.appendChild(document.createTextNode(" "));
       } else {
         var span = document.createElement("span");
         span.className = "glyph-char";
@@ -559,7 +558,6 @@ function initBinaryDecoder(customTitles) {
               resolvedSpace.className = "glyph-char glyph-space";
               resolvedSpace.innerHTML = "&nbsp;";
               container.appendChild(resolvedSpace);
-              container.appendChild(document.createTextNode(" "));
             } else {
               var resolvedSpan = document.createElement("span");
               resolvedSpan.className = "glyph-char";

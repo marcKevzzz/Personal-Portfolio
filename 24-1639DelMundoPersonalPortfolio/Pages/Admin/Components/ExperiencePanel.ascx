@@ -33,11 +33,11 @@
         </div>
         <div class="field field-col-2">
             <label>Tags (Hit Enter or comma to add)</label>
-            <div class="chips-container" id="expTagChips" data-input-target="ctl00_AdminMainContent_ucExperiencePanel_hidExpTags">
+            <div class="chips-container" id="expTagChips" data-input-target="hidExpTags">
                 <asp:Literal ID="litExpChips" runat="server" />
                 <input type="text" class="chip-input" placeholder="Type tag & hit Enter..." />
             </div>
-            <asp:HiddenField ID="hidExpTags" runat="server" Value="React,Tailwind CSS" />
+            <asp:HiddenField ID="hidExpTags" runat="server" ClientIDMode="Static" Value="React,Tailwind CSS" />
         </div>
         <div class="field field-col-2">
             <label>Description</label>
