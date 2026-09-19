@@ -38,20 +38,34 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
             var sb = new StringBuilder();
             foreach (char c in name)
             {
-                sb.AppendFormat("<span class=\"glyph-char\">{0}</span>", c == ' ' ? "&nbsp;" : Server.HtmlEncode(c.ToString()));
+                if (c == ' ')
+                {
+                    sb.Append("<span class=\"glyph-char glyph-space\">&nbsp;</span> ");
+                }
+                else
+                {
+                    sb.AppendFormat("<span class=\"glyph-char\">{0}</span>", Server.HtmlEncode(c.ToString()));
+                }
             }
             return sb.ToString();
         }
 
         private string GetHeroSublineSpans()
         {
-            string subline = string.IsNullOrWhiteSpace(ProfileData?.HeroSubline) ? "buildsinterfaces" : ProfileData.HeroSubline;
+            string subline = string.IsNullOrWhiteSpace(ProfileData?.HeroSubline) ? "builds interfaces" : ProfileData.HeroSubline;
             subline = subline.TrimStart('/', ' ');
             var sb = new StringBuilder();
-            sb.Append("<span class=\"accent glyph\">/</span><span class=\"glyph\">&nbsp;</span>");
+            sb.Append("<span class=\"accent glyph\">/</span><span class=\"glyph glyph-space\">&nbsp;</span> ");
             foreach (char c in subline)
             {
-                sb.AppendFormat("<span class=\"glyph\">{0}</span>", c == ' ' ? "&nbsp;" : Server.HtmlEncode(c.ToString()));
+                if (c == ' ')
+                {
+                    sb.Append("<span class=\"glyph glyph-space\">&nbsp;</span> ");
+                }
+                else
+                {
+                    sb.AppendFormat("<span class=\"glyph\">{0}</span>", Server.HtmlEncode(c.ToString()));
+                }
             }
             return sb.ToString();
         }

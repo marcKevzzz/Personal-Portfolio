@@ -505,10 +505,18 @@ function initBinaryDecoder(customTitles) {
   function renderResolved(text) {
     container.innerHTML = "";
     for (var i = 0; i < text.length; i++) {
-      var span = document.createElement("span");
-      span.className = "glyph-char";
-      span.textContent = text[i] === " " ? "\u00A0" : text[i];
-      container.appendChild(span);
+      if (text[i] === " ") {
+        var spaceSpan = document.createElement("span");
+        spaceSpan.className = "glyph-char glyph-space";
+        spaceSpan.innerHTML = "&nbsp;";
+        container.appendChild(spaceSpan);
+        container.appendChild(document.createTextNode(" "));
+      } else {
+        var span = document.createElement("span");
+        span.className = "glyph-char";
+        span.textContent = text[i];
+        container.appendChild(span);
+      }
     }
   }
 
@@ -546,10 +554,18 @@ function initBinaryDecoder(customTitles) {
 
         if (progress >= resolveThreshold) {
           if (i < nextText.length) {
-            var resolvedSpan = document.createElement("span");
-            resolvedSpan.className = "glyph-char";
-            resolvedSpan.textContent = nextText[i] === " " ? "\u00A0" : nextText[i];
-            container.appendChild(resolvedSpan);
+            if (nextText[i] === " ") {
+              var resolvedSpace = document.createElement("span");
+              resolvedSpace.className = "glyph-char glyph-space";
+              resolvedSpace.innerHTML = "&nbsp;";
+              container.appendChild(resolvedSpace);
+              container.appendChild(document.createTextNode(" "));
+            } else {
+              var resolvedSpan = document.createElement("span");
+              resolvedSpan.className = "glyph-char";
+              resolvedSpan.textContent = nextText[i];
+              container.appendChild(resolvedSpan);
+            }
           }
         } else {
           var binarySpan = document.createElement("span");

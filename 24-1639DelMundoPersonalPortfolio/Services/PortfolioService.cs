@@ -4,6 +4,7 @@ using System.Data;
 using System.Web;
 using System.Web.Caching;
 using _24_1639DelMundoPersonalPortfolio.Data;
+using _24_1639DelMundoPersonalPortfolio.Helpers;
 using _24_1639DelMundoPersonalPortfolio.Models;
 
 namespace _24_1639DelMundoPersonalPortfolio.Services
@@ -611,6 +612,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool SaveProfile(ProfileDto profile)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             if (profile == null) return false;
             try
             {
@@ -673,6 +675,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool SaveTechStack(TechStackItemDto item, string svgContent = null)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             if (item == null) return false;
             try
             {
@@ -738,6 +741,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool DeleteTechStack(int techId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM tech_stacks_tbl WHERE tech_id = @TechId",
@@ -754,6 +758,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool SaveSkill(SkillDto skill)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             if (skill == null) return false;
             try
             {
@@ -792,6 +797,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool DeleteSkill(int skillId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM skills_tbl WHERE skill_id = @SkillId",
@@ -808,6 +814,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool SaveExperience(ExperienceDto exp)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             if (exp == null) return false;
             try
             {
@@ -852,6 +859,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool DeleteExperience(int expId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM experiences_tbl WHERE exp_id = @ExpId",
@@ -868,6 +876,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool SaveProject(ProjectDto project)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             if (project == null) return false;
             try
             {
@@ -910,6 +919,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool DeleteProject(int projectId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM projects_tbl WHERE project_id = @ProjectId",
@@ -926,6 +936,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool SaveEducation(EducationDto edu)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             if (edu == null) return false;
             try
             {
@@ -968,6 +979,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool DeleteEducation(int eduId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM educations_tbl WHERE edu_id = @EduId",
@@ -984,6 +996,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool SaveAward(AwardDto award)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             if (award == null) return false;
             try
             {
@@ -1026,6 +1039,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool DeleteAward(int awardId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM awards_tbl WHERE award_id = @AwardId",
@@ -1042,6 +1056,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool SaveHobby(HobbyDto hobby)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             if (hobby == null) return false;
             try
             {
@@ -1078,6 +1093,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool DeleteHobby(int hobbyId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM hobbies_tbl WHERE hobby_id = @HobbyId",
@@ -1140,6 +1156,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool SetUserActiveStatus(int userId, bool isActive)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 DatabaseHelper.ExecuteNonQuery("UPDATE users_tbl SET is_active = @IsActive WHERE user_id = @UserId",
@@ -1156,6 +1173,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool DeleteUser(int userId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM users_tbl WHERE user_id = @UserId",
@@ -1171,6 +1189,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool UpdateAdminCredentials(int userId, string firstName, string lastName, string email, string newPassword, string avatarPath = null)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 var paramList = new List<System.Data.SqlClient.SqlParameter>
@@ -1254,6 +1273,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool ApprovePasswordResetRequest(int resetId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 string query = "UPDATE password_resets_tbl SET status = 'password_removed' WHERE reset_id = @ResetId";
@@ -1269,6 +1289,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool RejectPasswordResetRequest(int resetId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 string query = "UPDATE password_resets_tbl SET status = 'expired' WHERE reset_id = @ResetId";
@@ -1284,6 +1305,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
 
         public static bool AdminResetUserPassword(int userId)
         {
+            if (!AuthHelper.IsAdmin()) return false;
             try
             {
                 string userEmailQuery = "SELECT email FROM users_tbl WHERE user_id = @UserId";

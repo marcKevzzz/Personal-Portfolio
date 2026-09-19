@@ -25,7 +25,7 @@
       <h2 class="">Sign in</h2>
       <p class="sub ">Don't have an account? <a href="SignUp.aspx">Create one</a></p>
 
-      <asp:Panel ID="pnlAlert" runat="server" Visible="false" CssClass="save-toast " style="margin-bottom: 20px;">
+      <asp:Panel ID="pnlAlert" runat="server" Visible="false" CssClass="save-toast" style="margin-bottom: 20px;">
         <asp:Literal ID="litAlertIcon" runat="server">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="20 6 9 17 4 12"></polyline>

@@ -22,18 +22,26 @@ function initInputFocus() {
 
 function initLoadReveal() {
   var els = document.querySelectorAll(".reveal");
-  els.forEach(function (el, i) {
-    el.style.transition = "opacity .5s ease, transform .5s ease";
-    el.style.transitionDelay = i * 0.08 + "s";
-  });
-  requestAnimationFrame(function () {
-    requestAnimationFrame(function () {
+  if (!els || els.length === 0) return;
+
+  if (typeof gsap !== "undefined") {
+    gsap.fromTo(
+      els,
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.6, stagger: 0.06, ease: "power2.out", clearProps: "transform" }
+    );
+  } else {
+    els.forEach(function (el, i) {
+      el.style.transition = "opacity .5s ease, transform .5s ease";
+      el.style.transitionDelay = i * 0.06 + "s";
+    });
+    setTimeout(function () {
       els.forEach(function (el) {
         el.style.opacity = "1";
         el.style.transform = "translateY(0)";
       });
-    });
-  });
+    }, 40);
+  }
 }
 
 function markValid(field, isValid) {
@@ -292,7 +300,8 @@ function initNewPassword() {
 /* -------------------------------------------------------------
    BOOTSTRAP AUTH PAGE
    ------------------------------------------------------------- */
-document.addEventListener("DOMContentLoaded", function () {
+function bootAuth() {
+  initInputFocus();
   initCustomCursor();
   if (document.getElementById("signinForm")) {
     initSignIn();
@@ -303,4 +312,10 @@ document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("newPasswordForm")) {
     initNewPassword();
   }
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootAuth);
+} else {
+  bootAuth();
+}

@@ -46,11 +46,11 @@
           </div>
         </div>
 
-        <!-- Admin Portal Quick Nav Link (for admins) -->
+        <!-- Admin Portal Quick Nav Link (for admins and regular users in viewer mode) -->
         <asp:PlaceHolder ID="phAdminLink" runat="server" Visible="false">
           <div style="margin-top: 16px;">
             <a href="<%= ResolveUrl("~/Pages/Admin/Admin.aspx") %>" class="submit" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 10px; font-size: 13px;">
-              <span>Go to Admin Portal &rarr;</span>
+              <span><%= _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.IsAdmin() ? "Go to Admin Portal &rarr;" : "Explore Admin Console (Read-Only) &rarr;" %></span>
             </a>
           </div>
         </asp:PlaceHolder>

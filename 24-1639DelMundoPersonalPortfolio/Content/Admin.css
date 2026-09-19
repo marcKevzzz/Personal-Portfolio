@@ -1556,19 +1556,12 @@ textarea:focus {
 
 @media (max-width: 800px) {
   /* Keep sidebar strictly ON THE SIDE (never stack on top) */
-  .admin-shell {
-    flex-direction: row !important;
-    min-height: 100svh;
-    width: 100%;
-    position: relative;
-    overflow-x: hidden;
-  }
 
   /* Sidebar stays on the side */
   .admin-nav {
     position: sticky !important;
     top: 0;
-    height: 100svh !important;
+    height: 100dvh !important;
     flex-shrink: 0;
     z-index: 160;
     border-right: 1px solid var(--line-soft);
@@ -1594,28 +1587,23 @@ textarea:focus {
 
   .admin-shell.sidebar-collapsed .admin-nav-header {
     padding: 16px 8px;
-    justify-content: center;
   }
 
-  .admin-shell.sidebar-collapsed .admin-menu {
+  /* .admin-shell.sidebar-collapsed .admin-menu {
     padding: 10px 4px;
     align-items: center;
-  }
+  }*/
 
   .admin-shell.sidebar-collapsed .admin-nav a.nav-item {
-    padding: 12px 0;
-    justify-content: center;
-    width: 100%;
+    padding: 12px;
   }
 
-  .admin-shell.sidebar-collapsed .admin-nav-foot {
+  /* .admin-shell.sidebar-collapsed .admin-nav-foot {
     padding: 12px 6px;
-  }
+  } */
 
   .admin-shell.sidebar-collapsed .admin-logout-btn {
-    padding: 10px 0;
-    justify-content: center;
-    width: 100%;
+    padding: 10px;
   }
 
   /* Main content area dynamically takes all remaining width */
@@ -1942,6 +1930,91 @@ input[type="number"]::placeholder{
   background: var(--blue);
   color: #fff;
 }
+
+/* =============================================================
+   READ-ONLY / VIEWER MODE
+   ============================================================= */
+.admin-user-badge.is-viewer .admin-indicator {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.admin-user-badge.is-viewer {
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.admin-readonly-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+  color: #fbbf24;
+  font-size: var(--t-xs);
+  line-height: 1.5;
+}
+
+.admin-readonly-banner strong {
+  color: #ffffff;
+}
+
+.readonly-return-link {
+  margin-left: auto;
+  color: var(--cyan);
+  text-decoration: none;
+  white-space: nowrap;
+  font-family: var(--f-display);
+  font-size: var(--t-xxs);
+  letter-spacing: 0.04em;
+  transition: color 0.2s ease;
+}
+
+.readonly-return-link:hover {
+  text-decoration: underline;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .admin-readonly-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .readonly-return-link {
+    margin-left: 0;
+  }
+}
+
+/* Hide mutation triggers when in Read-Only mode */
+.admin-shell.is-read-only .add-form,
+.admin-shell.is-read-only .btn-primary,
+.admin-shell.is-read-only .btn-danger,
+.admin-shell.is-read-only .action-btn-delete,
+.admin-shell.is-read-only .action-btn-edit,
+.admin-shell.is-read-only .chip-remove,
+.admin-shell.is-read-only .avatar-edit-overlay,
+.admin-shell.is-read-only .admin-file-input,
+.admin-shell.is-read-only .data-table td a.danger,
+.admin-shell.is-read-only input[type="submit"],
+.admin-shell.is-read-only button[type="submit"] {
+  display: none !important;
+}
+
+/* Make profile inputs read-only style */
+.admin-shell.is-read-only .admin-panel[data-panel="profile"] input,
+.admin-shell.is-read-only .admin-panel[data-panel="profile"] textarea,
+.admin-shell.is-read-only .admin-panel[data-panel="profile"] select,
+.admin-shell.is-read-only .admin-panel[data-panel="admin-profile"] input,
+.admin-shell.is-read-only .admin-panel[data-panel="admin-profile"] textarea {
+  pointer-events: none;
+  opacity: 0.8;
+  cursor: default;
+}
+
 
 
 

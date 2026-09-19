@@ -6,21 +6,29 @@ namespace _24_1639DelMundoPersonalPortfolio
 {
     public partial class AdminMaster : System.Web.UI.MasterPage
     {
+        public bool IsReadOnly { get; private set; }
+
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!AuthHelper.IsAuthenticated())
+            {
+                Response.Redirect("~/Auth/SignIn.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
+                return;
+            }
+
+            IsReadOnly = !AuthHelper.IsAdmin();
+
             if (!IsPostBack)
             {
-                if (!AuthHelper.IsAuthenticated() || !AuthHelper.IsAdmin())
-                {
-                    Response.Redirect("~/Auth/SignIn.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
-                    return;
-                }
-
                 if (Request.QueryString["login"] == "true")
                 {
-                    var adminUser = AuthHelper.GetCurrentUser();
-                    string adminName = adminUser != null ? $"{adminUser.FirstName} {adminUser.LastName}" : "Administrator";
-                    string script = $"document.addEventListener('DOMContentLoaded', function() {{ if (typeof AdminToast !== 'undefined') {{ AdminToast.show('Welcome to Admin Portal, {adminName}', 'success'); }} else if (typeof Toast !== 'undefined') {{ Toast.show({{ title: 'ADMIN ACCESS', message: 'Welcome back, {adminName}', type: 'success' }}); }} }});";
+                    var currentUser = AuthHelper.GetCurrentUser();
+                    string userName = currentUser != null ? $"{currentUser.FirstName} {currentUser.LastName}".Trim() : "User";
+                    string title = IsReadOnly ? "VIEWER ACCESS" : "ADMIN ACCESS";
+                    string msg = IsReadOnly 
+                        ? $"Welcome to Admin Console (Read-Only Viewer), {userName}" 
+                        : $"Welcome back to Admin Portal, {userName}";
+                    string script = $"document.addEventListener('DOMContentLoaded', function() {{ if (typeof AdminToast !== 'undefined') {{ AdminToast.show('{msg}', 'success'); }} else if (typeof Toast !== 'undefined') {{ Toast.show({{ title: '{title}', message: '{msg}', type: 'info' }}); }} }});";
                     Page.ClientScript.RegisterStartupScript(this.GetType(), "adminLoginToast", script, true);
                 }
             }

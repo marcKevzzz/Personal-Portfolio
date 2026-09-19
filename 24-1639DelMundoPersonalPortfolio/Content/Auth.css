@@ -94,14 +94,10 @@ input:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.001ms !important;
-        transition-duration: 0.001ms !important;
-        scroll-behavior: auto !important;
-    }
     .reveal {
         opacity: 1 !important;
         transform: none !important;
+        transition: none !important;
     }
 }
 
@@ -369,7 +365,6 @@ input:focus-visible {
 .field input:focus,
 .field input:focus-visible {
     outline: none !important;
-    border-bottom-color: transparent;
 }
 
 .field input::placeholder {
@@ -380,20 +375,18 @@ input:focus-visible {
     content: "";
     position: absolute;
     left: 0;
-    bottom: 0px;
+    bottom: -1px;
     height: 1px;
-    width: 100%;
+    width: 0%;
     background: var(--grad);
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: width 0.35s ease-in;
     pointer-events: none;
     z-index: 2;
 }
 
 .field .input-row.focused::after,
 .field .input-row:focus-within::after {
-    transform: scaleX(1);
+    width: 100%;
 }
 
 .field-error {

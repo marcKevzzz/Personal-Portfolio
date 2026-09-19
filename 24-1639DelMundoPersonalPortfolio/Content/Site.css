@@ -325,7 +325,8 @@ h2.section-title {
 }
 
 .hero-left {
-    min-width: max(510px, 100%);
+    min-width: 0;
+    max-width: 100%;
 }
 
 .hero-inner {
@@ -367,6 +368,8 @@ h2.section-title {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .hero-name-primary {
@@ -388,6 +391,10 @@ h2.section-title {
 .hero-name .glyph,
 .hero-name .glyph-char {
     display: inline-block;
+}
+
+.hero-name .glyph-space {
+    display: inline;
 }
 
 .hero-name .glyph-binary {
@@ -493,14 +500,69 @@ h2.section-title {
 }
 
 @media (max-width:860px) {
+    #hero {
+        padding-top: 100px;
+        padding-bottom: 60px;
+        min-height: auto;
+    }
+
     .hero-inner {
         grid-template-columns: 1fr;
         gap: 24px;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .hero-left {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .hero-name {
+        font-size: clamp(28px, 8.5vw, 48px);
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .hero-name-primary {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .hero-name-sub {
+        font-size: clamp(16px, 4.2vw, 24px);
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .hero-role {
+        font-size: var(--t-sm);
+        max-width: 100%;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .hero-meta {
+        margin-top: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px 24px;
+    }
+
+    .hero-meta div {
+        min-width: 90px;
+    }
+
+    .hero-meta strong {
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
 
     .avatar {
-        width: 144px;
-        height: 154px;
+        width: 136px;
+        height: 136px;
         order: -1;
     }
 
@@ -509,9 +571,24 @@ h2.section-title {
     }
 
     .scroll-cue {
-        left: 38px;
+        display: none;
+    }
+}
+
+@media (max-width:480px) {
+    .wrap-wide {
+        padding: 0 16px;
     }
 
+    .hero-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 16px;
+    }
+
+    .hero-meta div:last-child {
+        grid-column: span 2;
+    }
 }
 
 @keyframes cue {
@@ -1291,7 +1368,7 @@ footer {
 .account-top-bar-header {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 32px;
 }
 
 .account-page-title {

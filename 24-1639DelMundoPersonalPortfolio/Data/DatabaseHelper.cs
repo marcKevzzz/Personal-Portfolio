@@ -2,6 +2,7 @@ using System;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Web;
 
 namespace _24_1639DelMundoPersonalPortfolio.Data
 {
@@ -11,9 +12,52 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
     /// </summary>
     public static class DatabaseHelper
     {
-        private static readonly string ConnectionString =
-            ConfigurationManager.ConnectionStrings["PortfolioDB"]?.ConnectionString ??
-            ConfigurationManager.ConnectionStrings["PortfolioDb"]?.ConnectionString;
+        /// <summary>
+        /// Gets the active connection string. Automatically detects whether the application is running
+        /// locally (localhost / 127.0.0.1 / ::1 / Debug) to use PortfolioDB_Local, or remotely to use PortfolioDB_Remote.
+        /// </summary>
+        public static string ConnectionString
+        {
+            get
+            {
+                try
+                {
+                    var context = HttpContext.Current;
+                    if (context != null && context.Request != null)
+                    {
+                        bool isLocal = context.Request.IsLocal ||
+                                       context.Request.Url.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                                       context.Request.Url.Host.Equals("127.0.0.1") ||
+                                       context.Request.Url.Host.Equals("::1");
+
+                        if (isLocal)
+                        {
+                            var localConn = ConfigurationManager.ConnectionStrings["PortfolioDB_Local"]?.ConnectionString;
+                            if (!string.IsNullOrEmpty(localConn)) return localConn;
+                        }
+                        else
+                        {
+                            var remoteConn = ConfigurationManager.ConnectionStrings["PortfolioDB_Remote"]?.ConnectionString;
+                            if (!string.IsNullOrEmpty(remoteConn)) return remoteConn;
+                        }
+                    }
+                    else
+                    {
+#if DEBUG
+                        var localDebug = ConfigurationManager.ConnectionStrings["PortfolioDB_Local"]?.ConnectionString;
+                        if (!string.IsNullOrEmpty(localDebug)) return localDebug;
+#endif
+                    }
+                }
+                catch
+                {
+                    // Fall back gracefully if context is unavailable
+                }
+
+                return ConfigurationManager.ConnectionStrings["PortfolioDB"]?.ConnectionString ??
+                       ConfigurationManager.ConnectionStrings["PortfolioDb"]?.ConnectionString;
+            }
+        }
 
         /// <summary>
         /// Retrieves an open SqlConnection.

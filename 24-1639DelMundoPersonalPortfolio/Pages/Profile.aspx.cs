@@ -81,7 +81,7 @@ namespace _24_1639DelMundoPersonalPortfolio
                     avatarSvgPlaceholder.Style["display"] = "flex";
                 }
 
-                phAdminLink.Visible = AuthHelper.IsAdmin();
+                phAdminLink.Visible = true;
 
                 if (AuthHelper.IsAdmin())
                 {
