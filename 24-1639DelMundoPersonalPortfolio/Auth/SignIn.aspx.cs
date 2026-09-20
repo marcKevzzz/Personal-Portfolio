@@ -159,6 +159,15 @@ namespace _24_1639DelMundoPersonalPortfolio
                 bool isRemember = remember != null && remember.Checked;
                 AuthHelper.SetUserSession(user, isRemember);
 
+                // Record sign-in timestamp, login count, and engagement audit log
+                try
+                {
+                    string clientIp = Request.UserHostAddress;
+                    string userAgent = Request.UserAgent;
+                    _24_1639DelMundoPersonalPortfolio.Services.PortfolioService.RecordUserLogin(userId, clientIp, userAgent);
+                }
+                catch { }
+
                 // 5. Redirect based on role and returnUrl
                 string returnUrl = Request.QueryString["returnUrl"];
                 bool hasReturnUrl = !string.IsNullOrEmpty(returnUrl)

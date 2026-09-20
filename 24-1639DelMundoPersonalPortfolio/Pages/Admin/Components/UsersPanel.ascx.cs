@@ -58,12 +58,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             }
         }
 
-        protected void btnRefreshUsers_Click(object sender, EventArgs e)
-        {
-            BindAll();
-            string script = "if(window.AdminToast) AdminToast.info('User accounts and reset requests refreshed from database.', 'Refreshed');";
-            Page.ClientScript.RegisterStartupScript(GetType(), "refreshUsersToast", script, true);
-        }
 
         protected void btnRefreshResetRequests_Click(object sender, EventArgs e)
         {

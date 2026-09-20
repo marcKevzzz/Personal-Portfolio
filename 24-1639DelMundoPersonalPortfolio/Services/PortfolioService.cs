@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Web;
 using System.Web.Caching;
 using _24_1639DelMundoPersonalPortfolio.Data;
@@ -97,11 +98,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
         {
             if (row == null || !row.Table.Columns.Contains(colName) || row[colName] == DBNull.Value)
             {
-                return fallback;
+                return CleanMojibake(fallback);
             }
             string val = row[colName]?.ToString();
-            return string.IsNullOrWhiteSpace(val) ? fallback : val.Trim();
+            return string.IsNullOrWhiteSpace(val) ? CleanMojibake(fallback) : CleanMojibake(val.Trim());
         }
+
 
         private static int GetIntWithFallback(DataRow row, string colName, int fallback)
         {
@@ -617,10 +619,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                        .Replace("â€“", "–")
                        .Replace("âˆ’", "−")
                        .Replace("â€™", "'")
+                       .Replace("â€˜", "'")
                        .Replace("â€œ", "\"")
-                       .Replace("â€", "\"")
-                       .Replace("?\"", "—")
-                       .Replace("?", "—");
+                       .Replace("â€ ", "\"")
+                       .Replace("â€ ", "\"")
+                       .Replace("Â", "");
         }
 
         public static bool SaveProfile(ProfileDto profile)
@@ -1363,5 +1366,308 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
         }
 
         #endregion
+
+        #region Dashboard & Statistic Reports
+
+        /// <summary>
+        /// Retrieves comprehensive system, portfolio, user, engagement, and security statistics for the Admin Dashboard.
+        /// Executes sp_GetDashboardStatistics or aggregates directly from database/cache with full resilience.
+        /// </summary>
+        public static DashboardStatsDto GetDashboardStats()
+        {
+            var stats = new DashboardStatsDto
+            {
+                ReportGeneratedAt = DateTime.UtcNow
+            };
+
+            // Attempt 1: Execute MSSQL Stored Procedure sp_GetDashboardStatistics
+            try
+            {
+                DataSet ds = DatabaseHelper.ExecuteStoredProcedureDataSet("sp_GetDashboardStatistics");
+                if (ds != null && ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+                {
+                    DataRow kpiRow = ds.Tables[0].Rows[0];
+                    stats.IsDatabaseConnected = true;
+                    stats.DatabaseSource = "MSSQL Server (Stored Procedure)";
+                    stats.TotalProjects = kpiRow.Table.Columns.Contains("TotalActiveProjects") && kpiRow["TotalActiveProjects"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalActiveProjects"]) : 0;
+                    stats.TotalFeaturedProjects = kpiRow.Table.Columns.Contains("TotalProjects") && kpiRow["TotalProjects"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalProjects"]) : 0;
+                    stats.TotalTechStacks = kpiRow.Table.Columns.Contains("TotalTechStacks") && kpiRow["TotalTechStacks"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalTechStacks"]) : 0;
+                    stats.TotalTechCategories = kpiRow.Table.Columns.Contains("TotalTechCategories") && kpiRow["TotalTechCategories"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalTechCategories"]) : 0;
+                    stats.TotalSkills = kpiRow.Table.Columns.Contains("TotalSkills") && kpiRow["TotalSkills"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalSkills"]) : 0;
+                    stats.TotalExperiences = kpiRow.Table.Columns.Contains("TotalExperiences") && kpiRow["TotalExperiences"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalExperiences"]) : 0;
+                    stats.TotalEducations = kpiRow.Table.Columns.Contains("TotalEducations") && kpiRow["TotalEducations"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalEducations"]) : 0;
+                    stats.TotalAwards = kpiRow.Table.Columns.Contains("TotalAwards") && kpiRow["TotalAwards"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalAwards"]) : 0;
+                    stats.TotalHobbies = kpiRow.Table.Columns.Contains("TotalHobbies") && kpiRow["TotalHobbies"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalHobbies"]) : 0;
+                    
+                    // User accounts overview
+                    stats.TotalUsers = kpiRow.Table.Columns.Contains("TotalUsers") && kpiRow["TotalUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalUsers"]) : 0;
+                    stats.ActiveUsers = kpiRow.Table.Columns.Contains("ActiveUsers") && kpiRow["ActiveUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["ActiveUsers"]) : 0;
+                    stats.InactiveUsers = kpiRow.Table.Columns.Contains("InactiveUsers") && kpiRow["InactiveUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["InactiveUsers"]) : (stats.TotalUsers - stats.ActiveUsers);
+                    stats.AdminUsers = kpiRow.Table.Columns.Contains("AdminUsers") && kpiRow["AdminUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["AdminUsers"]) : 0;
+                    stats.SignUpsToday = kpiRow.Table.Columns.Contains("SignUpsToday") && kpiRow["SignUpsToday"] != DBNull.Value ? Convert.ToInt32(kpiRow["SignUpsToday"]) : 0;
+                    stats.SignUpsThisWeek = kpiRow.Table.Columns.Contains("SignUpsThisWeek") && kpiRow["SignUpsThisWeek"] != DBNull.Value ? Convert.ToInt32(kpiRow["SignUpsThisWeek"]) : 0;
+                    stats.SignUpsThisMonth = kpiRow.Table.Columns.Contains("SignUpsThisMonth") && kpiRow["SignUpsThisMonth"] != DBNull.Value ? Convert.ToInt32(kpiRow["SignUpsThisMonth"]) : 0;
+
+                    // User activity & engagement
+                    stats.TotalLogins = kpiRow.Table.Columns.Contains("TotalLogins") && kpiRow["TotalLogins"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalLogins"]) : 0;
+                    stats.DailyActiveUsers = kpiRow.Table.Columns.Contains("DailyActiveUsers") && kpiRow["DailyActiveUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["DailyActiveUsers"]) : 0;
+                    stats.MonthlyActiveUsers = kpiRow.Table.Columns.Contains("MonthlyActiveUsers") && kpiRow["MonthlyActiveUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["MonthlyActiveUsers"]) : 0;
+
+                    stats.PendingPasswordResets = kpiRow.Table.Columns.Contains("PendingPasswordResets") && kpiRow["PendingPasswordResets"] != DBNull.Value ? Convert.ToInt32(kpiRow["PendingPasswordResets"]) : 0;
+                    stats.ExperienceYears = kpiRow.Table.Columns.Contains("ExperienceYears") && kpiRow["ExperienceYears"] != DBNull.Value ? Convert.ToInt32(kpiRow["ExperienceYears"]) : 0;
+
+                    // Table 1: Tech Categories
+                    if (ds.Tables.Count > 1 && ds.Tables[1].Rows.Count > 0)
+                    {
+                        foreach (DataRow row in ds.Tables[1].Rows)
+                        {
+                            int count = Convert.ToInt32(row["ItemCount"]);
+                            stats.TechCategoryStats.Add(new CategoryStatDto
+                            {
+                                Category = row["Category"]?.ToString() ?? "General",
+                                ItemCount = count,
+                                Percentage = stats.TotalTechStacks > 0 ? Math.Round((double)count / stats.TotalTechStacks * 100, 1) : 0
+                            });
+                        }
+                    }
+
+                    // Table 2: Recent Users
+                    if (ds.Tables.Count > 2 && ds.Tables[2].Rows.Count > 0)
+                    {
+                        foreach (DataRow row in ds.Tables[2].Rows)
+                        {
+                            stats.RecentUsers.Add(new UserSummaryDto
+                            {
+                                UserId = Convert.ToInt32(row["user_id"]),
+                                Email = row["email"]?.ToString() ?? "",
+                                FullName = $"{row["first_name"]} {row["last_name"]}".Trim(),
+                                Role = row.Table.Columns.Contains("user_role") ? (row["user_role"]?.ToString() ?? "User") : (row["role"]?.ToString() ?? "User"),
+                                IsActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true,
+                                LastLoginAt = row.Table.Columns.Contains("last_login_at") && row["last_login_at"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["last_login_at"]) : null,
+                                LoginCount = row.Table.Columns.Contains("login_count") && row["login_count"] != DBNull.Value ? Convert.ToInt32(row["login_count"]) : 0,
+                                CreatedAt = row.Table.Columns.Contains("created_at") && row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : DateTime.UtcNow
+                            });
+                        }
+                    }
+
+                    // Table 3: Pending Resets
+                    if (ds.Tables.Count > 3 && ds.Tables[3].Rows.Count > 0)
+                    {
+                        foreach (DataRow row in ds.Tables[3].Rows)
+                        {
+                            stats.RecentPendingResets.Add(new PasswordResetSummaryDto
+                            {
+                                ResetId = Convert.ToInt32(row["reset_id"]),
+                                UserId = row.Table.Columns.Contains("user_id") && row["user_id"] != DBNull.Value ? Convert.ToInt32(row["user_id"]) : 0,
+                                Email = row["email"]?.ToString() ?? "",
+                                FullName = $"{row["first_name"]} {row["last_name"]}".Trim(),
+                                Status = row["status"]?.ToString() ?? "Pending",
+                                RequestedAt = row.Table.Columns.Contains("created_at") && row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : DateTime.UtcNow
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PortfolioService] sp_GetDashboardStatistics failed, falling back to direct aggregation: {ex.Message}");
+            }
+
+            // Attempt 2: If SP didn't populate (or threw exception), aggregate directly
+            if (!stats.IsDatabaseConnected || (stats.TotalProjects == 0 && stats.TotalTechStacks == 0))
+            {
+                try
+                {
+                    var data = GetPortfolioData(false);
+                    stats.TotalProjects = data.Projects?.Count ?? 0;
+                    stats.TotalFeaturedProjects = data.Projects?.Count(p => p.IsActive) ?? 0;
+                    stats.TotalTechStacks = data.TechStacks?.Count ?? 0;
+                    stats.TotalTechCategories = data.TechStacks?.Select(t => t.GroupName).Distinct().Count() ?? 0;
+                    stats.TotalSkills = data.Skills?.Count ?? 0;
+                    stats.TotalExperiences = data.Experiences?.Count ?? 0;
+                    stats.TotalEducations = data.Educations?.Count ?? 0;
+                    stats.TotalAwards = data.Awards?.Count ?? 0;
+                    stats.TotalHobbies = data.Hobbies?.Count ?? 0;
+                    stats.ExperienceYears = data.Profile?.ExperienceYears ?? 3;
+
+                    // Group tech stacks by group_name
+                    if (data.TechStacks != null && data.TechStacks.Count > 0)
+                    {
+                        var groups = data.TechStacks.GroupBy(t => string.IsNullOrWhiteSpace(t.GroupName) ? "General" : t.GroupName);
+                        foreach (var g in groups)
+                        {
+                            int count = g.Count();
+                            stats.TechCategoryStats.Add(new CategoryStatDto
+                            {
+                                Category = g.Key,
+                                ItemCount = count,
+                                Percentage = stats.TotalTechStacks > 0 ? Math.Round((double)count / stats.TotalTechStacks * 100, 1) : 0
+                            });
+                        }
+                    }
+
+                    // Query users from database directly
+                    try
+                    {
+                        DataTable userDt = DatabaseHelper.ExecuteDataTable("SELECT * FROM users_tbl ORDER BY created_at DESC");
+                        if (userDt != null)
+                        {
+                            stats.TotalUsers = userDt.Rows.Count;
+                            stats.IsDatabaseConnected = true;
+                            stats.DatabaseSource = "MSSQL Server (Direct Query)";
+                            int activeCount = 0;
+                            int adminCount = 0;
+                            int todayCount = 0;
+                            int weekCount = 0;
+                            int monthCount = 0;
+                            int totalLoginsSum = 0;
+                            int dauCount = 0;
+                            int mauCount = 0;
+
+                            DateTime now = DateTime.Now;
+                            DateTime todayStart = now.Date;
+                            DateTime weekAgo = now.AddDays(-7);
+                            DateTime monthStart = new DateTime(now.Year, now.Month, 1);
+                            DateTime monthAgo = now.AddDays(-30);
+
+                            foreach (DataRow row in userDt.Rows)
+                            {
+                                bool isActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true;
+                                string role = row.Table.Columns.Contains("user_role") ? (row["user_role"]?.ToString() ?? "User") : (row["role"]?.ToString() ?? "User");
+                                DateTime created = row.Table.Columns.Contains("created_at") && row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : now;
+                                DateTime? lastLogin = row.Table.Columns.Contains("last_login_at") && row["last_login_at"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["last_login_at"]) : null;
+                                int lCount = row.Table.Columns.Contains("login_count") && row["login_count"] != DBNull.Value ? Convert.ToInt32(row["login_count"]) : 0;
+
+                                if (isActive) activeCount++;
+                                if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase)) adminCount++;
+                                if (created >= todayStart) todayCount++;
+                                if (created >= weekAgo) weekCount++;
+                                if (created >= monthStart) monthCount++;
+
+                                totalLoginsSum += lCount;
+                                if (lastLogin.HasValue && lastLogin.Value >= todayStart) dauCount++;
+                                if (lastLogin.HasValue && lastLogin.Value >= monthAgo) mauCount++;
+
+                                if (stats.RecentUsers.Count < 10)
+                                {
+                                    stats.RecentUsers.Add(new UserSummaryDto
+                                    {
+                                        UserId = Convert.ToInt32(row["user_id"]),
+                                        Email = row["email"]?.ToString() ?? "",
+                                        FullName = $"{row["first_name"]} {row["last_name"]}".Trim(),
+                                        Role = role,
+                                        IsActive = isActive,
+                                        LastLoginAt = lastLogin,
+                                        LoginCount = lCount,
+                                        CreatedAt = created
+                                    });
+                                }
+                            }
+                            stats.ActiveUsers = activeCount;
+                            stats.InactiveUsers = stats.TotalUsers - activeCount;
+                            stats.AdminUsers = adminCount;
+                            stats.SignUpsToday = todayCount;
+                            stats.SignUpsThisWeek = weekCount;
+                            stats.SignUpsThisMonth = monthCount;
+                            stats.TotalLogins = totalLoginsSum;
+                            stats.DailyActiveUsers = dauCount;
+                            stats.MonthlyActiveUsers = mauCount;
+                        }
+
+                        // Query pending resets
+                        DataTable resetDt = DatabaseHelper.ExecuteDataTable(@"
+                            SELECT r.reset_id, r.user_id, r.status, r.created_at, u.email, u.first_name, u.last_name
+                            FROM password_resets_tbl r
+                            LEFT JOIN users_tbl u ON r.user_id = u.user_id
+                            WHERE LOWER(r.status) = 'pending'
+                            ORDER BY r.created_at DESC");
+                        if (resetDt != null)
+                        {
+                            stats.PendingPasswordResets = resetDt.Rows.Count;
+                            foreach (DataRow rRow in resetDt.Rows)
+                            {
+                                if (stats.RecentPendingResets.Count < 5)
+                                {
+                                    stats.RecentPendingResets.Add(new PasswordResetSummaryDto
+                                    {
+                                        ResetId = Convert.ToInt32(rRow["reset_id"]),
+                                        UserId = rRow.Table.Columns.Contains("user_id") && rRow["user_id"] != DBNull.Value ? Convert.ToInt32(rRow["user_id"]) : 0,
+                                        Email = rRow["email"]?.ToString() ?? "",
+                                        FullName = $"{rRow["first_name"]} {rRow["last_name"]}".Trim(),
+                                        Status = rRow["status"]?.ToString() ?? "Pending",
+                                        RequestedAt = rRow.Table.Columns.Contains("created_at") && rRow["created_at"] != DBNull.Value ? Convert.ToDateTime(rRow["created_at"]) : DateTime.UtcNow
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        stats.TotalUsers = 1;
+                        stats.ActiveUsers = 1;
+                        stats.InactiveUsers = 0;
+                        stats.AdminUsers = 1;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PortfolioService] Direct aggregation fallback error: {ex.Message}");
+                    stats.IsDatabaseConnected = false;
+                    stats.DatabaseSource = "Local Server Cache / Memory Fallback";
+                }
+            }
+
+            // Calculate Profile Completeness Percentage
+            var profileData = GetPortfolioData(false).Profile;
+            int completenessScore = 0;
+            int totalFactors = 10;
+
+            if (!string.IsNullOrWhiteSpace(profileData?.FirstName)) completenessScore++;
+            if (!string.IsNullOrWhiteSpace(profileData?.LastName)) completenessScore++;
+            if (!string.IsNullOrWhiteSpace(profileData?.RoleTitle)) completenessScore++;
+            if (!string.IsNullOrWhiteSpace(profileData?.RoleSummary)) completenessScore++;
+            if (!string.IsNullOrWhiteSpace(profileData?.FocusArea)) completenessScore++;
+            if (!string.IsNullOrWhiteSpace(profileData?.AvatarPath)) completenessScore++;
+            if (!string.IsNullOrWhiteSpace(profileData?.Email)) completenessScore++;
+            if (!string.IsNullOrWhiteSpace(profileData?.GithubUrl)) completenessScore++;
+            if (!string.IsNullOrWhiteSpace(profileData?.LinkedinUrl)) completenessScore++;
+            if (profileData?.ExperienceYears > 0) completenessScore++;
+
+            stats.ProfileCompletenessPct = (int)Math.Round((double)completenessScore / totalFactors * 100);
+
+            return stats;
+        }
+
+        /// <summary>
+        /// Records user sign-in timestamp and increments total login count via sp_RecordUserLogin.
+        /// </summary>
+        public static void RecordUserLogin(int userId, string ipAddress = null, string userAgent = null)
+        {
+            if (userId <= 0) return;
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_RecordUserLogin",
+                    new System.Data.SqlClient.SqlParameter("@UserId", userId),
+                    new System.Data.SqlClient.SqlParameter("@IpAddress", (object)ipAddress ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@UserAgent", (object)userAgent ?? DBNull.Value)
+                );
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PortfolioService] RecordUserLogin SP failed, attempting direct query: {ex.Message}");
+                try
+                {
+                    DatabaseHelper.ExecuteNonQuery(
+                        "UPDATE users_tbl SET last_login_at = GETDATE(), login_count = ISNULL(login_count, 0) + 1 WHERE user_id = @UserId",
+                        new System.Data.SqlClient.SqlParameter("@UserId", userId)
+                    );
+                }
+                catch { }
+            }
+        }
+
+        #endregion
     }
 }
+
+

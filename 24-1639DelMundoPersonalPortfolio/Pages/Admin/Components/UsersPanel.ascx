@@ -6,14 +6,6 @@
             <h2 style="margin: 0 0 6px 0;">User Management</h2>
             <p class="admin-sub" style="margin: 0;">Registered accounts. Deactivating prevents sign-in while preserving user records.</p>
         </div>
-        <asp:LinkButton ID="btnRefreshUsers" runat="server" CssClass="btn btn-secondary" OnClick="btnRefreshUsers_Click" ToolTip="Reload all users and reset requests from database" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; font-size: var(--t-xs);">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <polyline points="1 20 1 14 7 14"></polyline>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            <span>Refresh</span>
-        </asp:LinkButton>
     </div>
 
     <div style="margin-bottom: 32px;">

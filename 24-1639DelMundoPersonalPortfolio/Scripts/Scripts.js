@@ -3,22 +3,28 @@
    Shared by Default.aspx and Profile.aspx
    ============================================================= */
 
-var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var reduceMotion = window.matchMedia(
+  "(prefers-reduced-motion: reduce)",
+).matches;
 var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /* -------------------------------------------------------------
    SHARED INPUT FOCUS
    ------------------------------------------------------------- */
 function initInputFocus() {
-  document.querySelectorAll(".field input, .field select, .input-row input, .input-row select").forEach(function (input) {
-    var row = input.closest(".input-row") || input.closest(".field");
-    input.addEventListener("focus", function () {
-      if (row) row.classList.add("focused");
+  document
+    .querySelectorAll(
+      ".field input, .field select, .input-row input, .input-row select",
+    )
+    .forEach(function (input) {
+      var row = input.closest(".input-row") || input.closest(".field");
+      input.addEventListener("focus", function () {
+        if (row) row.classList.add("focused");
+      });
+      input.addEventListener("blur", function () {
+        if (row) row.classList.remove("focused");
+      });
     });
-    input.addEventListener("blur", function () {
-      if (row) row.classList.remove("focused");
-    });
-  });
 }
 
 /* =============================================================
@@ -49,8 +55,7 @@ var Toast = (function () {
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
     warning:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
-    info:
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
   };
 
   function show(options) {
@@ -60,18 +65,27 @@ var Toast = (function () {
     var msg = options.message || "";
     var title = options.title || "";
     var type = options.type || "success";
-    var duration = typeof options.duration === "number" ? options.duration : 3500;
+    var duration =
+      typeof options.duration === "number" ? options.duration : 3500;
 
     var container = getContainer();
     var card = document.createElement("div");
     card.className = "admin-toast-card toast-" + type;
 
     var iconHtml = icons[type] || icons.info;
-    var titleHtml = title ? '<div class="admin-toast-title">' + title + "</div>" : "";
+    var titleHtml = title
+      ? '<div class="admin-toast-title">' + title + "</div>"
+      : "";
 
     card.innerHTML =
-      '<div class="admin-toast-icon">' + iconHtml + "</div>" +
-      '<div class="admin-toast-body">' + titleHtml + '<div class="admin-toast-message">' + msg + "</div></div>" +
+      '<div class="admin-toast-icon">' +
+      iconHtml +
+      "</div>" +
+      '<div class="admin-toast-body">' +
+      titleHtml +
+      '<div class="admin-toast-message">' +
+      msg +
+      "</div></div>" +
       '<button type="button" class="admin-toast-close" title="Dismiss">&times;</button>' +
       '<div class="admin-toast-progress"><div class="admin-toast-progress-bar"></div></div>';
 
@@ -106,7 +120,7 @@ var Toast = (function () {
       gsap.fromTo(
         card,
         { opacity: 0, x: 40, scale: 0.95 },
-        { opacity: 1, x: 0, scale: 1, duration: 0.25, ease: "power2.out" }
+        { opacity: 1, x: 0, scale: 1, duration: 0.25, ease: "power2.out" },
       );
 
       if (duration > 0 && progressBar) {
@@ -118,7 +132,7 @@ var Toast = (function () {
             duration: duration / 1000,
             ease: "none",
             onComplete: dismiss,
-          }
+          },
         );
 
         card.addEventListener("mouseenter", function () {
@@ -189,7 +203,9 @@ function initPortfolio() {
           document.querySelectorAll(".index-nav a").forEach(function (a) {
             a.classList.remove("active");
           });
-          var link = document.querySelector('.index-nav a[href="#' + sec.id + '"]');
+          var link = document.querySelector(
+            '.index-nav a[href="#' + sec.id + '"]',
+          );
           if (link) link.classList.add("active");
         }
       },
@@ -212,7 +228,8 @@ function initPortfolio() {
           el.textContent = final;
           return;
         }
-        el.textContent = glyphPool[Math.floor(Math.random() * glyphPool.length)];
+        el.textContent =
+          glyphPool[Math.floor(Math.random() * glyphPool.length)];
       },
       onComplete: function () {
         el.textContent = final;
@@ -266,9 +283,11 @@ function initScrollTriggersAndReveals() {
     gsap.set(el, { opacity: 0, y: 20 });
 
     var parent = el.parentElement;
-    var siblings = Array.from(parent ? parent.children : []).filter(function (c) {
-      return c.classList.contains("reveal");
-    });
+    var siblings = Array.from(parent ? parent.children : []).filter(
+      function (c) {
+        return c.classList.contains("reveal");
+      },
+    );
     var idx = siblings.indexOf(el);
     var forwardDelay = idx > 0 ? Math.min(idx * 0.07, 0.35) : 0;
 
@@ -381,16 +400,30 @@ function initCustomCursor() {
 
   cursor.style.opacity = "0";
 
-  gsap.set(cursor, { xPercent: -50, yPercent: -50 });
+  var hasGsap =
+    typeof gsap !== "undefined" && typeof gsap.quickTo === "function";
+  if (hasGsap) {
+    gsap.set(cursor, { xPercent: -50, yPercent: -50 });
+  }
 
-  var xTo = gsap.quickTo(cursor, "x", { duration: 0.08, ease: "power3.out" });
-  var yTo = gsap.quickTo(cursor, "y", { duration: 0.08, ease: "power3.out" });
+  var xTo =
+    typeof gsap !== "undefined"
+      ? gsap.quickTo(cursor, "x", { duration: 0.22, ease: "power2.out" })
+      : null;
+  var yTo =
+    typeof gsap !== "undefined"
+      ? gsap.quickTo(cursor, "y", { duration: 0.22, ease: "power2.out" })
+      : null;
 
   window.addEventListener("mousemove", function (e) {
     mouseX = e.clientX;
     mouseY = e.clientY;
-    xTo(mouseX);
-    yTo(mouseY);
+    if (xTo && yTo) {
+      xTo(mouseX);
+      yTo(mouseY);
+    } else {
+      cursor.style.transform = "translate(" + mouseX + "px, " + mouseY + "px)";
+    }
     if (!isVisible) {
       cursor.style.opacity = "1";
       isVisible = true;
@@ -452,7 +485,10 @@ function initCustomCursor() {
   });
 
   document.addEventListener("focusin", function (e) {
-    if (e.target && e.target.closest("input, textarea, select, button, [role='button']")) {
+    if (
+      e.target &&
+      e.target.closest("input, textarea, select, button, [role='button']")
+    ) {
       isFocused = true;
       cursor.classList.add("is-focus");
       gsap.to(cursor, { scale: 1.35, duration: 0.22, ease: "power2.out" });
@@ -460,7 +496,10 @@ function initCustomCursor() {
   });
 
   document.addEventListener("focusout", function (e) {
-    if (e.target && e.target.closest("input, textarea, select, button, [role='button']")) {
+    if (
+      e.target &&
+      e.target.closest("input, textarea, select, button, [role='button']")
+    ) {
       isFocused = false;
       cursor.classList.remove("is-focus");
       if (!isHovered) {
@@ -490,15 +529,27 @@ function initBinaryDecoder(customTitles) {
   var container = document.getElementById("heroDynamicName");
   if (!container) return;
 
-  if ((!customTitles || !customTitles.length) && container.getAttribute("data-names")) {
+  if (
+    (!customTitles || !customTitles.length) &&
+    container.getAttribute("data-names")
+  ) {
     var raw = container.getAttribute("data-names");
-    customTitles = raw.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    customTitles = raw
+      .split(",")
+      .map(function (s) {
+        return s.trim();
+      })
+      .filter(Boolean);
   }
 
-  var titles = (customTitles && customTitles.length) ? customTitles : ["Del Mundo", "Marc Kevin", "Kevs"];
+  var titles =
+    customTitles && customTitles.length
+      ? customTitles
+      : ["Del Mundo", "Marc Kevin", "Kevs"];
   var currentIndex = -1;
   var isDecoding = false;
-  var currentText = container.textContent.trim() || titles[titles.length - 1] || "Kevs";
+  var currentText =
+    container.textContent.trim() || titles[titles.length - 1] || "Kevs";
   var timer = null;
   var animFrame = null;
 
@@ -643,7 +694,11 @@ function getCachedPortfolioData() {
     var raw = sessionStorage.getItem(PORTFOLIO_CACHE_KEY);
     if (!raw) return null;
     var parsed = JSON.parse(raw);
-    if (parsed && parsed.timestamp && (Date.now() - parsed.timestamp < PORTFOLIO_CACHE_TTL)) {
+    if (
+      parsed &&
+      parsed.timestamp &&
+      Date.now() - parsed.timestamp < PORTFOLIO_CACHE_TTL
+    ) {
       return parsed.data;
     }
   } catch (e) {
@@ -654,10 +709,13 @@ function getCachedPortfolioData() {
 
 function savePortfolioDataToCache(data) {
   try {
-    sessionStorage.setItem(PORTFOLIO_CACHE_KEY, JSON.stringify({
-      timestamp: Date.now(),
-      data: data
-    }));
+    sessionStorage.setItem(
+      PORTFOLIO_CACHE_KEY,
+      JSON.stringify({
+        timestamp: Date.now(),
+        data: data,
+      }),
+    );
   } catch (e) {
     console.warn("[Portfolio Cache] Error saving cache:", e);
   }
@@ -717,7 +775,10 @@ function renderHero(profile) {
       var glyphs = '<span class="accent glyph">/</span>';
       var text = " " + profile.HeroSubline.replace(/^\/+/, "").trim();
       for (var i = 0; i < text.length; i++) {
-        glyphs += '<span class="glyph">' + (text[i] === " " ? "\u00A0" : escapeHtml(text[i])) + '</span>';
+        glyphs +=
+          '<span class="glyph">' +
+          (text[i] === " " ? "\u00A0" : escapeHtml(text[i])) +
+          "</span>";
       }
       sublineEl.innerHTML = glyphs;
     }
@@ -759,7 +820,8 @@ function renderBasicInfo(profile) {
   if (nameEl && profile.FullName) nameEl.textContent = profile.FullName;
 
   var locEl = document.getElementById("infoLocation");
-  if (locEl && profile.LocationAddress) locEl.textContent = profile.LocationAddress;
+  if (locEl && profile.LocationAddress)
+    locEl.textContent = profile.LocationAddress;
 
   var ageEl = document.getElementById("infoAge");
   if (ageEl && profile.Age !== undefined && profile.Age !== null) {
@@ -767,7 +829,11 @@ function renderBasicInfo(profile) {
   }
 
   var expEl = document.getElementById("infoExperience");
-  if (expEl && profile.ExperienceYears !== undefined && profile.ExperienceYears !== null) {
+  if (
+    expEl &&
+    profile.ExperienceYears !== undefined &&
+    profile.ExperienceYears !== null
+  ) {
     expEl.textContent = profile.ExperienceYears + " years of coding";
   }
 }
@@ -776,9 +842,16 @@ function renderTechStacks(techStacks) {
   var container = document.getElementById("techStackGroups");
   if (!container || !techStacks || !techStacks.length) return;
 
-  var groupsOrder = ["Frontend", "3D & Motion", "Backend & Database", "Tools & DevOps"];
+  var groupsOrder = [
+    "Frontend",
+    "3D & Motion",
+    "Backend & Database",
+    "Tools & DevOps",
+  ];
   var grouped = {};
-  groupsOrder.forEach(function (g) { grouped[g] = []; });
+  groupsOrder.forEach(function (g) {
+    grouped[g] = [];
+  });
 
   techStacks.forEach(function (item) {
     var g = item.GroupName || "Frontend";
@@ -791,17 +864,29 @@ function renderTechStacks(techStacks) {
     var items = grouped[gName] || [];
     if (!items.length) return;
 
-    html += '<div class="stack-group reveal">' +
-      '<div class="stack-group-head"><h4>' + escapeHtml(gName) + '</h4></div>' +
+    html +=
+      '<div class="stack-group reveal">' +
+      '<div class="stack-group-head"><h4>' +
+      escapeHtml(gName) +
+      "</h4></div>" +
       '<div class="tech-icons-grid">';
 
     items.forEach(function (item) {
-      html += '<div class="tech-card" data-label="' + escapeHtml(item.Label) + '" title="' + escapeHtml(item.Label) + '">' +
-        '<img src="' + escapeHtml(item.IconPath) + '" alt="' + escapeHtml(item.Label) + '" class="tech-icon" />' +
-      '</div>';
+      html +=
+        '<div class="tech-card" data-label="' +
+        escapeHtml(item.Label) +
+        '" title="' +
+        escapeHtml(item.Label) +
+        '">' +
+        '<img src="' +
+        escapeHtml(item.IconPath) +
+        '" alt="' +
+        escapeHtml(item.Label) +
+        '" class="tech-icon" />' +
+        "</div>";
     });
 
-    html += '</div></div>';
+    html += "</div></div>";
   });
 
   container.innerHTML = html;
@@ -814,11 +899,18 @@ function renderSkills(skills) {
   var html = "";
   skills.forEach(function (s) {
     var val = s.ProficiencyVal;
-    html += '<div class="skill-row reveal">' +
-      '<span class="skill-name">' + escapeHtml(s.SkillName) + '</span>' +
-      '<div class="skill-track"><div class="skill-fill" data-val="' + val + '"></div></div>' +
-      '<span class="skill-val">' + val + '</span>' +
-    '</div>';
+    html +=
+      '<div class="skill-row reveal">' +
+      '<span class="skill-name">' +
+      escapeHtml(s.SkillName) +
+      "</span>" +
+      '<div class="skill-track"><div class="skill-fill" data-val="' +
+      val +
+      '"></div></div>' +
+      '<span class="skill-val">' +
+      val +
+      "</span>" +
+      "</div>";
   });
 
   list.innerHTML = html;
@@ -841,17 +933,26 @@ function renderExperiences(experiences) {
       });
     }
 
-    html += '<div class="exp-card reveal">' +
+    html +=
+      '<div class="exp-card reveal">' +
       '<div class="exp-header">' +
-        '<div class="exp-role-group">' +
-          '<h3 class="exp-role">' + escapeHtml(exp.RoleTitle) + '</h3>' +
-          '<span class="exp-company">' + escapeHtml(exp.CompanyName) + '</span>' +
-        '</div>' +
-        '<span class="exp-period">' + escapeHtml(exp.PeriodRange) + '</span>' +
-      '</div>' +
-      (exp.DescriptionText ? '<p class="exp-desc">' + escapeHtml(exp.DescriptionText) + '</p>' : '') +
-      (tagsHtml ? '<div class="exp-tags">' + tagsHtml + '</div>' : '') +
-    '</div>';
+      '<div class="exp-role-group">' +
+      '<h3 class="exp-role">' +
+      escapeHtml(exp.RoleTitle) +
+      "</h3>" +
+      '<span class="exp-company">' +
+      escapeHtml(exp.CompanyName) +
+      "</span>" +
+      "</div>" +
+      '<span class="exp-period">' +
+      escapeHtml(exp.PeriodRange) +
+      "</span>" +
+      "</div>" +
+      (exp.DescriptionText
+        ? '<p class="exp-desc">' + escapeHtml(exp.DescriptionText) + "</p>"
+        : "") +
+      (tagsHtml ? '<div class="exp-tags">' + tagsHtml + "</div>" : "") +
+      "</div>";
   });
 
   list.innerHTML = html;
@@ -872,7 +973,7 @@ function renderProjects(projects) {
       spanClass = "span-12";
     } else {
       var rowIndex = Math.floor(idx / 2);
-      var isSecondInRow = (idx % 2 === 1);
+      var isSecondInRow = idx % 2 === 1;
 
       // Alternating 2-column row patterns:
       // Even rows (0, 2, 4...): col 7 + col 5
@@ -898,24 +999,39 @@ function renderProjects(projects) {
     var linkHref = proj.ProjectUrl || "#";
     var imgPath = proj.ImagePath || "Assets/Images/samsondentalcenter.png";
 
-    html += '<a href="' + escapeHtml(linkHref) + '" target="_blank" rel="noopener noreferrer" class="tile ' + spanClass + ' reveal">' +
+    html +=
+      '<a href="' +
+      escapeHtml(linkHref) +
+      '" target="_blank" rel="noopener noreferrer" class="tile ' +
+      spanClass +
+      ' reveal">' +
       '<div class="tile-thumb">' +
-        '<img src="' + escapeHtml(imgPath) + '" alt="' + escapeHtml(proj.Title) + '" loading="lazy" />' +
-      '</div>' +
-      '<span class="tile-num">' + pNum + '</span>' +
+      '<img src="' +
+      escapeHtml(imgPath) +
+      '" alt="' +
+      escapeHtml(proj.Title) +
+      '" loading="lazy" />' +
+      "</div>" +
+      '<span class="tile-num">' +
+      pNum +
+      "</span>" +
       '<div class="tile-arrow" title="Open repository in new tab">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
-          '<line x1="7" y1="17" x2="17" y2="7"></line>' +
-          '<polyline points="7 7 17 7 17 17"></polyline>' +
-        '</svg>' +
-      '</div>' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+      '<line x1="7" y1="17" x2="17" y2="7"></line>' +
+      '<polyline points="7 7 17 7 17 17"></polyline>' +
+      "</svg>" +
+      "</div>" +
       '<div class="tile-content">' +
-        '<div class="tile-body-top">' +
-          '<h3>' + escapeHtml(proj.Title) + '</h3>' +
-        '</div>' +
-        '<div class="tile-meta">' + tagsHtml + '</div>' +
-      '</div>' +
-    '</a>';
+      '<div class="tile-body-top">' +
+      "<h3>" +
+      escapeHtml(proj.Title) +
+      "</h3>" +
+      "</div>" +
+      '<div class="tile-meta">' +
+      tagsHtml +
+      "</div>" +
+      "</div>" +
+      "</a>";
   });
 
   bento.innerHTML = html;
@@ -927,14 +1043,23 @@ function renderEducations(educations) {
 
   var html = "";
   educations.forEach(function (edu) {
-    html += '<div class="list-line reveal">' +
-      '<span class="yr">' + escapeHtml(edu.YearPeriod) + '</span>' +
-      '<div>' +
-        '<div class="ttl">' + escapeHtml(edu.Title) + '</div>' +
-        '<div class="sub">' + escapeHtml(edu.Subtitle) + '</div>' +
-      '</div>' +
-      '<span class="org">' + escapeHtml(edu.InstitutionName) + '</span>' +
-    '</div>';
+    html +=
+      '<div class="list-line reveal">' +
+      '<span class="yr">' +
+      escapeHtml(edu.YearPeriod) +
+      "</span>" +
+      "<div>" +
+      '<div class="ttl">' +
+      escapeHtml(edu.Title) +
+      "</div>" +
+      '<div class="sub">' +
+      escapeHtml(edu.Subtitle) +
+      "</div>" +
+      "</div>" +
+      '<span class="org">' +
+      escapeHtml(edu.InstitutionName) +
+      "</span>" +
+      "</div>";
   });
 
   list.innerHTML = html;
@@ -946,14 +1071,23 @@ function renderAwards(awards) {
 
   var html = "";
   awards.forEach(function (award) {
-    html += '<div class="list-line reveal">' +
-      '<span class="yr">' + escapeHtml(award.AwardYear) + '</span>' +
-      '<div>' +
-        '<div class="ttl">' + escapeHtml(award.Title) + '</div>' +
-        '<div class="sub">' + escapeHtml(award.Subtitle) + '</div>' +
-      '</div>' +
-      '<span class="org">' + escapeHtml(award.OrganizationName) + '</span>' +
-    '</div>';
+    html +=
+      '<div class="list-line reveal">' +
+      '<span class="yr">' +
+      escapeHtml(award.AwardYear) +
+      "</span>" +
+      "<div>" +
+      '<div class="ttl">' +
+      escapeHtml(award.Title) +
+      "</div>" +
+      '<div class="sub">' +
+      escapeHtml(award.Subtitle) +
+      "</div>" +
+      "</div>" +
+      '<span class="org">' +
+      escapeHtml(award.OrganizationName) +
+      "</span>" +
+      "</div>";
   });
 
   list.innerHTML = html;
@@ -965,7 +1099,8 @@ function renderHobbies(hobbies) {
 
   var html = "";
   hobbies.forEach(function (h) {
-    html += '<span class="chip real reveal">' + escapeHtml(h.HobbyName) + '</span>';
+    html +=
+      '<span class="chip real reveal">' + escapeHtml(h.HobbyName) + "</span>";
   });
 
   list.innerHTML = html;
@@ -1001,12 +1136,13 @@ function loadPortfolioData(forceRefresh, onDataReady) {
     method: "POST",
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "X-Requested-With": "XMLHttpRequest"
+      "X-Requested-With": "XMLHttpRequest",
     },
-    body: JSON.stringify({ forceRefresh: !!forceRefresh })
+    body: JSON.stringify({ forceRefresh: !!forceRefresh }),
   })
     .then(function (res) {
-      if (!res.ok) throw new Error("Network response was not ok: " + res.statusText);
+      if (!res.ok)
+        throw new Error("Network response was not ok: " + res.statusText);
       return res.json();
     })
     .then(function (json) {
@@ -1018,7 +1154,10 @@ function loadPortfolioData(forceRefresh, onDataReady) {
       if (onDataReady) onDataReady(data, false /* fromCache */);
     })
     .catch(function (err) {
-      console.warn("[Portfolio] Failed to fetch data from backend, using fallback DOM:", err);
+      console.warn(
+        "[Portfolio] Failed to fetch data from backend, using fallback DOM:",
+        err,
+      );
       if (onDataReady) onDataReady(null, false);
     });
 }
@@ -1034,10 +1173,54 @@ window.refreshPortfolioData = function (force) {
 };
 
 /* =============================================================
+   PASSWORD VISIBILITY TOGGLE HELPER
+   ============================================================= */
+function initPasswordToggles() {
+  document.querySelectorAll(".password-toggle-btn").forEach(function (btn) {
+    if (btn.dataset.toggleBound) return;
+    btn.dataset.toggleBound = "true";
+
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var row = btn.closest(".input-row") || btn.closest(".field");
+      if (!row) return;
+
+      var input = row.querySelector("input");
+      if (!input) return;
+
+      var eyeClosed = btn.querySelector(".eye-closed");
+      var eyeOpen = btn.querySelector(".eye-open");
+
+      if (input.type === "password") {
+        input.type = "text";
+        if (eyeClosed) eyeClosed.style.display = "none";
+        if (eyeOpen) eyeOpen.style.display = "block";
+        btn.setAttribute("aria-label", "Hide password");
+        btn.setAttribute("title", "Hide password");
+      } else {
+        input.type = "password";
+        if (eyeClosed) eyeClosed.style.display = "block";
+        if (eyeOpen) eyeOpen.style.display = "none";
+        btn.setAttribute("aria-label", "Show password");
+        btn.setAttribute("title", "Show password");
+      }
+
+      try {
+        var len = input.value.length;
+        input.setSelectionRange(len, len);
+      } catch (err) {}
+    });
+  });
+}
+
+/* =============================================================
    ACCOUNT PROFILE PAGE
    ============================================================= */
 function initProfile() {
   initInputFocus();
+  initPasswordToggles();
 
   var pwInput = document.getElementById("txtNewPassword");
   var meter = document.getElementById("strengthMeter");
@@ -1047,7 +1230,13 @@ function initProfile() {
       var level = 0;
       if (v.length >= 8) level = 1;
       if (v.length >= 8 && /[0-9]/.test(v) && /[A-Z]/.test(v)) level = 2;
-      if (v.length >= 12 && /[0-9]/.test(v) && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v)) level = 3;
+      if (
+        v.length >= 12 &&
+        /[0-9]/.test(v) &&
+        /[A-Z]/.test(v) &&
+        /[^A-Za-z0-9]/.test(v)
+      )
+        level = 3;
       meter.setAttribute("data-level", level);
     });
   }
@@ -1130,7 +1319,11 @@ document.addEventListener("DOMContentLoaded", function () {
         setTimeout(function () {
           window.__showWelcomeToast();
           if (window.history && window.history.replaceState) {
-            window.history.replaceState({}, document.title, window.location.pathname);
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname,
+            );
           }
         }, 400);
       }

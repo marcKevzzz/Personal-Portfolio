@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initAdminProfile();
   initAdminLogout();
   initInputFocus();
+  initPasswordToggles();
 });
 
 /* -------------------------------------------------------------
@@ -24,7 +25,11 @@ function initImageLivePreviews() {
   function formatImgUrl(path) {
     if (!path) return "";
     var clean = path.trim();
-    if (clean.startsWith("http://") || clean.startsWith("https://") || clean.startsWith("data:")) {
+    if (
+      clean.startsWith("http://") ||
+      clean.startsWith("https://") ||
+      clean.startsWith("data:")
+    ) {
       return clean;
     }
     clean = clean.replace(/^(\~|\/)/, "");
@@ -33,9 +38,15 @@ function initImageLivePreviews() {
 
   // Profile Avatar live preview
   var fuProfileAvatar = document.querySelector("input[id*='fuProfileAvatar']");
-  var boxProfileAvatar = document.querySelector("[id*='profileAvatarPreviewBox']");
-  var imgProfileAvatar = document.querySelector("img[id*='imgProfileAvatarThumb']");
-  var hidExistingAvatar = document.querySelector("input[id*='hidExistingAvatarPath']");
+  var boxProfileAvatar = document.querySelector(
+    "[id*='profileAvatarPreviewBox']",
+  );
+  var imgProfileAvatar = document.querySelector(
+    "img[id*='imgProfileAvatarThumb']",
+  );
+  var hidExistingAvatar = document.querySelector(
+    "input[id*='hidExistingAvatarPath']",
+  );
 
   if (fuProfileAvatar && imgProfileAvatar) {
     fuProfileAvatar.addEventListener("change", function (e) {
@@ -48,7 +59,12 @@ function initImageLivePreviews() {
         };
         reader.readAsDataURL(file);
         if (typeof AdminToast !== "undefined") {
-          AdminToast.info("Avatar image selected: " + file.name + ". Click Save Profile to apply.", "Avatar Ready");
+          AdminToast.info(
+            "Avatar image selected: " +
+              file.name +
+              ". Click Save Profile to apply.",
+            "Avatar Ready",
+          );
         }
       } else {
         if (!hidExistingAvatar || !hidExistingAvatar.value) {
@@ -60,9 +76,15 @@ function initImageLivePreviews() {
 
   // Project Image live preview
   var fuProjImg = document.querySelector("input[id*='fuProjectImage']");
-  var boxProjImg = document.getElementById("projectImgPreviewBox") || document.querySelector("[id*='projectImgPreviewBox']");
-  var imgProj = document.getElementById("projectFormImgPreview") || document.querySelector("img[id*='projectFormImgPreview']");
-  var hidExistingProjImg = document.querySelector("input[id*='hidExistingImagePath']");
+  var boxProjImg =
+    document.getElementById("projectImgPreviewBox") ||
+    document.querySelector("[id*='projectImgPreviewBox']");
+  var imgProj =
+    document.getElementById("projectFormImgPreview") ||
+    document.querySelector("img[id*='projectFormImgPreview']");
+  var hidExistingProjImg = document.querySelector(
+    "input[id*='hidExistingImagePath']",
+  );
 
   if (fuProjImg && imgProj) {
     fuProjImg.addEventListener("change", function (e) {
@@ -75,7 +97,12 @@ function initImageLivePreviews() {
         };
         reader.readAsDataURL(file);
         if (typeof AdminToast !== "undefined") {
-          AdminToast.info("Project image selected: " + file.name + ". Click Add/Update Project to save.", "Image Ready");
+          AdminToast.info(
+            "Project image selected: " +
+              file.name +
+              ". Click Add/Update Project to save.",
+            "Image Ready",
+          );
         }
       } else {
         if (!hidExistingProjImg || !hidExistingProjImg.value) {
@@ -90,19 +117,23 @@ function initImageLivePreviews() {
    INPUT UNDERLINE FOCUS STATE (ADMIN)
    ------------------------------------------------------------- */
 function initInputFocus() {
-  document.querySelectorAll(".field input, .field select, .input-row input, .input-row select").forEach(function (input) {
-    var row = input.closest(".input-row") || input.closest(".field");
-    input.addEventListener("focus", function () {
-      if (row) row.classList.add("focused");
+  document
+    .querySelectorAll(
+      ".field input, .field select, .input-row input, .input-row select",
+    )
+    .forEach(function (input) {
+      var row = input.closest(".input-row") || input.closest(".field");
+      input.addEventListener("focus", function () {
+        if (row) row.classList.add("focused");
+      });
+      input.addEventListener("blur", function () {
+        if (row) row.classList.remove("focused");
+      });
     });
-    input.addEventListener("blur", function () {
-      if (row) row.classList.remove("focused");
-    });
-  });
 }
 
 /* -------------------------------------------------------------
-   CUSTOM INVERTING CURSOR (ADMIN)
+   CUSTOM INVERTING CURSOR (ADMIN - GSAP ENHANCED)
    ------------------------------------------------------------- */
 function initAdminCursor() {
   if (!window.matchMedia("(pointer: fine)").matches) return;
@@ -119,33 +150,41 @@ function initAdminCursor() {
   }
 
   var dot = cursor.querySelector(".custom-cursor-circle");
+  var mouseX = window.innerWidth / 2;
+  var mouseY = window.innerHeight / 2;
   var isMoved = false;
   var isHovered = false;
 
-  if (typeof gsap !== "undefined" && dot) {
-    gsap.set(dot, { xPercent: -50, yPercent: -50 });
-  }
+  gsap.set(cursor, { xPercent: -50, yPercent: -50 });
+
+  var xTo = gsap.quickTo(cursor, "x", { duration: 0.22, ease: "power2.out" });
+  var yTo = gsap.quickTo(cursor, "y", { duration: 0.22, ease: "power2.out" });
 
   window.addEventListener("mousemove", function (e) {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    xTo(mouseX);
+    yTo(mouseY);
     if (!isMoved) {
       cursor.classList.add("is-visible");
       isMoved = true;
     }
-    cursor.style.transform =
-      "translate(" + e.clientX + "px, " + e.clientY + "px)";
   });
 
   document.addEventListener("mouseleave", function () {
     cursor.classList.remove("is-visible");
+    isMoved = false;
   });
 
   document.addEventListener("mouseenter", function () {
-    if (isMoved) cursor.classList.add("is-visible");
+    cursor.classList.add("is-visible");
+    isMoved = true;
   });
 
   // Subtle click animation
   window.addEventListener("mousedown", function () {
-    if (typeof gsap !== "undefined" && dot) {
+    cursor.classList.add("is-active");
+    if (dot) {
       gsap.to(dot, {
         scale: isHovered ? 1.15 : 0.85,
         duration: 0.15,
@@ -155,35 +194,45 @@ function initAdminCursor() {
   });
 
   window.addEventListener("mouseup", function () {
-    if (typeof gsap !== "undefined" && dot) {
+    cursor.classList.remove("is-active");
+    if (dot) {
       gsap.to(dot, {
-        scale: isHovered ? 1.15 : 1,
+        scale: isHovered ? 1.25 : 1,
         duration: 0.18,
         ease: "power2.out",
       });
     }
   });
 
-  // Magnetic scale on hover targets (reduced to subtle 1.35x)
-  if (typeof gsap !== "undefined" && dot) {
-    var hoverTargets = document.querySelectorAll(
-      "a, button, input, textarea, select, .nav-item, .btn, .sidebar-toggle-btn, .admin-logout-btn, .admin-avatar-box, .status-pill, .chip, .chip-tag, .chip-remove, .chip-input, .chips-container, .data-table tr",
-    );
-    hoverTargets.forEach(function (target) {
-      target.addEventListener("mouseenter", function () {
+  // Hover targets with delegation & GSAP scale
+  var hoverSelector =
+    "a, button, input, textarea, select, .nav-item, .btn, .sidebar-toggle-btn, .admin-logout-btn, .admin-avatar-box, .status-pill, .chip, .chip-tag, .chip-remove, .chip-input, .chips-container, .data-table tr, .dash-kpi-card, .jump-panel-btn";
+
+  document.addEventListener("mouseover", function (e) {
+    if (e.target && e.target.closest(hoverSelector)) {
+      if (!isHovered) {
         isHovered = true;
-        gsap.to(dot, { scale: 1.15, duration: 0.2, ease: "power2.out" });
-      });
-      target.addEventListener("mouseleave", function () {
-        isHovered = false;
-        gsap.to(dot, { scale: 1, duration: 0.2, ease: "power2.out" });
-      });
-    });
-  }
+        cursor.classList.add("is-hover");
+        if (dot) {
+          gsap.to(dot, { scale: 1.25, duration: 0.22, ease: "power2.out" });
+        }
+      }
+    }
+  });
+
+  document.addEventListener("mouseout", function (e) {
+    if (e.target && e.target.closest(hoverSelector)) {
+      isHovered = false;
+      cursor.classList.remove("is-hover");
+      if (dot) {
+        gsap.to(dot, { scale: 1, duration: 0.22, ease: "power2.out" });
+      }
+    }
+  });
 }
 
 /* -------------------------------------------------------------
-   GSAP SIDEBAR COLLAPSIBLE OPEN / CLOSE LOGIC
+   SIDEBAR COLLAPSIBLE OPEN / CLOSE (GSAP ENHANCED)
    ------------------------------------------------------------- */
 function initAdminSidebarAnimations() {
   var shell = document.getElementById("adminShell");
@@ -192,26 +241,41 @@ function initAdminSidebarAnimations() {
   var backdrop = document.getElementById("adminSidebarBackdrop");
   if (!shell || !nav || !toggleBtn) return;
 
-  var toggleIcon = toggleBtn.querySelector("svg");
-  var brand = nav.querySelector(".admin-brand");
-  var navLabels = nav.querySelectorAll(".nav-label");
-  var logoutText = nav.querySelector(".logout-text");
-
   function isMobileView() {
     return window.innerWidth <= 800;
   }
 
   var savedCollapsed = localStorage.getItem("admin_sidebar_collapsed");
-  // Default to collapsed on mobile to keep sidebar on the side as icon rail
-  var isCollapsed = savedCollapsed !== null ? savedCollapsed === "true" : isMobileView();
+  var isCollapsed =
+    savedCollapsed !== null ? savedCollapsed === "true" : isMobileView();
 
   function setSidebarState(collapsed, animate) {
     var isMobile = isMobileView();
-    var targetWidth = collapsed ? (isMobile ? 56 : 68) : 240;
 
     if (collapsed) {
       shell.classList.add("sidebar-collapsed");
       shell.classList.remove("sidebar-mobile-expanded");
+
+      if (animate) {
+        if (!isMobile) {
+          gsap.fromTo(
+            nav,
+            { width: 240 },
+            {
+              width: 56,
+              duration: 0.28,
+              ease: "power2.out",
+              clearProps: "width",
+            }
+          );
+        }
+        var labels = nav.querySelectorAll(".nav-label, .admin-profile-summary");
+        if (labels.length > 0) {
+          gsap.to(labels, { opacity: 0, duration: 0.15, ease: "power1.out" });
+        }
+      } else {
+        nav.style.width = "";
+      }
     } else {
       shell.classList.remove("sidebar-collapsed");
       if (isMobile) {
@@ -219,61 +283,41 @@ function initAdminSidebarAnimations() {
       } else {
         shell.classList.remove("sidebar-mobile-expanded");
       }
-    }
 
-    if (animate && typeof gsap !== "undefined") {
-      var tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
-
-      // Animate sidebar width smoothly with GSAP
-      tl.to(nav, { width: targetWidth, duration: 0.28 }, 0);
-
-      // Rotate toggle icon chevron
-      if (toggleIcon) {
-        tl.to(toggleIcon, { rotate: collapsed ? 180 : 0, duration: 0.28 }, 0);
-      }
-
-      if (collapsed) {
-        // Fade out brand (dot + title) and labels
-        tl.to(
-          [brand, navLabels, logoutText],
-          {
-            opacity: 0,
-            duration: 0.15,
-          },
-          0,
-        );
+      if (animate) {
+        if (!isMobile) {
+          gsap.fromTo(
+            nav,
+            { width: 56 },
+            {
+              width: 240,
+              duration: 0.28,
+              ease: "power2.out",
+              clearProps: "width",
+            }
+          );
+        }
+        var labels = nav.querySelectorAll(".nav-label, .admin-profile-summary");
+        if (labels.length > 0) {
+          gsap.fromTo(
+            labels,
+            { opacity: 0, x: -4 },
+            {
+              opacity: 1,
+              x: 0,
+              stagger: 0.02,
+              duration: 0.22,
+              ease: "power2.out",
+            }
+          );
+        }
       } else {
-        // Fade in brand and labels
-        tl.to(
-          [brand, navLabels, logoutText],
-          {
-            opacity: 1,
-            duration: 0.2,
-            delay: 0.05,
-          },
-          0,
-        );
-      }
-    } else {
-      // Immediate load without animation
-      if (typeof gsap !== "undefined") {
-        gsap.set(nav, { width: targetWidth });
-        if (toggleIcon) gsap.set(toggleIcon, { rotate: collapsed ? 180 : 0 });
-        gsap.set([brand, navLabels, logoutText], {
-          opacity: collapsed ? 0 : 1,
-        });
-      } else {
-        nav.style.width = targetWidth + "px";
-        if (brand) brand.style.opacity = collapsed ? "0" : "1";
-        navLabels.forEach(function (lbl) {
-          lbl.style.opacity = collapsed ? "0" : "1";
-        });
-        if (logoutText) logoutText.style.opacity = collapsed ? "0" : "1";
+        nav.style.width = "";
       }
     }
   }
 
-  // Initialize state
+  // Initial set without animation
   setSidebarState(isCollapsed, false);
 
   toggleBtn.addEventListener("click", function (e) {
@@ -283,7 +327,6 @@ function initAdminSidebarAnimations() {
     setSidebarState(isCollapsed, true);
   });
 
-  // Close drawer on backdrop tap (mobile)
   if (backdrop) {
     backdrop.addEventListener("click", function () {
       if (!isCollapsed && isMobileView()) {
@@ -294,7 +337,6 @@ function initAdminSidebarAnimations() {
     });
   }
 
-  // Close drawer on mobile when clicking any panel link
   nav.querySelectorAll(".nav-item").forEach(function (item) {
     item.addEventListener("click", function () {
       if (isMobileView() && !isCollapsed) {
@@ -305,7 +347,6 @@ function initAdminSidebarAnimations() {
     });
   });
 
-  // Responsive resize handler
   var resizeTimer;
   window.addEventListener("resize", function () {
     clearTimeout(resizeTimer);
@@ -319,8 +360,10 @@ function initAdminSidebarAnimations() {
   });
 }
 
+
+
 /* -------------------------------------------------------------
-   TAB PANEL NAVIGATION & GSAP TRANSITIONS
+   TAB PANEL NAVIGATION & ROUTING
    ------------------------------------------------------------- */
 function initAdminNavigation() {
   var navLinks = document.querySelectorAll(".admin-nav a[data-panel]");
@@ -338,31 +381,21 @@ function initAdminNavigation() {
 
     panels.forEach(function (p) {
       var match = p.getAttribute("data-panel") === panelName;
-      if (match) {
-        p.classList.add("active");
-        if (typeof gsap !== "undefined") {
-          gsap.fromTo(
-            p,
-            { opacity: 0, y: 12 },
-            { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" },
-          );
-        }
-      } else {
-        p.classList.remove("active");
-      }
+      p.classList.toggle("active", match);
     });
 
     if (hidden) {
       hidden.value = panelName;
     }
 
-    // Update Topbar Title
     if (titleDisplay) {
       var activeLink = document.querySelector(
         '.admin-nav a[data-panel="' + panelName + '"] .nav-label',
       );
       if (activeLink) {
         titleDisplay.textContent = activeLink.textContent;
+      } else if (panelName === "dashboard") {
+        titleDisplay.textContent = "Dashboard";
       }
     }
 
@@ -381,11 +414,29 @@ function initAdminNavigation() {
     });
   });
 
-  // Determine initial active panel
+  // Jump buttons on Dashboard or other panels
+  document.addEventListener("click", function (e) {
+    var jumpBtn = e.target.closest(".jump-panel-btn");
+    if (jumpBtn) {
+      var target = jumpBtn.getAttribute("data-target");
+      if (target) {
+        activatePanel(target);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  });
+
+  // Initial active panel (defaults to dashboard)
   var savedPanel = localStorage.getItem("admin_active_panel");
-  var initial = hidden && hidden.value ? hidden.value : savedPanel || "profile";
+  var initial =
+    hidden && hidden.value ? hidden.value : savedPanel || "dashboard";
   activatePanel(initial);
 }
+
+// Print / Export report function
+window.printReportSummary = function () {
+  window.print();
+};
 
 /* -------------------------------------------------------------
    INPUT CHIPS COMPONENT
@@ -395,11 +446,11 @@ function initInputChips() {
     var hiddenId = container.getAttribute("data-input-target");
     var getHidden = function () {
       return hiddenId
-        ? (document.getElementById(hiddenId) ||
-           container.querySelector("#" + hiddenId) ||
-           container.parentElement.querySelector("#" + hiddenId) ||
-           document.querySelector("input[id$='" + hiddenId + "']") ||
-           document.querySelector("input[name$='" + hiddenId + "']"))
+        ? document.getElementById(hiddenId) ||
+            container.querySelector("#" + hiddenId) ||
+            container.parentElement.querySelector("#" + hiddenId) ||
+            document.querySelector("input[id$='" + hiddenId + "']") ||
+            document.querySelector("input[name$='" + hiddenId + "']")
         : null;
     };
     var hiddenInput = getHidden();
@@ -420,10 +471,12 @@ function initInputChips() {
       var hInp = getHidden();
       if (!hInp) return;
       var tags = [];
-      chipsList.querySelectorAll(".chip-tag span:first-child").forEach(function (t) {
-        var txt = t.textContent.trim();
-        if (txt) tags.push(txt);
-      });
+      chipsList
+        .querySelectorAll(".chip-tag span:first-child")
+        .forEach(function (t) {
+          var txt = t.textContent.trim();
+          if (txt) tags.push(txt);
+        });
       hInp.value = tags.join(",");
     }
 
@@ -495,11 +548,11 @@ function commitAllChips() {
     var chipsList = container.querySelector(".chips-list");
     var hiddenId = container.getAttribute("data-input-target");
     var hInp = hiddenId
-      ? (document.getElementById(hiddenId) ||
-         container.querySelector("#" + hiddenId) ||
-         container.parentElement.querySelector("#" + hiddenId) ||
-         document.querySelector("input[id$='" + hiddenId + "']") ||
-         document.querySelector("input[name$='" + hiddenId + "']"))
+      ? document.getElementById(hiddenId) ||
+        container.querySelector("#" + hiddenId) ||
+        container.parentElement.querySelector("#" + hiddenId) ||
+        document.querySelector("input[id$='" + hiddenId + "']") ||
+        document.querySelector("input[name$='" + hiddenId + "']")
       : null;
 
     if (chipInput && chipInput.value.trim()) {
@@ -507,7 +560,10 @@ function commitAllChips() {
       if (val && chipsList) {
         var tag = document.createElement("span");
         tag.className = "chip-tag";
-        tag.innerHTML = "<span>" + val + "</span><span class=\"chip-remove\" title=\"Remove\">&times;</span>";
+        tag.innerHTML =
+          "<span>" +
+          val +
+          '</span><span class="chip-remove" title="Remove">&times;</span>';
         chipsList.appendChild(tag);
         chipInput.value = "";
       }
@@ -515,20 +571,30 @@ function commitAllChips() {
 
     if (hInp && chipsList) {
       var tags = [];
-      chipsList.querySelectorAll(".chip-tag span:first-child").forEach(function (t) {
-        var txt = t.textContent.trim();
-        if (txt) tags.push(txt);
-      });
+      chipsList
+        .querySelectorAll(".chip-tag span:first-child")
+        .forEach(function (t) {
+          var txt = t.textContent.trim();
+          if (txt) tags.push(txt);
+        });
       hInp.value = tags.join(",");
     }
   });
 }
 
 function safeEncodeSvgCode() {
-  var txtSvg = document.getElementById("txtTechSvgCode") || document.querySelector("textarea[id*='txtTechSvgCode']");
-  if (txtSvg && txtSvg.value && txtSvg.value.trim().indexOf("<") >= 0 && !txtSvg.value.startsWith("base64:")) {
+  var txtSvg =
+    document.getElementById("txtTechSvgCode") ||
+    document.querySelector("textarea[id*='txtTechSvgCode']");
+  if (
+    txtSvg &&
+    txtSvg.value &&
+    txtSvg.value.trim().indexOf("<") >= 0 &&
+    !txtSvg.value.startsWith("base64:")
+  ) {
     try {
-      txtSvg.value = "base64:" + btoa(unescape(encodeURIComponent(txtSvg.value.trim())));
+      txtSvg.value =
+        "base64:" + btoa(unescape(encodeURIComponent(txtSvg.value.trim())));
     } catch (err) {}
   }
 }
@@ -562,8 +628,13 @@ function initAdminDatePickers() {
    ------------------------------------------------------------- */
 function initAdminAvatarUpload() {
   var uploadInput = document.getElementById("adminAvatarUpload");
-  var previewImg = document.getElementById("adminAvatarPreview") || document.getElementById("imgAdminAvatar") || document.querySelector(".avatar-preview-container .account-avatar-img");
-  var svgPlaceholder = document.getElementById("adminAvatarSvgPlaceholder") || document.querySelector(".avatar-svg-placeholder");
+  var previewImg =
+    document.getElementById("adminAvatarPreview") ||
+    document.getElementById("imgAdminAvatar") ||
+    document.querySelector(".avatar-preview-container .account-avatar-img");
+  var svgPlaceholder =
+    document.getElementById("adminAvatarSvgPlaceholder") ||
+    document.querySelector(".avatar-svg-placeholder");
   if (!uploadInput) return;
 
   uploadInput.addEventListener("change", function (e) {
@@ -572,7 +643,12 @@ function initAdminAvatarUpload() {
       var reader = new FileReader();
       reader.onload = function (evt) {
         if (!previewImg) {
-          previewImg = document.getElementById("adminAvatarPreview") || document.getElementById("imgAdminAvatar") || document.querySelector(".avatar-preview-container .account-avatar-img");
+          previewImg =
+            document.getElementById("adminAvatarPreview") ||
+            document.getElementById("imgAdminAvatar") ||
+            document.querySelector(
+              ".avatar-preview-container .account-avatar-img",
+            );
         }
         if (previewImg) {
           previewImg.src = evt.target.result;
@@ -582,7 +658,12 @@ function initAdminAvatarUpload() {
       };
       reader.readAsDataURL(file);
       if (typeof AdminToast !== "undefined") {
-        AdminToast.info("Admin avatar selected: " + file.name + ". Click Save Changes to apply.", "Avatar Ready");
+        AdminToast.info(
+          "Admin avatar selected: " +
+            file.name +
+            ". Click Save Changes to apply.",
+          "Avatar Ready",
+        );
       }
     }
   });
@@ -622,17 +703,66 @@ function initAdminProfile() {
       if (newPw) {
         if (newPw.length < 8) {
           e.preventDefault();
-          AdminToast.warning("Password must be at least 8 characters.", "Security Warning");
+          AdminToast.warning(
+            "Password must be at least 8 characters.",
+            "Security Warning",
+          );
           return false;
         }
         if (newPw !== confirmPw) {
           e.preventDefault();
-          AdminToast.error("Passwords do not match. Please verify your new password.", "Validation Error");
+          AdminToast.error(
+            "Passwords do not match. Please verify your new password.",
+            "Validation Error",
+          );
           return false;
         }
       }
     });
   }
+}
+
+/* -------------------------------------------------------------
+   PASSWORD VISIBILITY TOGGLE HELPER (ADMIN)
+   ------------------------------------------------------------- */
+function initPasswordToggles() {
+  document.querySelectorAll(".password-toggle-btn").forEach(function (btn) {
+    if (btn.dataset.toggleBound) return;
+    btn.dataset.toggleBound = "true";
+
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var row = btn.closest(".input-row") || btn.closest(".field");
+      if (!row) return;
+
+      var input = row.querySelector("input");
+      if (!input) return;
+
+      var eyeClosed = btn.querySelector(".eye-closed");
+      var eyeOpen = btn.querySelector(".eye-open");
+
+      if (input.type === "password") {
+        input.type = "text";
+        if (eyeClosed) eyeClosed.style.display = "none";
+        if (eyeOpen) eyeOpen.style.display = "block";
+        btn.setAttribute("aria-label", "Hide password");
+        btn.setAttribute("title", "Hide password");
+      } else {
+        input.type = "password";
+        if (eyeClosed) eyeClosed.style.display = "block";
+        if (eyeOpen) eyeOpen.style.display = "none";
+        btn.setAttribute("aria-label", "Show password");
+        btn.setAttribute("title", "Show password");
+      }
+
+      try {
+        var len = input.value.length;
+        input.setSelectionRange(len, len);
+      } catch (err) {}
+    });
+  });
 }
 
 /* -------------------------------------------------------------
@@ -651,17 +781,20 @@ function initAdminLogout() {
 
   logoutBtn.addEventListener("click", function (e) {
     e.preventDefault();
-    var baseUrl = logoutBtn.getAttribute("data-redirect") || "../../Auth/SignIn.aspx?logout=true";
+    var baseUrl =
+      logoutBtn.getAttribute("data-redirect") ||
+      "../../Auth/SignIn.aspx?logout=true";
 
     if (typeof AdminModal !== "undefined" && AdminModal.confirm) {
       AdminModal.confirm({
         title: "Log Out",
-        message: "Are you sure you want to terminate your administrative session?",
+        message:
+          "Are you sure you want to terminate your administrative session?",
         confirmText: "Log Out",
         type: "danger",
         onConfirm: function () {
           window.location.href = baseUrl;
-        }
+        },
       });
     } else {
       window.location.href = baseUrl;
@@ -673,7 +806,9 @@ function initAdminLogout() {
    FORM & INPUT VALIDATION ENGINE
    ------------------------------------------------------------- */
 function validateAdminForm(trigger) {
-  var container = trigger.closest(".add-form, .admin-profile-card, .admin-panel, form");
+  var container = trigger.closest(
+    ".add-form, .admin-profile-card, .admin-panel, form",
+  );
   if (!container) return { valid: true };
 
   // Clear previous error highlights
@@ -681,7 +816,9 @@ function validateAdminForm(trigger) {
     el.classList.remove("input-error", "has-error");
   });
 
-  var inputs = container.querySelectorAll("input:not([type='hidden']), textarea, select");
+  var inputs = container.querySelectorAll(
+    "input:not([type='hidden']), textarea, select",
+  );
   var firstInvalid = null;
   var errorMsg = "";
 
@@ -690,57 +827,90 @@ function validateAdminForm(trigger) {
     if (inp.disabled || inp.offsetParent === null) continue;
 
     var val = inp.value.trim();
-    var labelElem = inp.closest(".field") ? inp.closest(".field").querySelector("label") : null;
-    var fieldName = labelElem ? labelElem.textContent.replace(/[\*\:]/g, "").trim() : (inp.placeholder || "Field");
+    var labelElem = inp.closest(".field")
+      ? inp.closest(".field").querySelector("label")
+      : null;
+    var fieldName = labelElem
+      ? labelElem.textContent.replace(/[\*\:]/g, "").trim()
+      : inp.placeholder || "Field";
 
-    var isRequired = inp.hasAttribute("required") || inp.getAttribute("aria-required") === "true";
-    var isAddFormBtn = trigger.classList.contains("btn-primary") && trigger.closest(".add-form");
+    var isRequired =
+      inp.hasAttribute("required") ||
+      inp.getAttribute("aria-required") === "true";
+    var isAddFormBtn =
+      trigger.classList.contains("btn-primary") && trigger.closest(".add-form");
 
     // Special handling for file uploads
     if (inp.type === "file") {
       var fieldWrap = inp.closest(".field") || inp.parentElement;
-      var previewBox = fieldWrap ? fieldWrap.querySelector("[id*='Preview'], [id*='preview'], img") : null;
-      var hiddenExisting = fieldWrap ? fieldWrap.querySelector("input[id*='Existing'], input[id*='existing'], input[id*='hidExisting']") : null;
-      var hasExisting = (hiddenExisting && hiddenExisting.value && hiddenExisting.value.trim() !== "") ||
-                        (previewBox && previewBox.offsetParent !== null && previewBox.style.display !== "none");
+      var previewBox = fieldWrap
+        ? fieldWrap.querySelector("[id*='Preview'], [id*='preview'], img")
+        : null;
+      var hiddenExisting = fieldWrap
+        ? fieldWrap.querySelector(
+            "input[id*='Existing'], input[id*='existing'], input[id*='hidExisting']",
+          )
+        : null;
+      var hasExisting =
+        (hiddenExisting &&
+          hiddenExisting.value &&
+          hiddenExisting.value.trim() !== "") ||
+        (previewBox &&
+          previewBox.offsetParent !== null &&
+          previewBox.style.display !== "none");
       var hasFiles = inp.files && inp.files.length > 0;
       if (isRequired && !hasExisting && !hasFiles) {
         firstInvalid = inp;
-        errorMsg = "Please choose a file for \"" + fieldName + "\".";
+        errorMsg = 'Please choose a file for "' + fieldName + '".';
         break;
       }
       // Never block if optional or existing image preview is present
       continue;
     }
 
-    if ((isRequired || (isAddFormBtn && !inp.classList.contains("chip-input") && !inp.id.includes("SvgCode") && !inp.id.includes("Url") && !inp.id.includes("Description"))) && !val) {
+    if (
+      (isRequired ||
+        (isAddFormBtn &&
+          !inp.classList.contains("chip-input") &&
+          !inp.id.includes("SvgCode") &&
+          !inp.id.includes("Url") &&
+          !inp.id.includes("Description"))) &&
+      !val
+    ) {
       firstInvalid = inp;
-      errorMsg = "Please fill out \"" + fieldName + "\" before proceeding.";
+      errorMsg = 'Please fill out "' + fieldName + '" before proceeding.';
       break;
     }
 
     if (inp.type === "number" && val !== "") {
       var num = parseFloat(val);
-      var min = inp.hasAttribute("min") ? parseFloat(inp.getAttribute("min")) : null;
-      var max = inp.hasAttribute("max") ? parseFloat(inp.getAttribute("max")) : null;
+      var min = inp.hasAttribute("min")
+        ? parseFloat(inp.getAttribute("min"))
+        : null;
+      var max = inp.hasAttribute("max")
+        ? parseFloat(inp.getAttribute("max"))
+        : null;
       if (isNaN(num)) {
         firstInvalid = inp;
-        errorMsg = "\"" + fieldName + "\" must be a valid number.";
+        errorMsg = '"' + fieldName + '" must be a valid number.';
         break;
       }
       if (min !== null && num < min) {
         firstInvalid = inp;
-        errorMsg = "\"" + fieldName + "\" cannot be less than " + min + ".";
+        errorMsg = '"' + fieldName + '" cannot be less than ' + min + ".";
         break;
       }
       if (max !== null && num > max) {
         firstInvalid = inp;
-        errorMsg = "\"" + fieldName + "\" cannot be greater than " + max + ".";
+        errorMsg = '"' + fieldName + '" cannot be greater than ' + max + ".";
         break;
       }
     }
 
-    if ((inp.type === "email" || inp.id.toLowerCase().indexOf("email") >= 0) && val !== "") {
+    if (
+      (inp.type === "email" || inp.id.toLowerCase().indexOf("email") >= 0) &&
+      val !== ""
+    ) {
       var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(val)) {
         firstInvalid = inp;
@@ -751,8 +921,12 @@ function validateAdminForm(trigger) {
   }
 
   // Check password matching if in admin profile
-  var newPw = container.querySelector("#txtAdminNewPassword, #adminNewPassword");
-  var confirmPw = container.querySelector("#txtAdminConfirmPassword, #adminConfirmPassword");
+  var newPw = container.querySelector(
+    "#txtAdminNewPassword, #adminNewPassword",
+  );
+  var confirmPw = container.querySelector(
+    "#txtAdminConfirmPassword, #adminConfirmPassword",
+  );
   if (newPw && confirmPw && newPw.value.trim() !== "") {
     if (newPw.value.trim().length < 8) {
       firstInvalid = newPw;
@@ -765,7 +939,8 @@ function validateAdminForm(trigger) {
 
   if (firstInvalid) {
     firstInvalid.classList.add("input-error");
-    var parentField = firstInvalid.closest(".field") || firstInvalid.closest(".input-row");
+    var parentField =
+      firstInvalid.closest(".field") || firstInvalid.closest(".input-row");
     if (parentField) parentField.classList.add("has-error");
     firstInvalid.focus();
     if (typeof AdminToast !== "undefined") {
@@ -780,61 +955,75 @@ function validateAdminForm(trigger) {
 /* -------------------------------------------------------------
    UNIVERSAL MODAL CONFIRMATION INTERCEPTOR
    ------------------------------------------------------------- */
-document.addEventListener("click", function (e) {
-  var trigger = e.target.closest("[data-confirm-title], [data-confirm-msg], .needs-confirm");
-  if (trigger && !trigger.dataset.confirmed) {
-    commitAllChips();
-    safeEncodeSvgCode();
+document.addEventListener(
+  "click",
+  function (e) {
+    var trigger = e.target.closest(
+      "[data-confirm-title], [data-confirm-msg], .needs-confirm",
+    );
+    if (trigger && !trigger.dataset.confirmed) {
+      commitAllChips();
+      safeEncodeSvgCode();
 
-    var type = trigger.getAttribute("data-confirm-type") || (trigger.classList.contains("btn-danger") || trigger.classList.contains("danger") ? "danger" : "primary");
+      var type =
+        trigger.getAttribute("data-confirm-type") ||
+        (trigger.classList.contains("btn-danger") ||
+        trigger.classList.contains("danger")
+          ? "danger"
+          : "primary");
 
-    // Perform validation on Add/Save/Update actions before opening modal
-    if (type !== "danger") {
-      var valResult = validateAdminForm(trigger);
-      if (!valResult.valid) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    var title = trigger.getAttribute("data-confirm-title") || "Confirm Action";
-    var msg = trigger.getAttribute("data-confirm-msg") || "Are you sure you want to proceed?";
-    var confirmText = trigger.getAttribute("data-confirm-btn") || (type === "danger" ? "Delete" : "Save Changes");
-
-    AdminModal.confirm({
-      title: title,
-      message: msg,
-      confirmText: confirmText,
-      type: type,
-      onConfirm: function () {
-        commitAllChips();
-        safeEncodeSvgCode();
-        trigger.dataset.confirmed = "true";
-        var href = trigger.getAttribute("href");
-        if (href && href.indexOf("__doPostBack") >= 0) {
-          eval(href.replace(/^javascript:/i, ""));
-        } else {
-          trigger.click();
+      // Perform validation on Add/Save/Update actions before opening modal
+      if (type !== "danger") {
+        var valResult = validateAdminForm(trigger);
+        if (!valResult.valid) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
         }
-        setTimeout(function () { delete trigger.dataset.confirmed; }, 1500);
       }
-    });
-  }
-}, true);
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      var title =
+        trigger.getAttribute("data-confirm-title") || "Confirm Action";
+      var msg =
+        trigger.getAttribute("data-confirm-msg") ||
+        "Are you sure you want to proceed?";
+      var confirmText =
+        trigger.getAttribute("data-confirm-btn") ||
+        (type === "danger" ? "Delete" : "Save Changes");
+
+      AdminModal.confirm({
+        title: title,
+        message: msg,
+        confirmText: confirmText,
+        type: type,
+        onConfirm: function () {
+          commitAllChips();
+          safeEncodeSvgCode();
+          trigger.dataset.confirmed = "true";
+          var href = trigger.getAttribute("href");
+          if (href && href.indexOf("__doPostBack") >= 0) {
+            eval(href.replace(/^javascript:/i, ""));
+          } else {
+            trigger.click();
+          }
+          setTimeout(function () {
+            delete trigger.dataset.confirmed;
+          }, 1500);
+        },
+      });
+    }
+  },
+  true,
+);
 
 // Global safety listener on any form submit to ensure chips and SVGs are prepared
 document.addEventListener("submit", function () {
   commitAllChips();
   safeEncodeSvgCode();
 });
-
-
-
-
 
 /* =============================================================
    REUSABLE TOAST NOTIFICATION SYSTEM
@@ -865,11 +1054,15 @@ var AdminToast = (function () {
   }
 
   var icons = {
-    success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
-    danger: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
-    error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
-    warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
-    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+    success:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+    danger:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+    error:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+    warning:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
   };
 
   function show(options) {
@@ -880,7 +1073,8 @@ var AdminToast = (function () {
     var title = options.title || "";
     var type = options.type || "success";
     if (type === "danger") type = "error";
-    var duration = typeof options.duration === "number" ? options.duration : 3500;
+    var duration =
+      typeof options.duration === "number" ? options.duration : 3500;
 
     var container = getContainer();
     if (!container) {
@@ -891,14 +1085,20 @@ var AdminToast = (function () {
     card.className = "admin-toast-card toast-" + type;
 
     var iconHtml = icons[type] || icons.info;
-    var titleHtml = title ? '<div class="admin-toast-title">' + title + '</div>' : '';
+    var titleHtml = title
+      ? '<div class="admin-toast-title">' + title + "</div>"
+      : "";
 
     card.innerHTML =
-      '<div class="admin-toast-icon">' + iconHtml + '</div>' +
+      '<div class="admin-toast-icon">' +
+      iconHtml +
+      "</div>" +
       '<div class="admin-toast-body">' +
-        titleHtml +
-        '<div class="admin-toast-message">' + msg + '</div>' +
-      '</div>' +
+      titleHtml +
+      '<div class="admin-toast-message">' +
+      msg +
+      "</div>" +
+      "</div>" +
       '<button type="button" class="admin-toast-close" title="Dismiss">&times;</button>' +
       '<div class="admin-toast-progress"><div class="admin-toast-progress-bar"></div></div>';
 
@@ -920,7 +1120,7 @@ var AdminToast = (function () {
           ease: "power2.in",
           onComplete: function () {
             card.remove();
-          }
+          },
         });
       } else {
         card.remove();
@@ -934,7 +1134,7 @@ var AdminToast = (function () {
       gsap.fromTo(
         card,
         { opacity: 0, x: 40, scale: 0.95 },
-        { opacity: 1, x: 0, scale: 1, duration: 0.25, ease: "power2.out" }
+        { opacity: 1, x: 0, scale: 1, duration: 0.25, ease: "power2.out" },
       );
 
       if (duration > 0 && progressBar) {
@@ -945,8 +1145,8 @@ var AdminToast = (function () {
             scaleX: 0,
             duration: duration / 1000,
             ease: "none",
-            onComplete: dismiss
-          }
+            onComplete: dismiss,
+          },
         );
 
         card.addEventListener("mouseenter", function () {
@@ -965,10 +1165,18 @@ var AdminToast = (function () {
 
   return {
     show: show,
-    success: function (msg, title) { return show({ message: msg, title: title, type: "success" }); },
-    error: function (msg, title) { return show({ message: msg, title: title, type: "danger" }); },
-    warning: function (msg, title) { return show({ message: msg, title: title, type: "warning" }); },
-    info: function (msg, title) { return show({ message: msg, title: title, type: "info" }); }
+    success: function (msg, title) {
+      return show({ message: msg, title: title, type: "success" });
+    },
+    error: function (msg, title) {
+      return show({ message: msg, title: title, type: "danger" });
+    },
+    warning: function (msg, title) {
+      return show({ message: msg, title: title, type: "warning" });
+    },
+    info: function (msg, title) {
+      return show({ message: msg, title: title, type: "info" });
+    },
   };
 })();
 window.AdminToast = AdminToast;
@@ -977,7 +1185,14 @@ window.AdminToast = AdminToast;
    REUSABLE MODAL DIALOG COMPONENT
    ============================================================= */
 var AdminModal = (function () {
-  var overlay, dialog, titleElem, iconElem, msgElem, confirmBtn, cancelBtn, closeBtn;
+  var overlay,
+    dialog,
+    titleElem,
+    iconElem,
+    msgElem,
+    confirmBtn,
+    cancelBtn,
+    closeBtn;
   var currentConfirmCallback = null;
   var currentCancelCallback = null;
 
@@ -990,21 +1205,21 @@ var AdminModal = (function () {
       overlay.setAttribute("aria-hidden", "true");
       overlay.innerHTML =
         '<div class="admin-modal-dialog" id="adminModalDialog" role="dialog" aria-modal="true">' +
-          '<div class="admin-modal-header">' +
-            '<div class="admin-modal-title" id="adminModalTitle">' +
-              '<span class="admin-modal-title-icon" id="adminModalIcon"></span>' +
-              '<span id="adminModalTitleText">Confirmation</span>' +
-            '</div>' +
-            '<button type="button" class="admin-modal-close-btn" id="adminModalCloseBtn" title="Close modal" aria-label="Close modal">&times;</button>' +
-          '</div>' +
-          '<div class="admin-modal-body" id="adminModalBody">' +
-            '<p id="adminModalMessage">Are you sure you want to proceed?</p>' +
-          '</div>' +
-          '<div class="admin-modal-footer" id="adminModalFooter">' +
-            '<button type="button" class="btn btn-secondary" id="adminModalCancelBtn">Cancel</button>' +
-            '<button type="button" class="btn btn-primary" id="adminModalConfirmBtn">Confirm</button>' +
-          '</div>' +
-        '</div>';
+        '<div class="admin-modal-header">' +
+        '<div class="admin-modal-title" id="adminModalTitle">' +
+        '<span class="admin-modal-title-icon" id="adminModalIcon"></span>' +
+        '<span id="adminModalTitleText">Confirmation</span>' +
+        "</div>" +
+        '<button type="button" class="admin-modal-close-btn" id="adminModalCloseBtn" title="Close modal" aria-label="Close modal">&times;</button>' +
+        "</div>" +
+        '<div class="admin-modal-body" id="adminModalBody">' +
+        '<p id="adminModalMessage">Are you sure you want to proceed?</p>' +
+        "</div>" +
+        '<div class="admin-modal-footer" id="adminModalFooter">' +
+        '<button type="button" class="btn btn-secondary" id="adminModalCancelBtn">Cancel</button>' +
+        '<button type="button" class="btn btn-primary" id="adminModalConfirmBtn">Confirm</button>' +
+        "</div>" +
+        "</div>";
       document.body.appendChild(overlay);
     }
 
@@ -1022,20 +1237,23 @@ var AdminModal = (function () {
       close();
     });
     confirmBtn.addEventListener("click", function () {
-      if (typeof currentConfirmCallback === "function") currentConfirmCallback();
+      if (typeof currentConfirmCallback === "function")
+        currentConfirmCallback();
       close();
     });
 
     overlay.addEventListener("click", function (e) {
       if (e.target === overlay) {
-        if (typeof currentCancelCallback === "function") currentCancelCallback();
+        if (typeof currentCancelCallback === "function")
+          currentCancelCallback();
         close();
       }
     });
 
     window.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && overlay.classList.contains("active")) {
-        if (typeof currentCancelCallback === "function") currentCancelCallback();
+        if (typeof currentCancelCallback === "function")
+          currentCancelCallback();
         close();
       }
     });
@@ -1053,7 +1271,7 @@ var AdminModal = (function () {
         onComplete: function () {
           overlay.classList.remove("active");
           overlay.setAttribute("aria-hidden", "true");
-        }
+        },
       });
     } else {
       overlay.classList.remove("active");
@@ -1078,18 +1296,22 @@ var AdminModal = (function () {
     if (msgElem) msgElem.innerHTML = message;
     if (confirmBtn) {
       confirmBtn.textContent = confirmText;
-      confirmBtn.className = "btn " + (type === "danger" ? "btn-danger" : "btn-primary");
+      confirmBtn.className =
+        "btn " + (type === "danger" ? "btn-danger" : "btn-primary");
     }
     if (cancelBtn) {
       cancelBtn.textContent = cancelText;
-      cancelBtn.style.display = options.showCancel === false ? "none" : "inline-flex";
+      cancelBtn.style.display =
+        options.showCancel === false ? "none" : "inline-flex";
     }
 
     var iconSvg = "";
     if (type === "danger") {
-      iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+      iconSvg =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
     } else {
-      iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      iconSvg =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>';
     }
     if (iconElem) iconElem.innerHTML = iconSvg;
 
@@ -1100,7 +1322,7 @@ var AdminModal = (function () {
       gsap.fromTo(
         dialog,
         { scale: 0.9, opacity: 0, y: -20 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.25, ease: "back.out(1.4)" }
+        { scale: 1, opacity: 1, y: 0, duration: 0.25, ease: "back.out(1.4)" },
       );
     }
   }
@@ -1112,7 +1334,7 @@ var AdminModal = (function () {
       confirmText: "OK",
       showCancel: false,
       type: "primary",
-      onConfirm: onClose
+      onConfirm: onClose,
     });
   }
 
@@ -1120,7 +1342,7 @@ var AdminModal = (function () {
     init: initElements,
     confirm: confirm,
     alert: alert,
-    close: close
+    close: close,
   };
 })();
 window.AdminModal = AdminModal;

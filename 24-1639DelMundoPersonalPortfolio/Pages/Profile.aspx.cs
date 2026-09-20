@@ -71,7 +71,7 @@ namespace _24_1639DelMundoPersonalPortfolio
 
                 if (!string.IsNullOrEmpty(profileImg))
                 {
-                    imgAvatarPreview.ImageUrl = ResolveUrl(profileImg);
+                    imgAvatarPreview.ImageUrl = ResolveUrl("~/" + profileImg.TrimStart('~', '/'));
                     imgAvatarPreview.Style["display"] = "block";
                     avatarSvgPlaceholder.Style["display"] = "none";
                 }
@@ -80,8 +80,6 @@ namespace _24_1639DelMundoPersonalPortfolio
                     imgAvatarPreview.Style["display"] = "none";
                     avatarSvgPlaceholder.Style["display"] = "flex";
                 }
-
-                phAdminLink.Visible = true;
 
                 if (AuthHelper.IsAdmin())
                 {
@@ -227,7 +225,7 @@ namespace _24_1639DelMundoPersonalPortfolio
                     if (!string.IsNullOrEmpty(relativeImagePath))
                     {
                         currentUser.ProfileImage = relativeImagePath;
-                        imgAvatarPreview.ImageUrl = ResolveUrl(relativeImagePath);
+                        imgAvatarPreview.ImageUrl = ResolveUrl("~/" + relativeImagePath.TrimStart('~', '/'));
                         imgAvatarPreview.Style["display"] = "block";
                         avatarSvgPlaceholder.Style["display"] = "none";
                     }

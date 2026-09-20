@@ -1694,6 +1694,57 @@ footer {
     position: relative;
 }
 
+.field .input-row.has-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.field .input-row.has-toggle input,
+.field .input-row:has(.password-toggle-btn) input {
+    padding-right: 32px;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    outline: none !important;
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    z-index: 5;
+}
+
+.password-toggle-btn:hover {
+    color: var(--cyan);
+}
+
+.password-toggle-btn:focus-visible {
+    outline: 1px solid var(--blue-light) !important;
+    outline-offset: 2px;
+}
+
+.password-toggle-btn .eye-icon {
+    width: 17px;
+    height: 17px;
+    stroke: currentColor;
+    pointer-events: none;
+    transition: transform 0.15s ease;
+}
+
+.password-toggle-btn:active .eye-icon {
+    transform: scale(0.9);
+}
+
 .field input {
     width: 100%;
     background: transparent;

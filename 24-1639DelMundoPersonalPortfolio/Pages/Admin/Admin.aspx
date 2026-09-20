@@ -1,5 +1,6 @@
 <%@ Page Title="Admin Console" Language="C#" MasterPageFile="~/Pages/Admin/Admin.Master" AutoEventWireup="true" CodeBehind="Admin.aspx.cs" Inherits="_24_1639DelMundoPersonalPortfolio.Admin" ValidateRequest="false" %>
 
+<%@ Register Src="~/Pages/Admin/Components/DashboardPanel.ascx" TagPrefix="admin" TagName="DashboardPanel" %>
 <%@ Register Src="~/Pages/Admin/Components/ProfilePanel.ascx" TagPrefix="admin" TagName="ProfilePanel" %>
 <%@ Register Src="~/Pages/Admin/Components/TechStackPanel.ascx" TagPrefix="admin" TagName="TechStackPanel" %>
 <%@ Register Src="~/Pages/Admin/Components/SkillsPanel.ascx" TagPrefix="admin" TagName="SkillsPanel" %>
@@ -16,8 +17,12 @@
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="AdminMainContent" runat="server">
+    <!-- 0. STATISTIC REPORTS DASHBOARD -->
+    <admin:DashboardPanel runat="server" ID="ucDashboardPanel" />
+
     <!-- 1. PUBLIC PROFILE & HERO -->
     <admin:ProfilePanel runat="server" ID="ucProfilePanel" />
+
 
     <!-- 2. TECH STACK -->
     <admin:TechStackPanel runat="server" ID="ucTechStackPanel" />

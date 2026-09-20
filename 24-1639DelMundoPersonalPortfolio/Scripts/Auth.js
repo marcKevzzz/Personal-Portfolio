@@ -298,11 +298,55 @@ function initNewPassword() {
 }
 
 /* -------------------------------------------------------------
+   PASSWORD VISIBILITY TOGGLE HELPER
+   ------------------------------------------------------------- */
+function initPasswordToggles() {
+  document.querySelectorAll(".password-toggle-btn").forEach(function (btn) {
+    if (btn.dataset.toggleBound) return;
+    btn.dataset.toggleBound = "true";
+
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var row = btn.closest(".input-row") || btn.closest(".field");
+      if (!row) return;
+
+      var input = row.querySelector("input");
+      if (!input) return;
+
+      var eyeClosed = btn.querySelector(".eye-closed");
+      var eyeOpen = btn.querySelector(".eye-open");
+
+      if (input.type === "password") {
+        input.type = "text";
+        if (eyeClosed) eyeClosed.style.display = "none";
+        if (eyeOpen) eyeOpen.style.display = "block";
+        btn.setAttribute("aria-label", "Hide password");
+        btn.setAttribute("title", "Hide password");
+      } else {
+        input.type = "password";
+        if (eyeClosed) eyeClosed.style.display = "block";
+        if (eyeOpen) eyeOpen.style.display = "none";
+        btn.setAttribute("aria-label", "Show password");
+        btn.setAttribute("title", "Show password");
+      }
+
+      try {
+        var len = input.value.length;
+        input.setSelectionRange(len, len);
+      } catch (err) {}
+    });
+  });
+}
+
+/* -------------------------------------------------------------
    BOOTSTRAP AUTH PAGE
    ------------------------------------------------------------- */
 function bootAuth() {
   initInputFocus();
   initCustomCursor();
+  initPasswordToggles();
   if (document.getElementById("signinForm")) {
     initSignIn();
   }
@@ -319,3 +363,4 @@ if (document.readyState === "loading") {
 } else {
   bootAuth();
 }
+

@@ -135,5 +135,86 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
         {
             return ExecuteDataTable(query, parameters);
         }
+
+        /// <summary>
+        /// Executes a Stored Procedure and returns a DataTable.
+        /// </summary>
+        public static DataTable ExecuteStoredProcedureDataTable(string procedureName, params SqlParameter[] parameters)
+        {
+            using (var conn = GetOpenConnection())
+            using (var cmd = new SqlCommand(procedureName, conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                if (parameters != null && parameters.Length > 0)
+                {
+                    cmd.Parameters.AddRange(parameters);
+                }
+
+                using (var adapter = new SqlDataAdapter(cmd))
+                {
+                    var table = new DataTable();
+                    adapter.Fill(table);
+                    return table;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes a Stored Procedure and returns rows affected.
+        /// </summary>
+        public static int ExecuteStoredProcedureNonQuery(string procedureName, params SqlParameter[] parameters)
+        {
+            using (var conn = GetOpenConnection())
+            using (var cmd = new SqlCommand(procedureName, conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                if (parameters != null && parameters.Length > 0)
+                {
+                    cmd.Parameters.AddRange(parameters);
+                }
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
+        /// <summary>
+        /// Executes a Stored Procedure and returns a single scalar value.
+        /// </summary>
+        public static object ExecuteStoredProcedureScalar(string procedureName, params SqlParameter[] parameters)
+        {
+            using (var conn = GetOpenConnection())
+            using (var cmd = new SqlCommand(procedureName, conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                if (parameters != null && parameters.Length > 0)
+                {
+                    cmd.Parameters.AddRange(parameters);
+                }
+                return cmd.ExecuteScalar();
+            }
+        }
+
+        /// <summary>
+        /// Executes a Stored Procedure and returns a DataSet with multiple result sets.
+        /// </summary>
+        public static DataSet ExecuteStoredProcedureDataSet(string procedureName, params SqlParameter[] parameters)
+        {
+            using (var conn = GetOpenConnection())
+            using (var cmd = new SqlCommand(procedureName, conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                if (parameters != null && parameters.Length > 0)
+                {
+                    cmd.Parameters.AddRange(parameters);
+                }
+
+                using (var adapter = new SqlDataAdapter(cmd))
+                {
+                    var ds = new DataSet();
+                    adapter.Fill(ds);
+                    return ds;
+                }
+            }
+        }
     }
 }
+

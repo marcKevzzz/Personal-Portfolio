@@ -17,6 +17,7 @@
 <footer>
   <div class="wrap" style="display:flex; justify-content:space-between; width:100%;">
     <span>KEVS &mdash; 2026</span>
-    <span>BUILT WITH GEIST</span>
+    <a href="<%= ResolveUrl("~/Pages/Admin/Admin.aspx") %>" style="text-decoration:none !important; color:inherit; cursor:pointer;" title="Admin Console">BUILT WITH GEIST</a>
   </div>
 </footer>
+

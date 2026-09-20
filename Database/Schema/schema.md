@@ -11,6 +11,7 @@
 | Table Name                                      | Description                                                  | Primary Key  | Foreign Keys                          |
 | :---------------------------------------------- | :----------------------------------------------------------- | :----------- | :------------------------------------ |
 | [`users_tbl`](#1-users_tbl)                     | Registered user and administrator accounts & credentials     | `user_id`    | —                                     |
+| [`user_logins_tbl`](#11-user_logins_tbl)        | User authentication activity, DAU/MAU audit logging          | `login_id`   | `user_id` &rarr; `users_tbl(user_id)` |
 | [`password_resets_tbl`](#2-password_resets_tbl) | Password reset tokens and admin password removal requests    | `reset_id`   | `user_id` &rarr; `users_tbl(user_id)` |
 | [`profile_tbl`](#3-profile_tbl)                 | Hero and public personal information configuration           | `profile_id` | —                                     |
 | [`tech_stacks_tbl`](#4-tech_stacks_tbl)         | Technologies, frameworks, and tools with icon badges         | `tech_id`    | —                                     |
@@ -27,18 +28,22 @@
 
 ### 1. `users_tbl`
 
-Stores registered user accounts and administrator authentication credentials.
+Stores registered user accounts, administrator authentication credentials, and engagement telemetry.
 
-| Column Name     | Data Type       | Nullable | Default         | Constraints / Enum        | Description                     |
-| :-------------- | :-------------- | :------: | :-------------- | :------------------------ | :------------------------------ |
-| `user_id`       | `INT`           |    No    | `IDENTITY(1,1)` | `PRIMARY KEY`             | Unique user ID                  |
-| `first_name`    | `NVARCHAR(150)` |    No    | —               | —                         | First name                      |
-| `last_name`     | `NVARCHAR(150)` |    No    | —               | —                         | Last name / surname             |
-| `email`         | `NVARCHAR(150)` |    No    | —               | `UNIQUE`                  | Unique sign-in email            |
-| `password_hash` | `NVARCHAR(256)` |    No    | —               | —                         | SHA-256 hashed password         |
-| `user_role`     | `NVARCHAR(50)`  |   Yes    | `'User'`        | `CHECK ('Admin', 'User')` | Role Enum                       |
-| `is_active`     | `BIT`           |   Yes    | `1`             | —                         | `1` = Active, `0` = Deactivated |
-| `created_at`    | `DATETIME`      |   Yes    | `GETDATE()`     | —                         | Registration timestamp          |
+| Column Name     | Data Type       | Nullable | Default         | Constraints / Enum        | Description                       |
+| :-------------- | :-------------- | :------: | :-------------- | :------------------------ | :-------------------------------- |
+| `user_id`       | `INT`           |    No    | `IDENTITY(1,1)` | `PRIMARY KEY`             | Unique user ID                    |
+| `first_name`    | `NVARCHAR(150)` |    No    | —               | —                         | First name                        |
+| `last_name`     | `NVARCHAR(150)` |    No    | —               | —                         | Last name / surname               |
+| `email`         | `NVARCHAR(150)` |    No    | —               | `UNIQUE`                  | Unique sign-in email              |
+| `password_hash` | `NVARCHAR(256)` |    No    | —               | —                         | SHA-256 hashed password           |
+| `user_role`     | `NVARCHAR(50)`  |   Yes    | `'User'`        | `CHECK ('Admin', 'User')` | Role Enum                         |
+| `is_active`     | `BIT`           |   Yes    | `1`             | —                         | `1` = Active, `0` = Deactivated   |
+| `profile_image` | `NVARCHAR(500)` |   Yes    | —               | —                         | Avatar / photo URL                |
+| `last_login_at` | `DATETIME`      |   Yes    | —               | —                         | Most recent sign-in timestamp     |
+| `login_count`   | `INT`           |    No    | `0`             | —                         | Cumulative total sign-ins count   |
+| `created_at`    | `DATETIME`      |   Yes    | `GETDATE()`     | —                         | Registration timestamp            |
+
 
 ---
 
@@ -189,3 +194,18 @@ Stores personal interests displayed on the landing page.
 | `hobby_name` | `NVARCHAR(150)` |    No    | —               | Hobby / Interest name |
 | `sort_order` | `INT`           |   Yes    | `0`             | Display sort order    |
 | `is_active`  | `BIT`           |   Yes    | `1`             | Visibility toggle     |
+
+---
+
+### 11. `user_logins_tbl`
+
+Audit table storing user sign-in events for historical engagement analytics, Daily Active Users (DAU), and Monthly Active Users (MAU).
+
+| Column Name   | Data Type       | Nullable | Default         | Constraints / Description                               |
+| :------------ | :-------------- | :------: | :-------------- | :------------------------------------------------------ |
+| `login_id`    | `INT`           |    No    | `IDENTITY(1,1)` | `PRIMARY KEY` — Unique login event ID                   |
+| `user_id`     | `INT`           |    No    | —               | `FOREIGN KEY` &rarr; `users_tbl(user_id)` (ON DELETE CASCADE) |
+| `login_time`  | `DATETIME`      |    No    | `GETDATE()`     | Timestamp of successful login session                   |
+| `ip_address`  | `NVARCHAR(100)` |   Yes    | —               | Client IP address                                       |
+| `user_agent`  | `NVARCHAR(500)` |   Yes    | —               | Client browser / operating system User-Agent string     |
+

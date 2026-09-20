@@ -119,4 +119,75 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public string Status { get; set; } = "pending";
         public DateTime CreatedAt { get; set; }
     }
+
+    public class DashboardStatsDto
+    {
+        public int TotalProjects { get; set; }
+        public int TotalFeaturedProjects { get; set; }
+        public int TotalTechStacks { get; set; }
+        public int TotalTechCategories { get; set; }
+        public int TotalSkills { get; set; }
+        public int TotalExperiences { get; set; }
+        public int TotalEducations { get; set; }
+        public int TotalAwards { get; set; }
+        public int TotalHobbies { get; set; }
+        
+        // User Accounts Overview Metrics
+        public int TotalUsers { get; set; }
+        public int ActiveUsers { get; set; }
+        public int InactiveUsers { get; set; }
+        public int AdminUsers { get; set; }
+        public int SignUpsToday { get; set; }
+        public int SignUpsThisWeek { get; set; }
+        public int SignUpsThisMonth { get; set; }
+
+        // User Activity & Engagement Metrics
+        public int TotalLogins { get; set; }
+        public int DailyActiveUsers { get; set; }
+        public int MonthlyActiveUsers { get; set; }
+
+        public int PendingPasswordResets { get; set; }
+        public int ExperienceYears { get; set; }
+        public int ProfileCompletenessPct { get; set; }
+        public bool IsDatabaseConnected { get; set; }
+        public string DatabaseSource { get; set; } = "MSSQL Server";
+        public DateTime ReportGeneratedAt { get; set; } = DateTime.UtcNow;
+
+        public List<CategoryStatDto> TechCategoryStats { get; set; } = new List<CategoryStatDto>();
+        public List<CategoryStatDto> ProjectCategoryStats { get; set; } = new List<CategoryStatDto>();
+        public List<UserSummaryDto> RecentUsers { get; set; } = new List<UserSummaryDto>();
+        public List<PasswordResetSummaryDto> RecentPendingResets { get; set; } = new List<PasswordResetSummaryDto>();
+    }
+
+    public class CategoryStatDto
+    {
+        public string Category { get; set; } = "";
+        public int ItemCount { get; set; }
+        public int HighlightCount { get; set; }
+        public double Percentage { get; set; }
+    }
+
+    public class UserSummaryDto
+    {
+        public int UserId { get; set; }
+        public string Email { get; set; } = "";
+        public string FullName { get; set; } = "";
+        public string Role { get; set; } = "User";
+        public bool IsActive { get; set; } = true;
+        public DateTime? LastLoginAt { get; set; }
+        public int LoginCount { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class PasswordResetSummaryDto
+    {
+        public int ResetId { get; set; }
+        public int UserId { get; set; }
+        public string Email { get; set; } = "";
+        public string FullName { get; set; } = "";
+        public string Status { get; set; } = "Pending";
+        public DateTime RequestedAt { get; set; }
+    }
 }
+
+

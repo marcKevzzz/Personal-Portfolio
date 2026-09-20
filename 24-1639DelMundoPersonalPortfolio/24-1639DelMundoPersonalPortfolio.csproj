@@ -126,9 +126,11 @@
     <Content Include="Content\Admin.css" />
     <Content Include="Content\Auth.css" />
     <Content Include="Content\Site.css" />
+    <Content Include="Data\Portfolio_StoredProcedures.sql" />
     <Content Include="Default.aspx" />
     <Content Include="Global.asax" />
     <Content Include="Pages\Admin\Admin.aspx" />
+    <Content Include="Pages\Admin\Components\DashboardPanel.ascx" />
     <Content Include="Pages\Admin\Components\ProfilePanel.ascx" />
     <Content Include="Pages\Admin\Components\TechStackPanel.ascx" />
     <Content Include="Pages\Admin\Components\SkillsPanel.ascx" />
@@ -275,13 +277,22 @@
     <Compile Include="Pages\Admin\Admin.aspx.designer.cs">
       <DependentUpon>Admin.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Pages\Admin\Components\DashboardPanel.ascx.cs">
+      <DependentUpon>DashboardPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\DashboardPanel.ascx.designer.cs">
+      <DependentUpon>DashboardPanel.ascx</DependentUpon>
+    </Compile>
     <Compile Include="Pages\Admin\Components\ProfilePanel.ascx.cs">
       <DependentUpon>ProfilePanel.ascx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Pages\Admin\Components\ProfilePanel.ascx.designer.cs">
       <DependentUpon>ProfilePanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
+
     <Compile Include="Pages\Admin\Components\TechStackPanel.ascx.cs">
       <DependentUpon>TechStackPanel.ascx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -392,7 +403,7 @@
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != '' and Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
