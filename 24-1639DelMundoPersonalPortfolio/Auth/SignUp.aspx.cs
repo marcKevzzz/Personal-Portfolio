@@ -19,7 +19,7 @@ namespace _24_1639DelMundoPersonalPortfolio
                 }
                 else
                 {
-                    Response.Redirect("~/Default.aspx");
+                    Response.Redirect("~/Pages/User/PortfolioBuilder.aspx");
                 }
             }
         }

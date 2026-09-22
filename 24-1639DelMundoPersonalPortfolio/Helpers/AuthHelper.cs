@@ -180,7 +180,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
 
                 string emailVal = ticket.Name.Trim().ToLowerInvariant();
 
-                string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, profile_image, is_active, created_at 
+                string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, is_active, created_at 
                                  FROM users_tbl 
                                  WHERE LOWER(email) = LOWER(@Email);";
 
@@ -200,7 +200,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
                     Email = emailVal,
                     PasswordHash = row["password_hash"] != DBNull.Value ? row["password_hash"].ToString() : "",
                     Role = row["user_role"] != DBNull.Value ? row["user_role"].ToString() : "User",
-                    ProfileImage = row["profile_image"] != DBNull.Value ? row["profile_image"].ToString() : null,
                     IsActive = isActive,
                     CreatedAt = Convert.ToDateTime(row["created_at"])
                 };

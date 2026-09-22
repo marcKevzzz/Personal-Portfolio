@@ -12,16 +12,7 @@ namespace _24_1639DelMundoPersonalPortfolio
     public partial class Admin
     {
         protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.DashboardPanel ucDashboardPanel;
-        protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.ProfilePanel ucProfilePanel;
-        protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.TechStackPanel ucTechStackPanel;
-        protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.SkillsPanel ucSkillsPanel;
-        protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.ExperiencePanel ucExperiencePanel;
-        protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.ProjectsPanel ucProjectsPanel;
-        protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.EducationPanel ucEducationPanel;
-        protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.AwardsPanel ucAwardsPanel;
-        protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.HobbiesPanel ucHobbiesPanel;
         protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.UsersPanel ucUsersPanel;
         protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.AdminProfilePanel ucAdminProfilePanel;
     }
 }
-

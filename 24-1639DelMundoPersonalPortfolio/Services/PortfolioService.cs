@@ -115,7 +115,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                     GroupName = r["group_name"]?.ToString() ?? "",
                                     Label = r["label"]?.ToString() ?? "",
                                     IconPath = r["icon_path"]?.ToString() ?? "",
-                                    SortOrder = Convert.ToInt32(r["sort_order"]),
                                     IsActive = Convert.ToBoolean(r["is_active"])
                                 });
                             }
@@ -132,7 +131,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                     UserId = Convert.ToInt32(r["user_id"]),
                                     SkillName = r["skill_name"]?.ToString() ?? "",
                                     ProficiencyVal = Convert.ToInt32(r["proficiency_val"]),
-                                    SortOrder = Convert.ToInt32(r["sort_order"]),
                                     IsActive = Convert.ToBoolean(r["is_active"])
                                 });
                             }
@@ -152,10 +150,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                     StartYear = Convert.ToInt32(r["start_year"]),
                                     EndYear = r["end_year"] != DBNull.Value ? Convert.ToInt32(r["end_year"]) : (int?)null,
                                     IsCurrent = Convert.ToBoolean(r["is_current"]),
-                                    PeriodRange = r["period_display"]?.ToString() ?? "",
                                     DescriptionText = r["description_text"]?.ToString() ?? "",
                                     Tags = r["tags"]?.ToString() ?? "",
-                                    SortOrder = Convert.ToInt32(r["sort_order"]),
                                     IsActive = Convert.ToBoolean(r["is_active"])
                                 });
                             }
@@ -174,7 +170,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                     ImagePath = r["image_path"]?.ToString() ?? "",
                                     ProjectUrl = r["project_url"]?.ToString() ?? "",
                                     Tags = r["tags"]?.ToString() ?? "",
-                                    SortOrder = Convert.ToInt32(r["sort_order"]),
                                     IsActive = Convert.ToBoolean(r["is_active"])
                                 });
                             }
@@ -192,11 +187,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                     StartYear = Convert.ToInt32(r["start_year"]),
                                     EndYear = r["end_year"] != DBNull.Value ? Convert.ToInt32(r["end_year"]) : (int?)null,
                                     IsCurrent = Convert.ToBoolean(r["is_current"]),
-                                    YearPeriod = r["year_display"]?.ToString() ?? "",
                                     Title = r["title"]?.ToString() ?? "",
                                     Subtitle = r["subtitle"]?.ToString() ?? "",
                                     InstitutionName = r["institution_name"]?.ToString() ?? "",
-                                    SortOrder = Convert.ToInt32(r["sort_order"]),
                                     IsActive = Convert.ToBoolean(r["is_active"])
                                 });
                             }
@@ -215,7 +208,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                     Title = r["title"]?.ToString() ?? "",
                                     Subtitle = r["subtitle"]?.ToString() ?? "",
                                     OrganizationName = r["organization_name"]?.ToString() ?? "",
-                                    SortOrder = Convert.ToInt32(r["sort_order"]),
                                     IsActive = Convert.ToBoolean(r["is_active"])
                                 });
                             }
@@ -232,7 +224,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                     UserId = Convert.ToInt32(r["user_id"]),
                                     HobbyName = r["hobby_name"]?.ToString() ?? "",
                                     HobbyDescription = r["hobby_description"]?.ToString() ?? "",
-                                    SortOrder = Convert.ToInt32(r["sort_order"]),
                                     IsActive = Convert.ToBoolean(r["is_active"])
                                 });
                             }
@@ -324,8 +315,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             var parameters = new SqlParameter[]
             {
                 new SqlParameter("@user_id", userId),
-                new SqlParameter("@first_name", (object)p.FirstName ?? DBNull.Value),
-                new SqlParameter("@last_name", (object)p.LastName ?? DBNull.Value),
                 new SqlParameter("@hero_names", (object)p.HeroNames ?? DBNull.Value),
                 new SqlParameter("@role_summary", (object)p.RoleSummary ?? DBNull.Value),
                 new SqlParameter("@role_title", (object)p.RoleTitle ?? DBNull.Value),
@@ -333,9 +322,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 new SqlParameter("@based_in", (object)p.BasedIn ?? DBNull.Value),
                 new SqlParameter("@avatar_path", (object)p.AvatarPath ?? DBNull.Value),
                 new SqlParameter("@location_address", (object)p.LocationAddress ?? DBNull.Value),
-                new SqlParameter("@birth_date", p.BirthDate.HasValue ? (object)p.BirthDate.Value : DBNull.Value),
-                new SqlParameter("@experience_years", p.ExperienceYears),
+                new SqlParameter("@birth_date", p.BirthDate.HasValue ? (object)p.BirthDate.Value.Date : DBNull.Value),
                 new SqlParameter("@email", (object)p.Email ?? DBNull.Value),
+                new SqlParameter("@experience_years", p.ExperienceYears),
                 new SqlParameter("@github_url", (object)p.GithubUrl ?? DBNull.Value),
                 new SqlParameter("@linkedin_url", (object)p.LinkedinUrl ?? DBNull.Value)
             };
@@ -349,6 +338,44 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("[PortfolioService] SaveProfile error: " + ex.Message);
+                return false;
+            }
+        }
+
+        public static bool UpdateUserDetails(int userId, string firstName, string lastName, string newPassword = null)
+        {
+            if (userId <= 0) userId = AuthHelper.GetCurrentUserId();
+            if (userId <= 0) return false;
+
+            try
+            {
+                string hash = !string.IsNullOrEmpty(newPassword) ? AuthHelper.HashPassword(newPassword) : null;
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@user_id", userId),
+                    new SqlParameter("@first_name", (object)firstName ?? DBNull.Value),
+                    new SqlParameter("@last_name", (object)lastName ?? DBNull.Value),
+                    new SqlParameter("@password_hash", (object)hash ?? DBNull.Value)
+                };
+
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_UpdateUserDetails", parameters);
+
+                // Update active session user
+                var currentUser = AuthHelper.GetCurrentUser();
+                if (currentUser != null && currentUser.UserId == userId)
+                {
+                    currentUser.FirstName = firstName;
+                    currentUser.LastName = lastName;
+                    if (!string.IsNullOrEmpty(hash)) currentUser.PasswordHash = hash;
+                    AuthHelper.SetUserSession(currentUser);
+                }
+
+                InvalidateCache(userId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[PortfolioService] UpdateUserDetails error: " + ex.Message);
                 return false;
             }
         }
@@ -381,8 +408,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 new SqlParameter("@user_id", userId),
                 new SqlParameter("@group_name", item.GroupName ?? "Frontend"),
                 new SqlParameter("@label", item.Label ?? ""),
-                new SqlParameter("@icon_path", item.IconPath ?? ""),
-                new SqlParameter("@sort_order", item.SortOrder)
+                new SqlParameter("@icon_path", item.IconPath ?? "")
             };
 
             try
@@ -423,8 +449,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 new SqlParameter("@skill_id", skill.SkillId),
                 new SqlParameter("@user_id", userId),
                 new SqlParameter("@skill_name", skill.SkillName ?? ""),
-                new SqlParameter("@proficiency_val", skill.ProficiencyVal),
-                new SqlParameter("@sort_order", skill.SortOrder)
+                new SqlParameter("@proficiency_val", skill.ProficiencyVal)
             };
 
             try
@@ -465,8 +490,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 new SqlParameter("@end_year", exp.EndYear.HasValue ? (object)exp.EndYear.Value : DBNull.Value),
                 new SqlParameter("@is_current", exp.IsCurrent),
                 new SqlParameter("@description_text", (object)exp.DescriptionText ?? DBNull.Value),
-                new SqlParameter("@tags", (object)exp.Tags ?? DBNull.Value),
-                new SqlParameter("@sort_order", exp.SortOrder)
+                new SqlParameter("@tags", (object)exp.Tags ?? DBNull.Value)
             };
 
             try
@@ -504,8 +528,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 new SqlParameter("@title", project.Title ?? ""),
                 new SqlParameter("@image_path", project.ImagePath ?? ""),
                 new SqlParameter("@project_url", (object)project.ProjectUrl ?? DBNull.Value),
-                new SqlParameter("@tags", (object)project.Tags ?? DBNull.Value),
-                new SqlParameter("@sort_order", project.SortOrder)
+                new SqlParameter("@tags", (object)project.Tags ?? DBNull.Value)
             };
 
             try
@@ -545,8 +568,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 new SqlParameter("@institution_name", edu.InstitutionName ?? ""),
                 new SqlParameter("@start_year", edu.StartYear),
                 new SqlParameter("@end_year", edu.EndYear.HasValue ? (object)edu.EndYear.Value : DBNull.Value),
-                new SqlParameter("@is_current", edu.IsCurrent),
-                new SqlParameter("@sort_order", edu.SortOrder)
+                new SqlParameter("@is_current", edu.IsCurrent)
             };
 
             try
@@ -584,8 +606,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 new SqlParameter("@award_year", award.AwardYear ?? ""),
                 new SqlParameter("@title", award.Title ?? ""),
                 new SqlParameter("@subtitle", award.Subtitle ?? ""),
-                new SqlParameter("@organization_name", award.OrganizationName ?? ""),
-                new SqlParameter("@sort_order", award.SortOrder)
+                new SqlParameter("@organization_name", award.OrganizationName ?? "")
             };
 
             try
@@ -621,8 +642,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 new SqlParameter("@hobby_id", hobby.HobbyId),
                 new SqlParameter("@user_id", userId),
                 new SqlParameter("@hobby_name", hobby.HobbyName ?? ""),
-                new SqlParameter("@hobby_description", (object)hobby.HobbyDescription ?? DBNull.Value),
-                new SqlParameter("@sort_order", hobby.SortOrder)
+                new SqlParameter("@hobby_description", (object)hobby.HobbyDescription ?? DBNull.Value)
             };
 
             try
@@ -652,7 +672,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
         // User Supervision & Admin Services
         // -------------------------------------------------------------
 
-        public static List<UserSummaryDto> GetAllUsers()
+        public static List<UserSummaryDto> GetAllUsers(bool excludeAdmins = false)
         {
             var list = new List<UserSummaryDto>();
             try
@@ -662,6 +682,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 {
                     foreach (DataRow r in dt.Rows)
                     {
+                        string role = r["Role"]?.ToString() ?? "User";
+                        if (excludeAdmins && role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
                         list.Add(new UserSummaryDto
                         {
                             UserId = Convert.ToInt32(r["UserId"]),
@@ -669,7 +695,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                             LastName = r["LastName"]?.ToString() ?? "",
                             FullName = $"{r["FirstName"]} {r["LastName"]}".Trim(),
                             Email = r["Email"]?.ToString() ?? "",
-                            Role = r["Role"]?.ToString() ?? "User",
+                            Role = role,
                             IsActive = Convert.ToBoolean(r["IsActive"]),
                             CreatedAt = Convert.ToDateTime(r["CreatedAt"]),
                             LastLoginAt = r["LastLoginAt"] != DBNull.Value ? Convert.ToDateTime(r["LastLoginAt"]) : (DateTime?)null,
@@ -684,6 +710,46 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("[PortfolioService] GetAllUsers error: " + ex.Message);
+            }
+            return list;
+        }
+
+        public static List<UserPortfolioReportDto> GetUserPortfolioReports()
+        {
+            var list = new List<UserPortfolioReportDto>();
+            try
+            {
+                var dt = DatabaseHelper.ExecuteStoredProcedureDataTable("sp_GetUserPortfolioReports");
+                if (dt != null)
+                {
+                    foreach (DataRow r in dt.Rows)
+                    {
+                        list.Add(new UserPortfolioReportDto
+                        {
+                            UserId = Convert.ToInt32(r["UserId"]),
+                            FirstName = r["FirstName"]?.ToString() ?? "",
+                            LastName = r["LastName"]?.ToString() ?? "",
+                            FullName = r["FullName"]?.ToString() ?? "",
+                            Email = r["Email"]?.ToString() ?? "",
+                            IsActive = Convert.ToBoolean(r["IsActive"]),
+                            CreatedAt = Convert.ToDateTime(r["CreatedAt"]),
+                            LastLoginAt = r["LastLoginAt"] != DBNull.Value ? Convert.ToDateTime(r["LastLoginAt"]) : (DateTime?)null,
+                            LoginCount = Convert.ToInt32(r["LoginCount"]),
+                            HasProfile = Convert.ToBoolean(r["HasProfile"]),
+                            RoleTitle = r["RoleTitle"]?.ToString() ?? "Not Set",
+                            LastProfileUpdate = r["LastProfileUpdate"] != DBNull.Value ? Convert.ToDateTime(r["LastProfileUpdate"]) : (DateTime?)null,
+                            ProjectsCount = Convert.ToInt32(r["ProjectsCount"]),
+                            SkillsCount = Convert.ToInt32(r["SkillsCount"]),
+                            TechCount = Convert.ToInt32(r["TechCount"]),
+                            ExperiencesCount = Convert.ToInt32(r["ExperiencesCount"]),
+                            PortfolioStatus = r["PortfolioStatus"]?.ToString() ?? "Not Started"
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[PortfolioService] GetUserPortfolioReports error: " + ex.Message);
             }
             return list;
         }
@@ -738,9 +804,16 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                     stats.TotalEducations = Convert.ToInt32(r["TotalEducations"]);
                     stats.TotalAwards = Convert.ToInt32(r["TotalAwards"]);
                     stats.TotalHobbies = Convert.ToInt32(r["TotalHobbies"]);
+                    if (r.Table.Columns.Contains("TotalPortfolios"))
+                        stats.TotalPortfolios = Convert.ToInt32(r["TotalPortfolios"]);
+                    if (r.Table.Columns.Contains("ConfiguredPortfolios"))
+                        stats.ConfiguredPortfolios = Convert.ToInt32(r["ConfiguredPortfolios"]);
+                    if (r.Table.Columns.Contains("PortfolioCreationRate"))
+                        stats.PortfolioCreationRate = Convert.ToInt32(r["PortfolioCreationRate"]);
                 }
 
-                stats.RecentUsers = GetAllUsers();
+                stats.RecentUsers = GetAllUsers(excludeAdmins: true);
+                stats.UserPortfolioReports = GetUserPortfolioReports();
             }
             catch (Exception ex)
             {
@@ -837,7 +910,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             catch { return false; }
         }
 
-        public static bool UpdateAdminCredentials(int userId, string firstName, string lastName, string email, string newPassword, string avatarPath = null)
+        public static bool UpdateAdminCredentials(int userId, string firstName, string lastName, string email, string newPassword)
         {
             try
             {
@@ -859,12 +932,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 else
                 {
                     query = "UPDATE users_tbl SET first_name = @FirstName, last_name = @LastName, email = @Email";
-                }
-
-                if (!string.IsNullOrWhiteSpace(avatarPath))
-                {
-                    query += ", profile_image = @ProfileImage";
-                    paramList.Add(new SqlParameter("@ProfileImage", avatarPath));
                 }
 
                 query += " WHERE user_id = @UserId;";

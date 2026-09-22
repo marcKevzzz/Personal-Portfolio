@@ -8,17 +8,15 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            var user = AuthHelper.GetCurrentUser();
-            if (user != null && !string.IsNullOrEmpty(user.ProfileImage))
+            if (AuthHelper.IsAdmin())
             {
-                imgNavAvatar.ImageUrl = ResolveUrl("~/" + user.ProfileImage.TrimStart('~', '/'));
-                imgNavAvatar.Visible = true;
-                phNavSvg.Visible = false;
+                lnkNavProfile.NavigateUrl = "~/Pages/Admin/Admin.aspx";
+                lnkNavProfile.ToolTip = "Admin Console";
             }
             else
             {
-                imgNavAvatar.Visible = false;
-                phNavSvg.Visible = true;
+                lnkNavProfile.NavigateUrl = "~/Pages/User/PortfolioBuilder.aspx";
+                lnkNavProfile.ToolTip = "Portfolio Builder";
             }
         }
     }

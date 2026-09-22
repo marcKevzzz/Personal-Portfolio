@@ -35,15 +35,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             }
 
             int techId = int.TryParse(hidEditingTechId.Value, out int id) ? id : 0;
-            var currentList = PortfolioService.GetPortfolioData()?.TechStacks;
-            int nextSort = (currentList != null && currentList.Count > 0) ? currentList.Max(t => t.SortOrder) + 1 : 1;
 
             var item = new TechStackItemDto
             {
                 TechId = techId,
                 GroupName = ddlTechGroup.SelectedValue,
                 Label = label,
-                SortOrder = techId > 0 && currentList != null ? (currentList.FirstOrDefault(t => t.TechId == techId)?.SortOrder ?? nextSort) : nextSort,
                 IsActive = true
             };
 

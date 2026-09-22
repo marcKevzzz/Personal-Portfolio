@@ -34,20 +34,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             }
 
             int awardId = int.TryParse(hidEditingAwardId.Value, out int id) ? id : 0;
-            var currentData = PortfolioService.GetPortfolioData();
-
-            int sort = 1;
-            if (awardId > 0)
-            {
-                var existing = currentData?.Awards?.FirstOrDefault(a => a.AwardId == awardId);
-                sort = existing?.SortOrder ?? 1;
-            }
-            else
-            {
-                sort = (currentData?.Awards != null && currentData.Awards.Count > 0)
-                    ? currentData.Awards.Max(a => a.SortOrder) + 1
-                    : 1;
-            }
 
             var award = new AwardDto
             {
@@ -56,7 +42,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 Title = txtAwardTitle.Text.Trim(),
                 Subtitle = txtAwardSubtitle.Text.Trim(),
                 OrganizationName = txtAwardOrg.Text.Trim(),
-                SortOrder = sort,
                 IsActive = true
             };
 

@@ -1,16 +1,163 @@
 -- ============================================================================
--- Project: 24-1639DelMundoPersonalPortfolio
--- Description: Complete MSSQL stored procedures and schema views for Multi-User Portfolio System
+-- Migration: 010_schema_simplification_and_clean_refactor.sql
+-- Description:
+-- 1. users_tbl: Remove age and birth_date (keep core account/login data).
+-- 2. profile_tbl: Remove age, first_name, last_name. Ensure birth_date and email exist.
+-- 3. educations_tbl: Remove year_period and sort_order. Store raw years.
+-- 4. experiences_tbl: Remove period_range and sort_order. Store raw years.
+-- 5. Drop sort_order from tech_stacks_tbl, skills_tbl, projects_tbl, awards_tbl, hobbies_tbl.
+-- 6. Remove unnecessary constant default constraints on user-supplied fields.
+-- 7. Rewrite all stored procedures and schema summary view.
 -- ============================================================================
-
-USE personal_portfolio_db;
-GO
 
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
--- 1. sp_GetUserPortfolioData
+-- ============================================================================
+-- HELPER: DROP DEFAULT CONSTRAINT AND COLUMN PROCEDURE
+-- ============================================================================
+CREATE OR ALTER PROCEDURE dbo.sp_DropColumnWithConstraints
+    @TableName NVARCHAR(128),
+    @ColumnName NVARCHAR(128)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (
+        SELECT 1 FROM sys.columns c
+        JOIN sys.tables t ON c.object_id = t.object_id
+        WHERE t.name = @TableName AND c.name = @ColumnName
+    )
+    BEGIN
+        DECLARE @sql NVARCHAR(MAX) = N'';
+
+        -- Drop default constraints on this column
+        SELECT @sql += N'ALTER TABLE dbo.' + QUOTENAME(@TableName) + 
+                       N' DROP CONSTRAINT ' + QUOTENAME(dc.name) + N'; '
+        FROM sys.default_constraints dc
+        JOIN sys.tables t ON dc.parent_object_id = t.object_id
+        JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+        WHERE t.name = @TableName AND c.name = @ColumnName;
+
+        -- Drop check constraints on this column
+        SELECT @sql += N'ALTER TABLE dbo.' + QUOTENAME(@TableName) + 
+                       N' DROP CONSTRAINT ' + QUOTENAME(cc.name) + N'; '
+        FROM sys.check_constraints cc
+        JOIN sys.tables t ON cc.parent_object_id = t.object_id
+        JOIN sys.columns c ON cc.parent_object_id = c.object_id AND cc.parent_column_id = c.column_id
+        WHERE t.name = @TableName AND c.name = @ColumnName;
+
+        IF LEN(@sql) > 0
+        BEGIN
+            EXEC sp_executesql @sql;
+        END
+
+        SET @sql = N'ALTER TABLE dbo.' + QUOTENAME(@TableName) + N' DROP COLUMN ' + QUOTENAME(@ColumnName) + N';';
+        EXEC sp_executesql @sql;
+    END
+END;
+GO
+
+-- ============================================================================
+-- 1. USERS_TBL CLEANUP
+-- ============================================================================
+EXEC dbo.sp_DropColumnWithConstraints 'users_tbl', 'age';
+EXEC dbo.sp_DropColumnWithConstraints 'users_tbl', 'birth_date';
+EXEC dbo.sp_DropColumnWithConstraints 'users_tbl', 'profile_image';
+GO
+
+-- ============================================================================
+-- 2. PROFILE_TBL CLEANUP & REFACTOR
+-- ============================================================================
+EXEC dbo.sp_DropColumnWithConstraints 'profile_tbl', 'age';
+EXEC dbo.sp_DropColumnWithConstraints 'profile_tbl', 'first_name';
+EXEC dbo.sp_DropColumnWithConstraints 'profile_tbl', 'last_name';
+GO
+
+-- Ensure birth_date exists on profile_tbl
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.profile_tbl') AND name = 'birth_date')
+BEGIN
+    ALTER TABLE dbo.profile_tbl ADD birth_date DATE NULL;
+END
+GO
+
+-- Ensure email exists on profile_tbl
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.profile_tbl') AND name = 'email')
+BEGIN
+    ALTER TABLE dbo.profile_tbl ADD email NVARCHAR(150) NULL;
+END
+GO
+
+-- If profile_tbl has default constraints on user-supplied fields, drop them
+DECLARE @dropProfileDefaults NVARCHAR(MAX) = N'';
+SELECT @dropProfileDefaults += N'ALTER TABLE dbo.profile_tbl DROP CONSTRAINT ' + QUOTENAME(dc.name) + N'; '
+FROM sys.default_constraints dc
+JOIN sys.tables t ON dc.parent_object_id = t.object_id
+JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+WHERE t.name = 'profile_tbl' AND c.name IN (
+    'hero_subline', 'hero_names', 'role_title', 'focus_area', 'based_in', 
+    'avatar_path', 'location_address', 'experience_years', 'email', 'github_url', 'linkedin_url'
+);
+IF LEN(@dropProfileDefaults) > 0 EXEC sp_executesql @dropProfileDefaults;
+GO
+
+-- ============================================================================
+-- 3. EDUCATIONS_TBL CLEANUP
+-- ============================================================================
+EXEC dbo.sp_DropColumnWithConstraints 'educations_tbl', 'year_period';
+EXEC dbo.sp_DropColumnWithConstraints 'educations_tbl', 'sort_order';
+GO
+
+-- Drop constant default on start_year and is_current
+DECLARE @dropEduDefaults NVARCHAR(MAX) = N'';
+SELECT @dropEduDefaults += N'ALTER TABLE dbo.educations_tbl DROP CONSTRAINT ' + QUOTENAME(dc.name) + N'; '
+FROM sys.default_constraints dc
+JOIN sys.tables t ON dc.parent_object_id = t.object_id
+JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+WHERE t.name = 'educations_tbl' AND c.name IN ('start_year', 'is_current');
+IF LEN(@dropEduDefaults) > 0 EXEC sp_executesql @dropEduDefaults;
+GO
+
+-- ============================================================================
+-- 4. EXPERIENCES_TBL CLEANUP
+-- ============================================================================
+EXEC dbo.sp_DropColumnWithConstraints 'experiences_tbl', 'period_range';
+EXEC dbo.sp_DropColumnWithConstraints 'experiences_tbl', 'sort_order';
+GO
+
+DECLARE @dropExpDefaults NVARCHAR(MAX) = N'';
+SELECT @dropExpDefaults += N'ALTER TABLE dbo.experiences_tbl DROP CONSTRAINT ' + QUOTENAME(dc.name) + N'; '
+FROM sys.default_constraints dc
+JOIN sys.tables t ON dc.parent_object_id = t.object_id
+JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+WHERE t.name = 'experiences_tbl' AND c.name IN ('start_year', 'is_current');
+IF LEN(@dropExpDefaults) > 0 EXEC sp_executesql @dropExpDefaults;
+GO
+
+-- ============================================================================
+-- 5. DROP SORT_ORDER FROM ALL REMAINING TABLES
+-- ============================================================================
+EXEC dbo.sp_DropColumnWithConstraints 'tech_stacks_tbl', 'sort_order';
+EXEC dbo.sp_DropColumnWithConstraints 'skills_tbl', 'sort_order';
+EXEC dbo.sp_DropColumnWithConstraints 'projects_tbl', 'sort_order';
+EXEC dbo.sp_DropColumnWithConstraints 'awards_tbl', 'sort_order';
+EXEC dbo.sp_DropColumnWithConstraints 'hobbies_tbl', 'sort_order';
+GO
+
+-- ============================================================================
+-- 6. DROP TEMPORARY HELPER PROCEDURE
+-- ============================================================================
+IF OBJECT_ID('dbo.sp_DropColumnWithConstraints', 'P') IS NOT NULL
+BEGIN
+    DROP PROCEDURE dbo.sp_DropColumnWithConstraints;
+END
+GO
+
+-- ============================================================================
+-- 7. REWRITE STORED PROCEDURES
+-- ============================================================================
+
+-- 7.1 sp_GetUserPortfolioData
 CREATE OR ALTER PROCEDURE dbo.sp_GetUserPortfolioData
     @user_id INT
 AS
@@ -95,17 +242,17 @@ BEGIN
 END;
 GO
 
--- 2. sp_SaveProfile
+-- 7.2 sp_SaveProfile
 CREATE OR ALTER PROCEDURE dbo.sp_SaveProfile
     @user_id INT,
-    @hero_subline NVARCHAR(150) = 'builds interfaces',
-    @hero_names NVARCHAR(500) = NULL,
-    @role_summary NVARCHAR(MAX) = NULL,
-    @role_title NVARCHAR(150) = 'Web Developer',
-    @focus_area NVARCHAR(150) = 'Interfaces & Data Systems',
-    @based_in NVARCHAR(150) = 'Quezon City',
-    @avatar_path NVARCHAR(255) = 'Assets/Images/pixelart_portrait.png',
-    @location_address NVARCHAR(255) = NULL,
+    @hero_subline NVARCHAR(150),
+    @hero_names NVARCHAR(500),
+    @role_summary NVARCHAR(MAX),
+    @role_title NVARCHAR(150),
+    @focus_area NVARCHAR(150),
+    @based_in NVARCHAR(150),
+    @avatar_path NVARCHAR(255),
+    @location_address NVARCHAR(255),
     @birth_date DATE = NULL,
     @experience_years INT = 1,
     @email NVARCHAR(150) = NULL,
@@ -150,7 +297,7 @@ BEGIN
 END;
 GO
 
--- 3. sp_UpdateUserDetails (Account settings: Name & Password only)
+-- 7.3 sp_UpdateUserDetails (Account Settings: Name & Password only)
 CREATE OR ALTER PROCEDURE dbo.sp_UpdateUserDetails
     @user_id INT,
     @first_name NVARCHAR(150),
@@ -178,7 +325,7 @@ BEGIN
 END;
 GO
 
--- 4. Tech Stack Procedures
+-- 7.4 sp_SaveTechStack
 CREATE OR ALTER PROCEDURE dbo.sp_SaveTechStack
     @tech_id INT = 0,
     @user_id INT,
@@ -204,17 +351,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_DeleteTechStack
-    @tech_id INT,
-    @user_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DELETE FROM dbo.tech_stacks_tbl WHERE tech_id = @tech_id AND user_id = @user_id;
-END;
-GO
-
--- 5. Skill Procedures
+-- 7.5 sp_SaveSkill
 CREATE OR ALTER PROCEDURE dbo.sp_SaveSkill
     @skill_id INT = 0,
     @user_id INT,
@@ -238,17 +375,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_DeleteSkill
-    @skill_id INT,
-    @user_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DELETE FROM dbo.skills_tbl WHERE skill_id = @skill_id AND user_id = @user_id;
-END;
-GO
-
--- 6. Experience Procedures
+-- 7.6 sp_SaveExperience (Raw years, no period_range string)
 CREATE OR ALTER PROCEDURE dbo.sp_SaveExperience
     @exp_id INT = 0,
     @user_id INT,
@@ -282,17 +409,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_DeleteExperience
-    @exp_id INT,
-    @user_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DELETE FROM dbo.experiences_tbl WHERE exp_id = @exp_id AND user_id = @user_id;
-END;
-GO
-
--- 7. Project Procedures
+-- 7.7 sp_SaveProject
 CREATE OR ALTER PROCEDURE dbo.sp_SaveProject
     @project_id INT = 0,
     @user_id INT,
@@ -320,17 +437,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_DeleteProject
-    @project_id INT,
-    @user_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DELETE FROM dbo.projects_tbl WHERE project_id = @project_id AND user_id = @user_id;
-END;
-GO
-
--- 8. Education Procedures
+-- 7.8 sp_SaveEducation (Raw years, no year_period string)
 CREATE OR ALTER PROCEDURE dbo.sp_SaveEducation
     @edu_id INT = 0,
     @user_id INT,
@@ -362,17 +469,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_DeleteEducation
-    @edu_id INT,
-    @user_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DELETE FROM dbo.educations_tbl WHERE edu_id = @edu_id AND user_id = @user_id;
-END;
-GO
-
--- 9. Award Procedures
+-- 7.9 sp_SaveAward
 CREATE OR ALTER PROCEDURE dbo.sp_SaveAward
     @award_id INT = 0,
     @user_id INT,
@@ -400,17 +497,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_DeleteAward
-    @award_id INT,
-    @user_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DELETE FROM dbo.awards_tbl WHERE award_id = @award_id AND user_id = @user_id;
-END;
-GO
-
--- 10. Hobby Procedures
+-- 7.10 sp_SaveHobby
 CREATE OR ALTER PROCEDURE dbo.sp_SaveHobby
     @hobby_id INT = 0,
     @user_id INT,
@@ -434,178 +521,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_DeleteHobby
-    @hobby_id INT,
-    @user_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DELETE FROM dbo.hobbies_tbl WHERE hobby_id = @hobby_id AND user_id = @user_id;
-END;
-GO
-
--- 11. User Management & Analytics
-CREATE OR ALTER PROCEDURE dbo.sp_GetAllUsers
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT 
-        u.user_id AS UserId,
-        u.first_name AS FirstName,
-        u.last_name AS LastName,
-        u.email AS Email,
-        u.user_role AS UserRole,
-        u.is_active AS IsActive,
-        u.created_at AS CreatedAt,
-        u.last_login_at AS LastLoginAt,
-        ISNULL(u.login_count, 0) AS LoginCount,
-        CASE WHEN p.profile_id IS NOT NULL THEN 1 ELSE 0 END AS HasProfile,
-        p.birth_date AS BirthDate,
-        ISNULL(p.role_title, 'Not Set') AS RoleTitle
-    FROM dbo.users_tbl u
-    LEFT JOIN dbo.profile_tbl p ON u.user_id = p.user_id
-    ORDER BY u.created_at DESC;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE dbo.sp_ToggleUserStatus
-    @user_id INT,
-    @is_active BIT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    UPDATE dbo.users_tbl
-    SET is_active = @is_active
-    WHERE user_id = @user_id;
-
-    SELECT @@ROWCOUNT AS rows_affected;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE dbo.sp_ResetUserPassword
-    @user_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    DECLARE @user_email NVARCHAR(150);
-    SELECT @user_email = email FROM dbo.users_tbl WHERE user_id = @user_id;
-
-    IF @user_email IS NOT NULL
-    BEGIN
-        INSERT INTO dbo.password_resets_tbl (user_id, email, status, reason, created_at)
-        VALUES (@user_id, @user_email, 'password_removed', 'Admin password reset', GETDATE());
-
-        SELECT 1 AS success;
-    END
-    ELSE
-    BEGIN
-        SELECT 0 AS success;
-    END
-END;
-GO
-
-CREATE OR ALTER PROCEDURE dbo.sp_GetDashboardStats
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    DECLARE @TotalUsers INT, @ActiveUsers INT, @InactiveUsers INT, @AdminUsers INT;
-    DECLARE @SignUpsToday INT, @SignUpsThisWeek INT, @SignUpsThisMonth INT;
-    DECLARE @TotalLogins INT, @DailyActiveUsers INT, @MonthlyActiveUsers INT;
-    DECLARE @PendingPasswordResets INT;
-    DECLARE @TotalProjects INT, @TotalSkills INT, @TotalTechStacks INT;
-    DECLARE @TotalExperiences INT, @TotalEducations INT, @TotalAwards INT, @TotalHobbies INT;
-    DECLARE @TotalPortfolios INT, @ConfiguredPortfolios INT;
-
-    SELECT @TotalUsers = COUNT(1) FROM dbo.users_tbl WHERE user_role != 'Admin';
-    SELECT @ActiveUsers = COUNT(1) FROM dbo.users_tbl WHERE is_active = 1 AND user_role != 'Admin';
-    SELECT @InactiveUsers = COUNT(1) FROM dbo.users_tbl WHERE is_active = 0 AND user_role != 'Admin';
-    SELECT @AdminUsers = COUNT(1) FROM dbo.users_tbl WHERE user_role = 'Admin';
-
-    SELECT @SignUpsToday = COUNT(1) FROM dbo.users_tbl WHERE CAST(created_at AS DATE) = CAST(GETDATE() AS DATE);
-    SELECT @SignUpsThisWeek = COUNT(1) FROM dbo.users_tbl WHERE created_at >= DATEADD(DAY, -7, GETDATE());
-    SELECT @SignUpsThisMonth = COUNT(1) FROM dbo.users_tbl WHERE created_at >= DATEADD(DAY, -30, GETDATE());
-
-    SELECT @TotalLogins = ISNULL(SUM(login_count), 0) FROM dbo.users_tbl;
-    SELECT @DailyActiveUsers = COUNT(DISTINCT user_id) FROM dbo.user_logins_tbl WHERE login_time >= DATEADD(DAY, -1, GETDATE());
-    SELECT @MonthlyActiveUsers = COUNT(DISTINCT user_id) FROM dbo.user_logins_tbl WHERE login_time >= DATEADD(DAY, -30, GETDATE());
-
-    SELECT @PendingPasswordResets = COUNT(1) FROM dbo.password_resets_tbl WHERE status = 'pending';
-
-    SELECT @TotalProjects = COUNT(1) FROM dbo.projects_tbl;
-    SELECT @TotalSkills = COUNT(1) FROM dbo.skills_tbl;
-    SELECT @TotalTechStacks = COUNT(1) FROM dbo.tech_stacks_tbl;
-    SELECT @TotalExperiences = COUNT(1) FROM dbo.experiences_tbl;
-    SELECT @TotalEducations = COUNT(1) FROM dbo.educations_tbl;
-    SELECT @TotalAwards = COUNT(1) FROM dbo.awards_tbl;
-    SELECT @TotalHobbies = COUNT(1) FROM dbo.hobbies_tbl;
-
-    SELECT @TotalPortfolios = COUNT(1) FROM dbo.profile_tbl;
-    SELECT @ConfiguredPortfolios = COUNT(DISTINCT user_id) FROM dbo.projects_tbl;
-
-    SELECT 
-        @TotalUsers AS TotalUsers,
-        @ActiveUsers AS ActiveUsers,
-        @InactiveUsers AS InactiveUsers,
-        @AdminUsers AS AdminUsers,
-        @SignUpsToday AS SignUpsToday,
-        @SignUpsThisWeek AS SignUpsThisWeek,
-        @SignUpsThisMonth AS SignUpsThisMonth,
-        @TotalLogins AS TotalLogins,
-        @DailyActiveUsers AS DailyActiveUsers,
-        @MonthlyActiveUsers AS MonthlyActiveUsers,
-        @PendingPasswordResets AS PendingPasswordResets,
-        @TotalProjects AS TotalProjects,
-        @TotalSkills AS TotalSkills,
-        @TotalTechStacks AS TotalTechStacks,
-        @TotalExperiences AS TotalExperiences,
-        @TotalEducations AS TotalEducations,
-        @TotalAwards AS TotalAwards,
-        @TotalHobbies AS TotalHobbies,
-        @TotalPortfolios AS TotalPortfolios,
-        @ConfiguredPortfolios AS ConfiguredPortfolios,
-        CASE WHEN @TotalUsers > 0 THEN (@TotalPortfolios * 100) / @TotalUsers ELSE 0 END AS PortfolioCreationRate;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE dbo.sp_GetUserPortfolioReports
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT 
-        u.user_id AS UserId,
-        u.first_name AS FirstName,
-        u.last_name AS LastName,
-        RTRIM(LTRIM(u.first_name + ' ' + u.last_name)) AS FullName,
-        u.email AS Email,
-        u.is_active AS IsActive,
-        u.created_at AS CreatedAt,
-        u.last_login_at AS LastLoginAt,
-        ISNULL(u.login_count, 0) AS LoginCount,
-        CASE WHEN p.profile_id IS NOT NULL THEN 1 ELSE 0 END AS HasProfile,
-        ISNULL(p.role_title, 'Not Set') AS RoleTitle,
-        p.updated_at AS LastProfileUpdate,
-        (SELECT COUNT(1) FROM dbo.projects_tbl WHERE user_id = u.user_id) AS ProjectsCount,
-        (SELECT COUNT(1) FROM dbo.skills_tbl WHERE user_id = u.user_id) AS SkillsCount,
-        (SELECT COUNT(1) FROM dbo.tech_stacks_tbl WHERE user_id = u.user_id) AS TechCount,
-        (SELECT COUNT(1) FROM dbo.experiences_tbl WHERE user_id = u.user_id) AS ExperiencesCount,
-        CASE 
-            WHEN (SELECT COUNT(1) FROM dbo.projects_tbl WHERE user_id = u.user_id) > 0 AND p.profile_id IS NOT NULL THEN 'Configured'
-            WHEN p.profile_id IS NOT NULL THEN 'In Progress'
-            ELSE 'Not Started'
-        END AS PortfolioStatus
-    FROM dbo.users_tbl u
-    LEFT JOIN dbo.profile_tbl p ON u.user_id = p.user_id
-    WHERE u.user_role != 'Admin'
-    ORDER BY u.created_at DESC;
-END;
-GO
-
--- 12. Database Schema Summary View & Stored Procedure
+-- 7.11 vw_DatabaseSchemaSummary (Cleaned up view without sysdiagrams)
 CREATE OR ALTER VIEW dbo.vw_DatabaseSchemaSummary
 AS
 SELECT 
@@ -660,6 +576,7 @@ LEFT JOIN (
 WHERE t.TABLE_TYPE = 'BASE TABLE' AND t.TABLE_NAME <> 'sysdiagrams';
 GO
 
+-- 7.12 sp_GetDatabaseSchemaSummary
 CREATE OR ALTER PROCEDURE dbo.sp_GetDatabaseSchemaSummary
     @TableName NVARCHAR(128) = NULL
 AS

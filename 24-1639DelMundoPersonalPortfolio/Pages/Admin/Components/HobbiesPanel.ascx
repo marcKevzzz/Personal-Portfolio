@@ -5,13 +5,13 @@
     <p class="admin-sub">Personal interests and recreational tags displayed on the public page.</p>
 
     <div class="add-form">
-        <div class="field" style="flex: 1; min-width: 200px;">
+        <div class="field" >
             <label>New Hobby Name</label>
             <div class="input-row">
                 <asp:TextBox ID="txtHobbyName" runat="server" placeholder="e.g. Basketball, Reading Manhwa" />
             </div>
         </div>
-        <div class="field" style="flex: 2; min-width: 250px;">
+        <div class="field" >
             <label>Hobby Description</label>
             <div class="input-row">
                 <asp:TextBox ID="txtHobbyDescription" runat="server" placeholder="Describe what you enjoy about this hobby..." />

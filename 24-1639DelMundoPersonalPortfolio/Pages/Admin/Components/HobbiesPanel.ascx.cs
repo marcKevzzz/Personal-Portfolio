@@ -35,16 +35,10 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 return;
             }
 
-            var currentData = PortfolioService.GetPortfolioData();
-            int sort = (currentData?.Hobbies != null && currentData.Hobbies.Count > 0)
-                ? currentData.Hobbies.Max(h => h.SortOrder) + 1
-                : 1;
-
             var hobby = new HobbyDto
             {
                 HobbyName = name,
                 HobbyDescription = txtHobbyDescription.Text.Trim(),
-                SortOrder = sort,
                 IsActive = true
             };
 

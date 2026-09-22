@@ -32,7 +32,7 @@ namespace _24_1639DelMundoPersonalPortfolio
             if (currentUser == null) return;
 
             // Query fresh user data from database
-            string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, profile_image, is_active, created_at 
+            string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, is_active, created_at 
                              FROM users_tbl 
                              WHERE user_id = @UserId;";
 
@@ -46,7 +46,6 @@ namespace _24_1639DelMundoPersonalPortfolio
                 string role = row["user_role"].ToString();
                 bool isActive = Convert.ToBoolean(row["is_active"]);
                 DateTime createdAt = Convert.ToDateTime(row["created_at"]);
-                string profileImg = row["profile_image"] != DBNull.Value ? row["profile_image"].ToString() : null;
 
                 // Sync session
                 currentUser.FirstName = fName;
@@ -55,7 +54,6 @@ namespace _24_1639DelMundoPersonalPortfolio
                 currentUser.Role = role;
                 currentUser.IsActive = isActive;
                 currentUser.CreatedAt = createdAt;
-                currentUser.ProfileImage = profileImg;
                 AuthHelper.SetUserSession(currentUser);
 
                 // Populate form fields
@@ -69,17 +67,8 @@ namespace _24_1639DelMundoPersonalPortfolio
                 litStatusText.Text = isActive ? "Active Account" : "Deactivated";
                 litMemberSince.Text = createdAt.ToString("MMMM yyyy");
 
-                if (!string.IsNullOrEmpty(profileImg))
-                {
-                    imgAvatarPreview.ImageUrl = ResolveUrl("~/" + profileImg.TrimStart('~', '/'));
-                    imgAvatarPreview.Style["display"] = "block";
-                    avatarSvgPlaceholder.Style["display"] = "none";
-                }
-                else
-                {
-                    imgAvatarPreview.Style["display"] = "none";
-                    avatarSvgPlaceholder.Style["display"] = "flex";
-                }
+                imgAvatarPreview.Style["display"] = "none";
+                avatarSvgPlaceholder.Style["display"] = "flex";
 
                 if (AuthHelper.IsAdmin())
                 {
@@ -186,11 +175,6 @@ namespace _24_1639DelMundoPersonalPortfolio
                                     SET first_name = @FirstName, 
                                         last_name = @LastName";
 
-                if (!string.IsNullOrEmpty(relativeImagePath))
-                {
-                    updateSql += ", profile_image = @ProfileImage";
-                }
-
                 if (!string.IsNullOrEmpty(newPasswordHash))
                 {
                     updateSql += ", password_hash = @PasswordHash";
@@ -205,11 +189,6 @@ namespace _24_1639DelMundoPersonalPortfolio
                     new SqlParameter("@UserId", currentUser.UserId)
                 };
 
-                if (!string.IsNullOrEmpty(relativeImagePath))
-                {
-                    parameters.Add(new SqlParameter("@ProfileImage", relativeImagePath));
-                }
-
                 if (!string.IsNullOrEmpty(newPasswordHash))
                 {
                     parameters.Add(new SqlParameter("@PasswordHash", newPasswordHash));
@@ -222,13 +201,6 @@ namespace _24_1639DelMundoPersonalPortfolio
                     // Update user in session
                     currentUser.FirstName = newFirstName;
                     currentUser.LastName = newLastName;
-                    if (!string.IsNullOrEmpty(relativeImagePath))
-                    {
-                        currentUser.ProfileImage = relativeImagePath;
-                        imgAvatarPreview.ImageUrl = ResolveUrl("~/" + relativeImagePath.TrimStart('~', '/'));
-                        imgAvatarPreview.Style["display"] = "block";
-                        avatarSvgPlaceholder.Style["display"] = "none";
-                    }
                     if (!string.IsNullOrEmpty(newPasswordHash))
                     {
                         currentUser.PasswordHash = newPasswordHash;

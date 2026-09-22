@@ -18,10 +18,6 @@
             <div class="input-row">
                 <asp:TextBox ID="txtEduEndYear" runat="server" TextMode="Number" min="1950" max="2100" placeholder="e.g. 2024" />
             </div>
-            <label style="display: flex; align-items: center; gap: 6px; margin-top: 6px; cursor: pointer; font-size: var(--t-xs); color: var(--text-mid);">
-                <asp:CheckBox ID="chkEduIsCurrent" runat="server" />
-                <span>Present / Ongoing</span>
-            </label>
         </div>
         <div class="field">
             <label>Degree / Level</label>

@@ -98,73 +98,134 @@
             </div>
         </div>
 
-        <!-- 4. Profile & System Health -->
+        <!-- 4. User Portfolio Adoption & Status -->
         <div class="dash-kpi-card" data-card="completeness">
             <div class="kpi-header">
-                <span class="kpi-label">PROFILE HEALTH</span>
+                <span class="kpi-label">PORTFOLIO ADOPTION</span>
                 <span class="kpi-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                     </svg>
                 </span>
             </div>
-            <div class="kpi-value"><%= Stats.ProfileCompletenessPct %>%</div>
+            <div class="kpi-value"><%= Stats.PortfolioCreationRate %>%</div>
             <div class="kpi-footer">
                 <div class="dash-progress-track">
-                    <div class="dash-progress-fill" style="width: <%= Stats.ProfileCompletenessPct %>%;"></div>
+                    <div class="dash-progress-fill" style="width: <%= Math.Min(100, Math.Max(0, Stats.PortfolioCreationRate)) %>%;"></div>
                 </div>
-                <span class="kpi-meta"><%= Stats.ExperienceYears %> yrs exp</span>
+                <span class="kpi-meta"><%= Stats.TotalPortfolios %> created &bull; <%= Stats.ConfiguredPortfolios %> configured</span>
             </div>
         </div>
     </div>
 
     <!-- Unified 2-Column Analytics & Activity Flow -->
     <div class="dash-analytics-grid">
-        <!-- Column 1: Technology & Content Domain Breakdown -->
+        <!-- Column 1: Portfolio Content Inventory by Section -->
         <div class="dash-card">
-            <div class="dash-card-header">
-                <div class="dash-card-title">
-                    <span class="dash-title-dot"></span>
-                    <span>Technology Distribution by Domain</span>
+            <div class="dash-card-header" style="flex-wrap: wrap; gap: 10px; min-height: auto;">
+                <div>
+                    <div class="dash-card-title">
+                        <span class="dash-title-dot"></span>
+                        <span>Portfolio Content by Section</span>
+                    </div>
+                    <% 
+                        int totalContentItems = Stats.TotalProjects + Stats.TotalTechStacks + Stats.TotalSkills + Stats.TotalExperiences + Stats.TotalEducations + Stats.TotalAwards + Stats.TotalHobbies;
+                    %>
+                    <div class="dash-sub-label" style="font-size: 11px; display: block; margin-top: 2px;">
+                        Distribution of <%= totalContentItems %> items across portfolio sections
+                    </div>
                 </div>
-                <span class="dash-pill-counter"><%= Stats.TotalTechStacks %> Items</span>
+                <span class="dash-pill-counter"><%= totalContentItems %> Total Items</span>
             </div>
             <div class="dash-card-body">
                 <div class="dash-bars-list">
-                    <% if (Stats.TechCategoryStats != null && Stats.TechCategoryStats.Count > 0) { 
-                        foreach (var cat in Stats.TechCategoryStats) { %>
-                        <div class="dash-bar-row">
-                            <div class="dash-bar-meta">
-                                <span class="dash-bar-name"><%= Server.HtmlEncode(cat.Category) %></span>
-                                <span class="dash-bar-count"><%= cat.ItemCount %> items (<%= cat.Percentage %>%)</span>
-                            </div>
-                            <div class="dash-bar-track">
-                                <div class="dash-bar-fill" style="width: <%= Math.Max(cat.Percentage, 5) %>%;"></div>
-                            </div>
+                    <!-- 1. Projects -->
+                    <div class="dash-bar-row">
+                        <div class="dash-bar-meta">
+                            <span class="dash-bar-name">Projects Showcase</span>
+                            <span class="dash-bar-count"><strong style="color: var(--text);"><%= Stats.TotalProjects %></strong> items <span style="color: var(--text-dim); font-size: 11px;">&bull; <%= totalContentItems > 0 ? (Stats.TotalProjects * 100 / totalContentItems) : 0 %>% of total</span></span>
                         </div>
-                    <% } } else { %>
-                        <div class="dash-bar-row">
-                            <div class="dash-bar-meta"><span class="dash-bar-name">Frontend</span><span class="dash-bar-count">5 items (28%)</span></div>
-                            <div class="dash-bar-track"><div class="dash-bar-fill" style="width: 28%;"></div></div>
+                        <div class="dash-bar-track">
+                            <div class="dash-bar-fill" style="width: <%= totalContentItems > 0 ? Math.Max(Stats.TotalProjects * 100 / totalContentItems, 6) : 6 %>%; background: var(--cyan);"></div>
                         </div>
-                        <div class="dash-bar-row">
-                            <div class="dash-bar-meta"><span class="dash-bar-name">3D &amp; Motion</span><span class="dash-bar-count">4 items (22%)</span></div>
-                            <div class="dash-bar-track"><div class="dash-bar-fill" style="width: 22%;"></div></div>
+                    </div>
+
+                    <!-- 2. Tech Stack -->
+                    <div class="dash-bar-row">
+                        <div class="dash-bar-meta">
+                            <span class="dash-bar-name">Tech Stack &amp; Tools</span>
+                            <span class="dash-bar-count"><strong style="color: var(--text);"><%= Stats.TotalTechStacks %></strong> items <span style="color: var(--text-dim); font-size: 11px;">&bull; <%= totalContentItems > 0 ? (Stats.TotalTechStacks * 100 / totalContentItems) : 0 %>% of total</span></span>
                         </div>
-                        <div class="dash-bar-row">
-                            <div class="dash-bar-meta"><span class="dash-bar-name">Backend &amp; Database</span><span class="dash-bar-count">5 items (28%)</span></div>
-                            <div class="dash-bar-track"><div class="dash-bar-fill" style="width: 28%;"></div></div>
+                        <div class="dash-bar-track">
+                            <div class="dash-bar-fill" style="width: <%= totalContentItems > 0 ? Math.Max(Stats.TotalTechStacks * 100 / totalContentItems, 6) : 6 %>%;"></div>
                         </div>
-                        <div class="dash-bar-row">
-                            <div class="dash-bar-meta"><span class="dash-bar-name">Tools &amp; DevOps</span><span class="dash-bar-count">4 items (22%)</span></div>
-                            <div class="dash-bar-track"><div class="dash-bar-fill" style="width: 22%;"></div></div>
+                    </div>
+
+                    <!-- 3. Skills -->
+                    <div class="dash-bar-row">
+                        <div class="dash-bar-meta">
+                            <span class="dash-bar-name">Core Skills</span>
+                            <span class="dash-bar-count"><strong style="color: var(--text);"><%= Stats.TotalSkills %></strong> items <span style="color: var(--text-dim); font-size: 11px;">&bull; <%= totalContentItems > 0 ? (Stats.TotalSkills * 100 / totalContentItems) : 0 %>% of total</span></span>
                         </div>
-                    <% } %>
+                        <div class="dash-bar-track">
+                            <div class="dash-bar-fill" style="width: <%= totalContentItems > 0 ? Math.Max(Stats.TotalSkills * 100 / totalContentItems, 6) : 6 %>%; background: var(--blue-light);"></div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Experience -->
+                    <div class="dash-bar-row">
+                        <div class="dash-bar-meta">
+                            <span class="dash-bar-name">Work Experience</span>
+                            <span class="dash-bar-count"><strong style="color: var(--text);"><%= Stats.TotalExperiences %></strong> roles <span style="color: var(--text-dim); font-size: 11px;">&bull; <%= totalContentItems > 0 ? (Stats.TotalExperiences * 100 / totalContentItems) : 0 %>% of total</span></span>
+                        </div>
+                        <div class="dash-bar-track">
+                            <div class="dash-bar-fill" style="width: <%= totalContentItems > 0 ? Math.Max(Stats.TotalExperiences * 100 / totalContentItems, 6) : 6 %>%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Education -->
+                    <div class="dash-bar-row">
+                        <div class="dash-bar-meta">
+                            <span class="dash-bar-name">Education Milestones</span>
+                            <span class="dash-bar-count"><strong style="color: var(--text);"><%= Stats.TotalEducations %></strong> milestones <span style="color: var(--text-dim); font-size: 11px;">&bull; <%= totalContentItems > 0 ? (Stats.TotalEducations * 100 / totalContentItems) : 0 %>% of total</span></span>
+                        </div>
+                        <div class="dash-bar-track">
+                            <div class="dash-bar-fill" style="width: <%= totalContentItems > 0 ? Math.Max(Stats.TotalEducations * 100 / totalContentItems, 6) : 6 %>%; background: var(--cyan);"></div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Awards -->
+                    <div class="dash-bar-row">
+                        <div class="dash-bar-meta">
+                            <span class="dash-bar-name">Awards &amp; Recognitions</span>
+                            <span class="dash-bar-count"><strong style="color: var(--text);"><%= Stats.TotalAwards %></strong> awards <span style="color: var(--text-dim); font-size: 11px;">&bull; <%= totalContentItems > 0 ? (Stats.TotalAwards * 100 / totalContentItems) : 0 %>% of total</span></span>
+                        </div>
+                        <div class="dash-bar-track">
+                            <div class="dash-bar-fill" style="width: <%= totalContentItems > 0 ? Math.Max(Stats.TotalAwards * 100 / totalContentItems, 6) : 6 %>%; background: var(--blue-light);"></div>
+                        </div>
+                    </div>
+
+                    <!-- 7. Hobbies -->
+                    <div class="dash-bar-row">
+                        <div class="dash-bar-meta">
+                            <span class="dash-bar-name">Hobbies &amp; Interests</span>
+                            <span class="dash-bar-count"><strong style="color: var(--text);"><%= Stats.TotalHobbies %></strong> hobbies <span style="color: var(--text-dim); font-size: 11px;">&bull; <%= totalContentItems > 0 ? (Stats.TotalHobbies * 100 / totalContentItems) : 0 %>% of total</span></span>
+                        </div>
+                        <div class="dash-bar-track">
+                            <div class="dash-bar-fill" style="width: <%= totalContentItems > 0 ? Math.Max(Stats.TotalHobbies * 100 / totalContentItems, 6) : 6 %>%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanation Note -->
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 14px; display: flex; align-items: center; gap: 6px; line-height: 1.4;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; color: var(--blue-light);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <span>Percentage indicates each section's share of all <%= totalContentItems %> items published on the platform.</span>
                 </div>
 
                 <!-- Quick Content Balance Summary -->
-                <div class="dash-mini-stats-box" style="margin-top: 20px;">
+                <div class="dash-mini-stats-box" style="margin-top: 16px;">
                     <div class="mini-stat-item">
                         <span class="mini-stat-num"><%= Stats.TotalProjects %></span>
                         <span class="mini-stat-desc">Projects</span>
@@ -179,7 +240,7 @@
                     </div>
                     <div class="mini-stat-item">
                         <span class="mini-stat-num"><%= Stats.TotalEducations %></span>
-                        <span class="mini-stat-desc">Milestones</span>
+                        <span class="mini-stat-desc">Education</span>
                     </div>
                 </div>
             </div>
@@ -187,10 +248,15 @@
 
         <!-- Column 2: User Engagement & Recent Activity Stream -->
         <div class="dash-card">
-            <div class="dash-card-header">
-                <div class="dash-card-title">
-                    <span class="dash-title-dot"></span>
-                    <span>User Activity &amp; Sign-in Stream</span>
+            <div class="dash-card-header" style="flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <div class="dash-card-title">
+                        <span class="dash-title-dot"></span>
+                        <span>User Activity &amp; Sign-in Stream</span>
+                    </div>
+                    <div class="dash-sub-label" style="font-size: 11px; display: block; margin-top: 2px;">
+                        Recent logins &amp; platform account metrics
+                    </div>
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="users">Manage Users &rarr;</button>
             </div>
@@ -212,7 +278,7 @@
                 </div>
 
                 <!-- Recent User Sign-ins Table -->
-                <div class="dash-table-wrap">
+                <div class="dash-table-wrap user-activity">
                     <table class="data-table dash-inventory-table">
                         <thead>
                             <tr>
@@ -263,179 +329,108 @@
         </div>
     </div>
 
-    <!-- Section Content Inventory Table & Management Routing -->
+    <!-- User Portfolios & Showcase Report Section -->
     <div class="dash-card" style="margin-top: 24px;">
-        <div class="dash-card-header">
-            <div class="dash-card-title">
-                <span class="dash-title-dot"></span>
-                <span>Portfolio Content Inventory &amp; Module Health</span>
+        <div class="dash-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <div class="dash-card-title">
+                    <span class="dash-title-dot"></span>
+                    <span>User Portfolios &amp; Showcase Report</span>
+                </div>
+                <span class="dash-sub-label">Multi-tenant portfolio registry. Review each user's portfolio status and preview their live website.</span>
             </div>
-            <span class="dash-sub-label">Click 'Manage' to jump directly to any configuration panel</span>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="dash-pill-counter"><%= Stats.UserPortfolioReports != null ? Stats.UserPortfolioReports.Count : 0 %> Registered Users</span>
+                <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="users">Manage Users &rarr;</button>
+            </div>
         </div>
-        <div class="dash-table-wrap">
+
+        <!-- Platform Portfolio Aggregates Banner -->
+        <div class="dash-sub-kpi-grid" style="margin: 16px 20px;">
+            <div class="sub-kpi-box">
+                <div class="sub-kpi-label">PUBLISHED PORTFOLIOS</div>
+                <div class="sub-kpi-value highlight-cyan"><%= Stats.TotalPortfolios %> <span style="font-size: 13px; color: var(--text-dim); font-weight: 400;">/ <%= Stats.TotalUsers %> users</span></div>
+            </div>
+            <div class="sub-kpi-box">
+                <div class="sub-kpi-label">TOTAL PROJECTS HOSTED</div>
+                <div class="sub-kpi-value"><%= Stats.TotalProjects %></div>
+            </div>
+            <div class="sub-kpi-box">
+                <div class="sub-kpi-label">TOTAL SKILLS LISTED</div>
+                <div class="sub-kpi-value"><%= Stats.TotalSkills %></div>
+            </div>
+            <div class="sub-kpi-box">
+                <div class="sub-kpi-label">TECH STACKS USED</div>
+                <div class="sub-kpi-value highlight-blue"><%= Stats.TotalTechStacks %></div>
+            </div>
+        </div>
+
+        <div class="dash-table-wrap user-portfolio">
             <table class="data-table dash-inventory-table">
                 <thead>
                     <tr>
-                        <th>MODULE / SECTION</th>
-                        <th>STORED RECORDS</th>
-                        <th>STATUS</th>
-                        <th>DATA SOURCE</th>
-                        <th>QUICK ACTION</th>
+                        <th>USER</th>
+                        <th>PORTFOLIO STATUS</th>
+                        <th>ROLE TITLE</th>
+                        <th>CONTENT SUMMARY</th>
+                        <th>LAST UPDATE</th>
+                        <th style="text-align: right;">QUICK ACTION</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>
-                            <div class="dash-module-cell">
-                                <span class="module-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                </span>
-                                <div>
-                                    <strong>Public Profile &amp; Hero</strong>
-                                    <div class="module-meta">Hero headings, bio, aliases &amp; contact links</div>
+                    <% if (Stats.UserPortfolioReports != null && Stats.UserPortfolioReports.Count > 0) {
+                        foreach (var u in Stats.UserPortfolioReports) { %>
+                        <tr>
+                            <td>
+                                <div class="dash-module-cell">
+                                    <span class="user-avatar-initials"><%= (!string.IsNullOrEmpty(u.FullName) ? u.FullName.Substring(0, 1).ToUpper() : "U") %></span>
+                                    <div>
+                                        <strong><%= Server.HtmlEncode(u.FullName) %></strong>
+                                        <div class="module-meta"><%= Server.HtmlEncode(u.Email) %></div>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td><strong>1</strong> Profile Record</td>
-                        <td><span class="status-pill status-active">Active</span></td>
-                        <td><%= Stats.DatabaseSource %></td>
-                        <td>
-                            <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="profile">Manage Profile &rarr;</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="dash-module-cell">
-                                <span class="module-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                                </span>
-                                <div>
-                                    <strong>Tech Stack</strong>
-                                    <div class="module-meta">Frameworks, languages, database &amp; SVG icons</div>
+                            </td>
+                            <td>
+                                <% if (u.PortfolioStatus == "Configured") { %>
+                                    <span class="status-pill status-active" style="background: rgba(0, 210, 106, 0.12); color: #00d26a; border-color: rgba(0, 210, 106, 0.3);">Configured</span>
+                                <% } else if (u.PortfolioStatus == "In Progress") { %>
+                                    <span class="status-pill" style="background: rgba(61, 127, 255, 0.12); color: var(--blue-light); border-color: rgba(61, 127, 255, 0.3);">In Progress</span>
+                                <% } else { %>
+                                    <span class="status-pill status-inactive">Not Started</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <span style="font-size: var(--t-xs); color: var(--text);"><%= Server.HtmlEncode(u.RoleTitle) %></span>
+                            </td>
+                            <td>
+                                <div style="font-size: var(--t-xs); display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <span class="kpi-badge kpi-badge-cyan" style="padding: 2px 6px; font-size: 11px;"><%= u.ProjectsCount %> Projects</span>
+                                    <span class="kpi-badge kpi-badge-blue" style="padding: 2px 6px; font-size: 11px;"><%= u.SkillsCount %> Skills</span>
+                                    <span style="color: var(--text-dim); padding-top: 2px;"><%= u.TechCount %> Techs</span>
                                 </div>
-                            </div>
-                        </td>
-                        <td><strong><%= Stats.TotalTechStacks %></strong> Tech Items</td>
-                        <td><span class="status-pill status-active">Active</span></td>
-                        <td>tech_stacks_tbl</td>
-                        <td>
-                            <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="techstack">Manage Tech Stack &rarr;</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="dash-module-cell">
-                                <span class="module-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                                </span>
-                                <div>
-                                    <strong>Skills &amp; Capabilities</strong>
-                                    <div class="module-meta">Categorized technical and architecture skillsets</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td><strong><%= Stats.TotalSkills %></strong> Skill Categories</td>
-                        <td><span class="status-pill status-active">Active</span></td>
-                        <td>skills_tbl</td>
-                        <td>
-                            <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="skills">Manage Skills &rarr;</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="dash-module-cell">
-                                <span class="module-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                                </span>
-                                <div>
-                                    <strong>Projects &amp; Showcase</strong>
-                                    <div class="module-meta">Case studies, live preview links &amp; screenshots</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td><strong><%= Stats.TotalProjects %></strong> Projects</td>
-                        <td><span class="status-pill status-active">Active</span></td>
-                        <td>projects_tbl</td>
-                        <td>
-                            <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="projects">Manage Projects &rarr;</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="dash-module-cell">
-                                <span class="module-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-                                </span>
-                                <div>
-                                    <strong>Experience &amp; Work History</strong>
-                                    <div class="module-meta">Career milestones, roles &amp; technical achievements</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td><strong><%= Stats.TotalExperiences %></strong> Positions</td>
-                        <td><span class="status-pill status-active">Active</span></td>
-                        <td>experiences_tbl</td>
-                        <td>
-                            <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="experience">Manage Experience &rarr;</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="dash-module-cell">
-                                <span class="module-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                                </span>
-                                <div>
-                                    <strong>Education &amp; Background</strong>
-                                    <div class="module-meta">Academic history and degrees</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td><strong><%= Stats.TotalEducations %></strong> Entries</td>
-                        <td><span class="status-pill status-active">Active</span></td>
-                        <td>educations_tbl</td>
-                        <td>
-                            <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="education">Manage Education &rarr;</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="dash-module-cell">
-                                <span class="module-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
-                                </span>
-                                <div>
-                                    <strong>Awards &amp; Recognition</strong>
-                                    <div class="module-meta">Honors, hackathons &amp; certifications</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td><strong><%= Stats.TotalAwards %></strong> Honors</td>
-                        <td><span class="status-pill status-active">Active</span></td>
-                        <td>awards_tbl</td>
-                        <td>
-                            <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="awards">Manage Awards &rarr;</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="dash-module-cell">
-                                <span class="module-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                </span>
-                                <div>
-                                    <strong>Hobbies &amp; Interests</strong>
-                                    <div class="module-meta">Personal passions and recreational activities</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td><strong><%= Stats.TotalHobbies %></strong> Hobbies</td>
-                        <td><span class="status-pill status-active">Active</span></td>
-                        <td>hobbies_tbl</td>
-                        <td>
-                            <button type="button" class="btn btn-secondary btn-sm jump-panel-btn" data-target="hobbies">Manage Hobbies &rarr;</button>
-                        </td>
-                    </tr>
+                            </td>
+                            <td>
+                                <% if (u.LastProfileUpdate.HasValue) { %>
+                                    <span style="font-size: 11px; color: var(--text);"><%= u.LastProfileUpdate.Value.ToString("MMM dd, yyyy") %></span>
+                                <% } else { %>
+                                    <span style="font-size: 11px; color: var(--text-dim); font-style: italic;">Never</span>
+                                <% } %>
+                            </td>
+                            <td style="text-align: right;">
+                                <a href='<%= ResolveUrl("~/Default.aspx?userId=" + u.UserId) %>' target="_blank" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <span>Preview Website</span>
+                                </a>
+                            </td>
+                        </tr>
+                    <% } } else { %>
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 24px;">No user portfolios registered yet.</td>
+                        </tr>
+                    <% } %>
                 </tbody>
             </table>
         </div>

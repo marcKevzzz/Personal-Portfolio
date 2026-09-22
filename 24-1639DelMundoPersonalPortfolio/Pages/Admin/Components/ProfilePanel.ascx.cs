@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Web.UI;
+using _24_1639DelMundoPersonalPortfolio.Helpers;
 using _24_1639DelMundoPersonalPortfolio.Models;
 using _24_1639DelMundoPersonalPortfolio.Services;
 
@@ -18,11 +19,39 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         public void LoadProfileData()
         {
-            var data = PortfolioService.GetPortfolioData(forceRefresh: true);
+            int currentUid = AuthHelper.GetCurrentUserId();
+            var currentUser = AuthHelper.GetCurrentUser();
+            var data = PortfolioService.GetPortfolioData(currentUid, true);
             var p = data?.Profile ?? new ProfileDto();
 
+            // Populate pre-filled user identity from users_tbl
+            string userFullName = !string.IsNullOrWhiteSpace(p.FullName) 
+                ? p.FullName 
+                : (currentUser != null ? $"{currentUser.FirstName} {currentUser.LastName}".Trim() : "Creator");
+            string loginEmail = currentUser?.Email ?? "";
+
+            litLinkedFullName.Text = Server.HtmlEncode(userFullName);
+            litLinkedEmail.Text = Server.HtmlEncode(loginEmail);
+
+            // Populate Profile Birth Date and live age calculation hint
+            if (p.BirthDate.HasValue)
+            {
+                txtProfileBirthDate.Text = p.BirthDate.Value.ToString("yyyy-MM-dd");
+                lblProfileAgeHint.Text = $"Calculated Portfolio Age: {p.Age} years old";
+            }
+            else
+            {
+                txtProfileBirthDate.Text = "";
+                lblProfileAgeHint.Text = "Set your birth date to display your age on your portfolio.";
+            }
+
+            // Populate Profile Contact Email (default to login email if profile email not yet set)
+            txtProfileEmail.Text = !string.IsNullOrWhiteSpace(p.Email) 
+                ? p.Email 
+                : loginEmail;
+
             txtHeroSubline.Text = p.HeroSubline ?? "builds interfaces";
-            hidHeroNames.Value = p.HeroNames ?? "Kevs,Marc Kevin,Del Mundo";
+            hidHeroNames.Value = p.HeroNames ?? (currentUser != null ? $"{currentUser.FirstName},{currentUser.LastName}" : "Kevs,Marc Kevin,Del Mundo");
             txtRoleSummary.Text = p.RoleSummary ?? "";
             txtRoleTitle.Text = p.RoleTitle ?? "Web Developer";
             txtFocusArea.Text = p.FocusArea ?? "Interfaces & Data Systems";
@@ -37,22 +66,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             {
                 profileAvatarPreviewBox.Style["display"] = "none";
             }
-            txtFullName.Text = p.FullName ?? "";
+
             txtLocationAddress.Text = p.LocationAddress ?? "";
-            if (p.BirthDate.HasValue)
-            {
-                txtBirthDate.Text = p.BirthDate.Value.ToString("yyyy-MM-dd");
-                lblDerivedAgeDisplay.Text = $"Derived Age: {p.Age} years old";
-            }
-            else
-            {
-                txtBirthDate.Text = "";
-                lblDerivedAgeDisplay.Text = "Enter your birthday to derive age automatically.";
-            }
             txtExperienceYears.Text = p.ExperienceYears.ToString();
-            txtEmail.Text = p.Email ?? "delmundo.marckevin.ferolino@gmail.com";
-            txtGithubUrl.Text = p.GithubUrl ?? "https://github.com/marcKevzzz";
-            txtLinkedinUrl.Text = p.LinkedinUrl ?? "https://www.linkedin.com/in/del-mundo-marc-kevin-f-ba5050436";
+            txtGithubUrl.Text = p.GithubUrl ?? "";
+            txtLinkedinUrl.Text = p.LinkedinUrl ?? "";
 
             RenderHeroChips(hidHeroNames.Value);
         }
@@ -77,30 +95,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnSaveProfile_Click(object sender, EventArgs e)
         {
-            string fullName = txtFullName.Text.Trim();
-            if (string.IsNullOrWhiteSpace(fullName))
-            {
-                Page.ClientScript.RegisterStartupScript(GetType(), "profileWarn", "if(window.AdminToast) AdminToast.warning('Please enter your full name.', 'Validation Error');", true);
-                return;
-            }
-
-            DateTime? birthDate = null;
-            if (DateTime.TryParse(txtBirthDate.Text, out DateTime parsedDate))
-            {
-                birthDate = parsedDate;
-            }
             int exp = int.TryParse(txtExperienceYears.Text, out int ex) ? ex : 0;
-
-            string firstName = fullName;
-            string lastName = "";
-            int lastSpace = fullName.LastIndexOf(' ');
-            if (lastSpace > 0)
-            {
-                firstName = fullName.Substring(0, lastSpace);
-                lastName = fullName.Substring(lastSpace + 1);
-            }
-
             string avatarPath = hidExistingAvatarPath.Value?.Trim() ?? "";
+
             if (fuProfileAvatar.HasFile)
             {
                 try
@@ -139,10 +136,26 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 profileAvatarPreviewBox.Style["display"] = "none";
             }
 
+            // Parse Date of Birth
+            DateTime? birthDate = null;
+            string bdayStr = txtProfileBirthDate.Text.Trim();
+            if (!string.IsNullOrEmpty(bdayStr))
+            {
+                if (DateTime.TryParse(bdayStr, out DateTime parsedDate))
+                {
+                    if (parsedDate <= DateTime.Today && parsedDate >= DateTime.Today.AddYears(-130))
+                    {
+                        birthDate = parsedDate;
+                    }
+                }
+            }
+
+            int currentUid = AuthHelper.GetCurrentUserId();
             var profile = new ProfileDto
             {
-                FirstName = firstName,
-                LastName = lastName,
+                UserId = currentUid,
+                BirthDate = birthDate,
+                Email = txtProfileEmail.Text.Trim(),
                 HeroSubline = txtHeroSubline.Text.Trim(),
                 HeroNames = string.IsNullOrWhiteSpace(hidHeroNames.Value) ? "Kevs,Marc Kevin,Del Mundo" : hidHeroNames.Value.Trim(),
                 RoleSummary = txtRoleSummary.Text.Trim(),
@@ -151,33 +164,20 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 BasedIn = txtBasedIn.Text.Trim(),
                 AvatarPath = avatarPath,
                 LocationAddress = txtLocationAddress.Text.Trim(),
-                BirthDate = birthDate,
-                Age = 0,
                 ExperienceYears = exp,
-                Email = txtEmail.Text.Trim(),
                 GithubUrl = txtGithubUrl.Text.Trim(),
                 LinkedinUrl = txtLinkedinUrl.Text.Trim()
             };
 
-            bool success = PortfolioService.SaveProfile(profile);
-
-            if (birthDate.HasValue)
-            {
-                int derivedAge = DateTime.Today.Year - birthDate.Value.Year;
-                if (birthDate.Value.Date > DateTime.Today.AddYears(-derivedAge)) derivedAge--;
-                lblDerivedAgeDisplay.Text = $"Derived Age: {derivedAge} years old";
-            }
-            else
-            {
-                lblDerivedAgeDisplay.Text = "Enter your birthday to derive age automatically.";
-            }
+            bool success = PortfolioService.SaveProfile(profile, userId: currentUid);
 
             RenderHeroChips(profile.HeroNames);
+            LoadProfileData();
 
             string script;
             if (success)
             {
-                script = "if(window.AdminToast) AdminToast.success('Public profile settings have been updated successfully.', 'Profile Saved');";
+                script = "if(window.AdminToast) AdminToast.success('Public profile, birth date, and contact email have been saved successfully.', 'Profile Saved');";
             }
             else
             {

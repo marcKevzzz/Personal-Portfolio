@@ -11,7 +11,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Role { get; set; }
-        public string ProfileImage { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
     }

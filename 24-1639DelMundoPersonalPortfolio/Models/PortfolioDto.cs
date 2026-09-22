@@ -66,7 +66,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public string GroupName { get; set; } = "";
         public string Label { get; set; } = "";
         public string IconPath { get; set; } = "";
-        public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
@@ -76,7 +75,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public int UserId { get; set; }
         public string SkillName { get; set; } = "";
         public int ProficiencyVal { get; set; }
-        public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
@@ -90,21 +88,17 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public int? EndYear { get; set; }
         public bool IsCurrent { get; set; }
 
-        private string _periodRange;
         public string PeriodRange
         {
             get
             {
-                if (!string.IsNullOrEmpty(_periodRange)) return _periodRange;
                 if (IsCurrent || !EndYear.HasValue) return $"{StartYear} — Present";
                 return $"{StartYear} — {EndYear.Value}";
             }
-            set { _periodRange = value; }
         }
 
         public string DescriptionText { get; set; } = "";
         public string Tags { get; set; } = "";
-        public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
@@ -116,7 +110,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public string ImagePath { get; set; } = "";
         public string ProjectUrl { get; set; } = "";
         public string Tags { get; set; } = "";
-        public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
@@ -128,22 +121,18 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public int? EndYear { get; set; }
         public bool IsCurrent { get; set; } = true;
 
-        private string _yearPeriod;
         public string YearPeriod
         {
             get
             {
-                if (!string.IsNullOrEmpty(_yearPeriod)) return _yearPeriod;
                 if (IsCurrent || !EndYear.HasValue) return $"{StartYear} — Present";
                 return $"{StartYear} — {EndYear.Value}";
             }
-            set { _yearPeriod = value; }
         }
 
         public string Title { get; set; } = "";
         public string Subtitle { get; set; } = "";
         public string InstitutionName { get; set; } = "";
-        public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
@@ -155,7 +144,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public string Title { get; set; } = "";
         public string Subtitle { get; set; } = "";
         public string OrganizationName { get; set; } = "";
-        public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
@@ -165,7 +153,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public int UserId { get; set; }
         public string HobbyName { get; set; } = "";
         public string HobbyDescription { get; set; } = "";
-        public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
@@ -209,6 +196,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public int PendingPasswordResets { get; set; }
         public int ExperienceYears { get; set; }
         public int ProfileCompletenessPct { get; set; }
+        public int TotalPortfolios { get; set; }
+        public int ConfiguredPortfolios { get; set; }
+        public int PortfolioCreationRate { get; set; }
         public bool IsDatabaseConnected { get; set; }
         public string DatabaseSource { get; set; } = "MSSQL Server (Stored Procedures)";
         public DateTime ReportGeneratedAt { get; set; } = DateTime.UtcNow;
@@ -217,6 +207,28 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public List<CategoryStatDto> ProjectCategoryStats { get; set; } = new List<CategoryStatDto>();
         public List<UserSummaryDto> RecentUsers { get; set; } = new List<UserSummaryDto>();
         public List<PasswordResetSummaryDto> RecentPendingResets { get; set; } = new List<PasswordResetSummaryDto>();
+        public List<UserPortfolioReportDto> UserPortfolioReports { get; set; } = new List<UserPortfolioReportDto>();
+    }
+
+    public class UserPortfolioReportDto
+    {
+        public int UserId { get; set; }
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string FullName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; }
+        public DateTime? LastLoginAt { get; set; }
+        public int LoginCount { get; set; }
+        public bool HasProfile { get; set; }
+        public string RoleTitle { get; set; } = "Not Set";
+        public DateTime? LastProfileUpdate { get; set; }
+        public int ProjectsCount { get; set; }
+        public int SkillsCount { get; set; }
+        public int TechCount { get; set; }
+        public int ExperiencesCount { get; set; }
+        public string PortfolioStatus { get; set; } = "Not Started";
     }
 
     public class CategoryStatDto

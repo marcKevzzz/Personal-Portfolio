@@ -34,32 +34,10 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             }
 
             int eduId = int.TryParse(hidEditingEduId.Value, out int id) ? id : 0;
-            var currentData = PortfolioService.GetPortfolioData();
-
-            int sort = 1;
-            if (eduId > 0)
-            {
-                var existing = currentData?.Educations?.FirstOrDefault(x => x.EduId == eduId);
-                sort = existing?.SortOrder ?? 1;
-            }
-            else
-            {
-                sort = (currentData?.Educations != null && currentData.Educations.Count > 0)
-                    ? currentData.Educations.Max(x => x.SortOrder) + 1
-                    : 1;
-            }
 
             int startYear = int.TryParse(txtEduStartYear.Text.Trim(), out int sy) ? sy : DateTime.Today.Year;
             int? endYear = int.TryParse(txtEduEndYear.Text.Trim(), out int ey) ? ey : (int?)null;
-            bool isCurrent = chkEduIsCurrent.Checked;
-
-            string periodRange = "";
-            if (isCurrent)
-                periodRange = $"{startYear} — Present";
-            else if (endYear.HasValue)
-                periodRange = $"{startYear} — {endYear.Value}";
-            else
-                periodRange = startYear.ToString();
+            bool isCurrent = !endYear.HasValue;
 
             var edu = new EducationDto
             {
@@ -67,11 +45,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 StartYear = startYear,
                 EndYear = endYear,
                 IsCurrent = isCurrent,
-                YearPeriod = periodRange,
                 Title = txtEduTitle.Text.Trim(),
                 Subtitle = txtEduSubtitle.Text.Trim(),
                 InstitutionName = txtEduInstitution.Text.Trim(),
-                SortOrder = sort,
                 IsActive = true
             };
 
@@ -109,7 +85,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                     hidEditingEduId.Value = item.EduId.ToString();
                     txtEduStartYear.Text = item.StartYear > 0 ? item.StartYear.ToString() : "";
                     txtEduEndYear.Text = item.EndYear.HasValue ? item.EndYear.Value.ToString() : "";
-                    chkEduIsCurrent.Checked = item.IsCurrent;
                     txtEduTitle.Text = item.Title;
                     txtEduSubtitle.Text = item.Subtitle;
                     txtEduInstitution.Text = item.InstitutionName;
@@ -132,7 +107,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             hidEditingEduId.Value = "0";
             txtEduStartYear.Text = "";
             txtEduEndYear.Text = "";
-            chkEduIsCurrent.Checked = false;
             txtEduTitle.Text = "";
             txtEduSubtitle.Text = "";
             txtEduInstitution.Text = "";

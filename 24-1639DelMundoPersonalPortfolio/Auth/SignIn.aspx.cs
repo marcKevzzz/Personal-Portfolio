@@ -62,7 +62,14 @@ namespace _24_1639DelMundoPersonalPortfolio
                 // If already logged in, redirect to management console
                 if (AuthHelper.IsAuthenticated())
                 {
-                    Response.Redirect("~/Pages/Admin/Admin.aspx");
+                    if (AuthHelper.IsAdmin())
+                    {
+                        Response.Redirect("~/Pages/Admin/Admin.aspx");
+                    }
+                    else
+                    {
+                        Response.Redirect("~/Pages/User/PortfolioBuilder.aspx");
+                    }
                 }
             }
         }
@@ -81,7 +88,7 @@ namespace _24_1639DelMundoPersonalPortfolio
             try
             {
                 // 1. Query user from users_tbl
-                string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, profile_image, is_active, created_at 
+                string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, is_active, created_at 
                                  FROM users_tbl 
                                  WHERE LOWER(email) = LOWER(@Email);";
 
@@ -106,15 +113,10 @@ namespace _24_1639DelMundoPersonalPortfolio
                 string userRole = row["user_role"] != DBNull.Value ? row["user_role"].ToString() : "User";
                 string firstName = row["first_name"] != DBNull.Value ? row["first_name"].ToString() : "";
                 string lastName = row["last_name"] != DBNull.Value ? row["last_name"].ToString() : "";
-                string profileImage = row["profile_image"] != DBNull.Value ? row["profile_image"].ToString() : null;
 
-                // 2. Check if password was removed by Admin for password reset
-                string checkReqQuery = @"SELECT TOP 1 reset_id, status 
-                                         FROM password_resets_tbl 
-                                         WHERE LOWER(email) = LOWER(@Email) AND status = 'password_removed'
-                                         ORDER BY reset_id DESC;";
-
-                var dtReq = DatabaseHelper.ExecuteQuery(checkReqQuery, new SqlParameter("@Email", emailVal));
+                // 2. Check if user is in "password_removed" state from an approved reset request
+                string checkReq = "SELECT TOP 1 reset_id FROM password_resets_tbl WHERE user_id = @UserId AND status = 'password_removed' ORDER BY reset_id DESC;";
+                var dtReq = DatabaseHelper.ExecuteQuery(checkReq, new SqlParameter("@UserId", userId));
                 if (dtReq != null && dtReq.Rows.Count > 0)
                 {
                     Response.Redirect("~/Auth/NewPassword.aspx?email=" + Server.UrlEncode(emailVal) + "&approved=true");
@@ -144,7 +146,6 @@ namespace _24_1639DelMundoPersonalPortfolio
                     Email = emailVal,
                     PasswordHash = storedHash,
                     Role = userRole,
-                    ProfileImage = profileImage,
                     IsActive = isActive,
                     CreatedAt = Convert.ToDateTime(row["created_at"])
                 };
@@ -174,7 +175,14 @@ namespace _24_1639DelMundoPersonalPortfolio
                 }
                 else
                 {
-                    Response.Redirect("~/Pages/Admin/Admin.aspx?login=true");
+                    if (AuthHelper.IsAdmin())
+                    {
+                        Response.Redirect("~/Pages/Admin/Admin.aspx?login=true");
+                    }
+                    else
+                    {
+                        Response.Redirect("~/Pages/User/PortfolioBuilder.aspx?login=true");
+                    }
                 }
             }
             catch (System.Threading.ThreadAbortException)

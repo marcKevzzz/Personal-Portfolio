@@ -141,6 +141,8 @@
     <Content Include="Pages\Admin\Components\HobbiesPanel.ascx" />
     <Content Include="Pages\Admin\Components\UsersPanel.ascx" />
     <Content Include="Pages\Admin\Components\AdminProfilePanel.ascx" />
+    <Content Include="Pages\User\PortfolioBuilder.aspx" />
+    <Content Include="Pages\User\Components\UserAccountPanel.ascx" />
     <Content Include="Pages\Profile.aspx" />
     <Content Include="Scripts\Admin.js" />
     <Content Include="Scripts\Auth.js" />
@@ -355,6 +357,20 @@
     </Compile>
     <Compile Include="Pages\Admin\Components\AdminProfilePanel.ascx.designer.cs">
       <DependentUpon>AdminProfilePanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\User\Components\UserAccountPanel.ascx.cs">
+      <DependentUpon>UserAccountPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\User\Components\UserAccountPanel.ascx.designer.cs">
+      <DependentUpon>UserAccountPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\User\PortfolioBuilder.aspx.cs">
+      <DependentUpon>PortfolioBuilder.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\User\PortfolioBuilder.aspx.designer.cs">
+      <DependentUpon>PortfolioBuilder.aspx</DependentUpon>
     </Compile>
     <Compile Include="Pages\Admin\Admin.Master.cs">
       <DependentUpon>Admin.Master</DependentUpon>

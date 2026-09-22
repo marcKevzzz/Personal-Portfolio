@@ -54,20 +54,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             }
 
             int projId = int.TryParse(hidEditingProjectId.Value, out int id) ? id : 0;
-            var currentData = PortfolioService.GetPortfolioData();
-            
-            int sort = 1;
-            if (projId > 0)
-            {
-                var existing = currentData?.Projects?.FirstOrDefault(p => p.ProjectId == projId);
-                sort = existing?.SortOrder ?? 1;
-            }
-            else
-            {
-                sort = (currentData?.Projects != null && currentData.Projects.Count > 0)
-                    ? currentData.Projects.Max(p => p.SortOrder) + 1
-                    : 1;
-            }
 
             string finalImagePath = "Assets/Images/samsondentalcenter.png";
             if (projId > 0 && !string.IsNullOrWhiteSpace(hidExistingImagePath.Value))
@@ -109,7 +95,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 ImagePath = finalImagePath,
                 ProjectUrl = txtProjectUrl.Text.Trim(),
                 Tags = hidProjectTags.Value.Trim(),
-                SortOrder = sort,
                 IsActive = true
             };
 

@@ -5,7 +5,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
         protected global::System.Web.UI.WebControls.HiddenField hidEditingEduId;
         protected global::System.Web.UI.WebControls.TextBox txtEduStartYear;
         protected global::System.Web.UI.WebControls.TextBox txtEduEndYear;
-        protected global::System.Web.UI.WebControls.CheckBox chkEduIsCurrent;
         protected global::System.Web.UI.WebControls.TextBox txtEduTitle;
         protected global::System.Web.UI.WebControls.TextBox txtEduSubtitle;
         protected global::System.Web.UI.WebControls.TextBox txtEduInstitution;

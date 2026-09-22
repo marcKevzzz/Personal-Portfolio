@@ -21,23 +21,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             var currentUser = AuthHelper.GetCurrentUser();
             string fullName = currentUser != null ? $"{currentUser.FirstName} {currentUser.LastName}".Trim() : "Marc Kevin Del Mundo";
             string email = currentUser != null ? currentUser.Email : "delmundo.marckevin.ferolino@gmail.com";
-            string avatar = currentUser != null ? currentUser.ProfileImage : "";
 
             litAdminDisplayName.Text = Server.HtmlEncode(fullName);
             txtAdminFullName.Text = fullName;
             txtAdminEmail.Text = email;
 
-            if (!string.IsNullOrEmpty(avatar))
-            {
-                imgAdminAvatar.ImageUrl = ResolveUrl("~/" + avatar.TrimStart('~', '/'));
-                imgAdminAvatar.Visible = true;
-                adminAvatarSvgPlaceholder.Visible = false;
-            }
-            else
-            {
-                imgAdminAvatar.Visible = false;
-                adminAvatarSvgPlaceholder.Visible = true;
-            }
+            imgAdminAvatar.Visible = false;
+            adminAvatarSvgPlaceholder.Visible = true;
         }
 
         protected void btnSaveAdminProfile_Click(object sender, EventArgs e)
@@ -101,17 +91,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             var currentUser = AuthHelper.GetCurrentUser();
             int userId = currentUser != null && currentUser.UserId > 0 ? currentUser.UserId : 1;
 
-            bool ok = PortfolioService.UpdateAdminCredentials(userId, firstName, lastName, email, newPass, newAvatarPath);
+            bool ok = PortfolioService.UpdateAdminCredentials(userId, firstName, lastName, email, newPass);
 
             if (ok && currentUser != null)
             {
                 currentUser.FirstName = firstName;
                 currentUser.LastName = lastName;
                 currentUser.Email = email;
-                if (!string.IsNullOrEmpty(newAvatarPath))
-                {
-                    currentUser.ProfileImage = newAvatarPath;
-                }
                 AuthHelper.SetUserSession(currentUser);
             }
 

@@ -14,33 +14,44 @@ namespace _24_1639DelMundoPersonalPortfolio
         {
             if (!AuthHelper.IsAuthenticated())
             {
-                Response.Redirect("~/Auth/SignIn.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
+                Response.Redirect("~/Auth/SignIn.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl), true);
                 return;
             }
 
             int currentUserId = AuthHelper.GetCurrentUserId();
-            int? targetUserId = null;
-            if (int.TryParse(Request.QueryString["userId"], out int qUserId))
+            int effectiveUserId;
+
+            if (AuthHelper.IsAdmin())
             {
-                if (AuthHelper.IsAdmin() || qUserId == currentUserId)
+                // System Administrators do not have a personal live portfolio
+                // They can only view other registered users' websites via ?userId=X
+                if (int.TryParse(Request.QueryString["userId"], out int qUserId) && qUserId > 0 && qUserId != currentUserId)
                 {
-                    targetUserId = qUserId;
+                    effectiveUserId = qUserId;
+                    pnlAdminViewingBanner.Visible = true;
                 }
-            }
-
-            int effectiveUserId = targetUserId ?? currentUserId;
-            var data = PortfolioService.GetPortfolioData(forceRefresh: false, userId: effectiveUserId);
-
-            if (AuthHelper.IsAdmin() && targetUserId.HasValue && targetUserId.Value != currentUserId)
-            {
-                pnlAdminViewingBanner.Visible = true;
-                string name = data?.Profile?.FullName;
-                if (string.IsNullOrWhiteSpace(name)) name = $"User #{targetUserId.Value}";
-                litViewingUserName.Text = Server.HtmlEncode(name);
+                else
+                {
+                    // No target user specified or tried to view self -> redirect back to Admin Console
+                    Response.Redirect("~/Pages/Admin/Admin.aspx", true);
+                    return;
+                }
             }
             else
             {
+                // Normal users can ONLY view their own personal portfolio preview
+                // Other userId query parameters are strictly forbidden/ignored
+                effectiveUserId = currentUserId;
                 pnlAdminViewingBanner.Visible = false;
+            }
+
+            var data = PortfolioService.GetPortfolioData(effectiveUserId, false);
+
+            if (AuthHelper.IsAdmin() && pnlAdminViewingBanner.Visible)
+            {
+                string name = data?.Profile?.FullName;
+                if (string.IsNullOrWhiteSpace(name)) name = $"User #{effectiveUserId}";
+                litViewingUserName.Text = Server.HtmlEncode(name);
             }
 
             if (data != null)
@@ -74,7 +85,8 @@ namespace _24_1639DelMundoPersonalPortfolio
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static PortfolioDataDto GetPortfolioData(bool forceRefresh = false)
         {
-            return PortfolioService.GetPortfolioData(forceRefresh);
+            int currentUserId = AuthHelper.GetCurrentUserId();
+            return PortfolioService.GetPortfolioData(currentUserId, forceRefresh);
         }
     }
 }

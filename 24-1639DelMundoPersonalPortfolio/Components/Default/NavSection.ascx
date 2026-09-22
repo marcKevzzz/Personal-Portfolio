@@ -8,14 +8,11 @@
 <div id="progress"></div>
 
 <nav class="index-nav" aria-label="Section index">
-  <asp:HyperLink ID="lnkNavProfile" runat="server" NavigateUrl="~/Pages/Admin/Admin.aspx" CssClass="nav-profile-btn" aria-label="Manage Website Console" ToolTip="Manage Website / Builder">
-    <asp:Image ID="imgNavAvatar" runat="server" CssClass="nav-avatar-img" AlternateText="Manage Website" Visible="false" />
-    <asp:PlaceHolder ID="phNavSvg" runat="server" Visible="true">
-      <svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 20h9"></path>
-        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-      </svg>
-    </asp:PlaceHolder>
+  <asp:HyperLink ID="lnkNavProfile" runat="server" NavigateUrl="~/Pages/User/PortfolioBuilder.aspx" CssClass="nav-profile-btn" aria-label="Manage Website Console" ToolTip="Portfolio Builder">
+    <svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20h9"></path>
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+    </svg>
   </asp:HyperLink>
   <a href="#hero" data-label="Intro"><span>Intro</span></a>
   <a href="#info" data-label="Info"><span>Info</span></a>

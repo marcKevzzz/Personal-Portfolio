@@ -24,7 +24,10 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         public void BindUsers()
         {
-            var list = PortfolioService.GetAllUsers();
+            int currentUid = _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.GetCurrentUserId();
+            var list = PortfolioService.GetAllUsers(excludeAdmins: true)
+                .Where(u => u.UserId != currentUid && !u.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                .ToList();
             rptUsersTable.DataSource = list;
             rptUsersTable.DataBind();
         }

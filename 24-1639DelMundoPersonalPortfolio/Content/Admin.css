@@ -594,6 +594,13 @@ button:focus-visible {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.email-span{
+  font-size: var(--t-xs); 
+  color: var(--text-dim); 
+  margin-top: 6px; 
+  display: block;
+}
+
 @media (max-width: 768px) {
   .admin-fieldgroup,
   .admin-fieldgroup.three-col {
@@ -626,6 +633,7 @@ button:focus-visible {
 .field input[type="email"],
 .field input[type="password"],   
 .field input[type="number"],   
+.field input[type="date"],
 .field select {
   width: 100%;
   background: var(--bg-1);
@@ -638,6 +646,49 @@ button:focus-visible {
   padding: 8px 4px;
   cursor: pointer;
   transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.field input[type="date"],
+input[type="date"],
+#AdminMainContent_ucProfilePanel_txtProfileBirthDate {
+  color-scheme: dark;
+  font-family: var(--f-sans);
+  font-size: var(--t-sm);
+  min-height: 38px;
+  line-height: normal;
+}
+
+.field input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit,
+#AdminMainContent_ucProfilePanel_txtProfileBirthDate::-webkit-datetime-edit {
+  color: var(--text);
+  font-family: var(--f-sans);
+  font-size: var(--t-sm);
+  padding: 0;
+}
+
+.field input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+#AdminMainContent_ucProfilePanel_txtProfileBirthDate::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+.field input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+#AdminMainContent_ucProfilePanel_txtProfileBirthDate::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.8) sepia(0.2) saturate(2) hue-rotate(180deg);
+  opacity: 0.75;
+  padding: 2px 4px;
+  margin-right: 2px;
+  transition: opacity 0.2s ease;
+}
+
+.field input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+#AdminMainContent_ucProfilePanel_txtProfileBirthDate::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
 .field select option,
@@ -853,7 +904,7 @@ textarea:focus {
   grid-template-columns: repeat(3, 1fr);
 }
 
-.admin-panel[data-panel="skills"] .add-form, .admin-panel[data-panel="experience"] .add-form {
+.admin-panel[data-panel="skills"]  {
   grid-template-columns: repeat(6, 1fr);
   align-items: start;
 }
@@ -868,6 +919,7 @@ textarea:focus {
 
 .admin-panel[data-panel="education"] .add-form,
 .admin-panel[data-panel="awards"] .add-form,
+ .admin-panel[data-panel="experience"] .add-form,
 .add-form.four-col {
   grid-template-columns: repeat(4, 1fr);
 }
@@ -876,13 +928,10 @@ textarea:focus {
   grid-template-columns: 1fr 1fr 2fr;
 }
 
-.admin-panel[data-panel="hobbies"] .add-form {
-  grid-template-columns: 1fr auto;
-}
 
 @media (max-width: 1100px) {
   .admin-panel[data-panel="education"] .add-form,
-  .admin-panel[data-panel="awards"] .add-form{
+  .admin-panel[data-panel="awards"] .add-form .admin-panel[data-panel="experience"] .add-form{
     grid-template-columns: repeat(2, 1fr);
   }
   .admin-panel[data-panel="techstack"] .add-form {
@@ -2340,6 +2389,15 @@ input[type="number"]::placeholder{
 @media (max-width: 900px) {
   .dash-analytics-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-analytics-grid {
+    gap: 14px;
+    margin-top: 14px;
   }
 }
 
@@ -2348,6 +2406,8 @@ input[type="number"]::placeholder{
   border: 1px solid var(--line);
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .dash-card-header {
@@ -2357,6 +2417,14 @@ input[type="number"]::placeholder{
   padding: 16px 20px;
   border-bottom: 1px solid var(--line-soft);
   background: var(--bg-2);
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+@media (max-width: 480px) {
+  .dash-card-header {
+    padding: 12px 14px;
+  }
 }
 
 .dash-card-title {
@@ -2368,6 +2436,12 @@ input[type="number"]::placeholder{
   color: var(--text);
   letter-spacing: 0.04em;
   font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .dash-card-title {
+    font-size: var(--t-xs);
+  }
 }
 
 .dash-title-dot {
@@ -2394,6 +2468,13 @@ input[type="number"]::placeholder{
 .dash-card-body {
   padding: 20px;
   flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .dash-card-body {
+    padding: 14px 12px;
+  }
 }
 
 /* Distribution Bars List */
@@ -2401,6 +2482,12 @@ input[type="number"]::placeholder{
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+@media (max-width: 480px) {
+  .dash-bars-list {
+    gap: 11px;
+  }
 }
 
 .dash-bar-row {
@@ -2412,13 +2499,22 @@ input[type="number"]::placeholder{
 .dash-bar-meta {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   font-size: var(--t-xs);
+  flex-wrap: wrap;
+  gap: 4px 8px;
 }
 
 .dash-bar-name {
   color: var(--text);
   font-weight: 500;
+  font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .dash-bar-name {
+    font-size: 12px;
+  }
 }
 
 .dash-bar-count {
@@ -2432,11 +2528,13 @@ input[type="number"]::placeholder{
   height: 6px;
   background: var(--bg-3);
   overflow: hidden;
+  border-radius: 3px;
 }
 
 .dash-bar-fill {
   height: 100%;
   background: var(--blue);
+  border-radius: 3px;
   transition: width 0.5s ease-out;
 }
 
@@ -2447,11 +2545,20 @@ input[type="number"]::placeholder{
 /* Mini Stats Box */
 .dash-mini-stats-box {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid var(--line-soft);
+}
+
+@media (max-width: 600px) {
+  .dash-mini-stats-box {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 12px;
+  }
 }
 
 .mini-stat-item {
@@ -2462,6 +2569,13 @@ input[type="number"]::placeholder{
   background: var(--bg-2);
   border: 1px solid var(--line-soft);
   text-align: center;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .mini-stat-item {
+    padding: 8px 6px;
+  }
 }
 
 .mini-stat-num {
@@ -2470,6 +2584,12 @@ input[type="number"]::placeholder{
   font-weight: 700;
   color: var(--text);
   line-height: 1.2;
+}
+
+@media (max-width: 480px) {
+  .mini-stat-num {
+    font-size: 18px;
+  }
 }
 
 .mini-stat-num.is-warn {
@@ -2482,9 +2602,36 @@ input[type="number"]::placeholder{
   margin-top: 2px;
 }
 
+@media (max-width: 480px) {
+  .mini-stat-desc {
+    font-size: 10px;
+  }
+}
+
 /* Content Inventory Table */
 .dash-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.user-activity{
+   max-height: 350px;
+}
+
+.user-portfolio{
+  max-height: 100vh;
+}
+
+.dash-inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+@media (max-width: 600px) {
+  .dash-inventory-table {
+    min-width: 360px;
+  }
 }
 
 .dash-inventory-table th {
@@ -2501,6 +2648,13 @@ input[type="number"]::placeholder{
   padding: 14px 18px;
   vertical-align: middle;
   border-bottom: 1px solid var(--line-soft);
+}
+
+@media (max-width: 600px) {
+  .dash-inventory-table th,
+  .dash-inventory-table td {
+    padding: 10px 12px;
+  }
 }
 
 .dash-module-cell {

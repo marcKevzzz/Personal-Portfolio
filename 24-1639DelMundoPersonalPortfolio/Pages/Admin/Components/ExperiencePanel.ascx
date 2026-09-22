@@ -7,35 +7,31 @@
     <asp:HiddenField ID="hidEditingExpId" runat="server" Value="0" />
 
     <div class="add-form">
-        <div class="field field-col-3">
+        <div class="field ">
             <label>Role</label>
             <div class="input-row">
                 <asp:TextBox ID="txtExpRole" runat="server" placeholder="Front-End Developer" />
             </div>
         </div>
-        <div class="field field-col-3">
+        <div class="field ">
             <label>Company</label>
             <div class="input-row">
                 <asp:TextBox ID="txtExpCompany" runat="server" placeholder="Samson Dental Center" />
             </div>
         </div>
-        <div class="field field-col-3">
+        <div class="field ">
             <label>Year Started</label>
             <div class="input-row">
                 <asp:TextBox ID="txtExpStartYear" runat="server" TextMode="Number" min="1950" max="2100" placeholder="e.g. 2021" />
             </div>
         </div>
-        <div class="field field-col-3">
+        <div class="field ">
             <label>Year Ended</label>
             <div class="input-row">
                 <asp:TextBox ID="txtExpEndYear" runat="server" TextMode="Number" min="1950" max="2100" placeholder="e.g. 2024" />
             </div>
-            <label style="display: flex; align-items: center; gap: 6px; margin-top: 6px; cursor: pointer; font-size: var(--t-xs); color: var(--text-mid);">
-                <asp:CheckBox ID="chkExpIsCurrent" runat="server" />
-                <span>Present / Ongoing</span>
-            </label>
         </div>
-        <div class="field field-col-2">
+        <div class="field field-col-3">
             <label>Tags (Hit Enter or comma to add)</label>
             <div class="chips-container" id="expTagChips" data-input-target="hidExpTags">
                 <asp:Literal ID="litExpChips" runat="server" />
@@ -43,7 +39,7 @@
             </div>
             <asp:HiddenField ID="hidExpTags" runat="server" ClientIDMode="Static" Value="React,Tailwind CSS" />
         </div>
-        <div class="field field-col-2">
+        <div class="field field-col-3">
             <label>Description</label>
             <asp:TextBox ID="txtExpDescription" runat="server" TextMode="MultiLine" Rows="3" placeholder="Describe responsibilities and impact..." />
         </div>

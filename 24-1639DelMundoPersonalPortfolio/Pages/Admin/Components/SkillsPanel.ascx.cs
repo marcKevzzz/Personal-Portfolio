@@ -37,15 +37,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             int skillId = int.TryParse(hidEditingSkillId.Value, out int id) ? id : 0;
             int pct = int.TryParse(txtProficiencyVal.Text, out int p) ? Math.Max(0, Math.Min(100, p)) : 80;
 
-            var currentList = PortfolioService.GetPortfolioData()?.Skills;
-            int nextSort = (currentList != null && currentList.Count > 0) ? currentList.Max(s => s.SortOrder) + 1 : 1;
-
             var skill = new SkillDto
             {
                 SkillId = skillId,
                 SkillName = name,
                 ProficiencyVal = pct,
-                SortOrder = skillId > 0 && currentList != null ? (currentList.FirstOrDefault(s => s.SkillId == skillId)?.SortOrder ?? nextSort) : nextSort,
                 IsActive = true
             };
 

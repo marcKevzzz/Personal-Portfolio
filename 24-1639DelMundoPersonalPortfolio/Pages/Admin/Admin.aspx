@@ -20,35 +20,10 @@
     <!-- 0. STATISTIC REPORTS DASHBOARD -->
     <admin:DashboardPanel runat="server" ID="ucDashboardPanel" />
 
-    <!-- 1. PUBLIC PROFILE & HERO -->
-    <admin:ProfilePanel runat="server" ID="ucProfilePanel" />
-
-
-    <!-- 2. TECH STACK -->
-    <admin:TechStackPanel runat="server" ID="ucTechStackPanel" />
-
-    <!-- 3. SKILLS -->
-    <admin:SkillsPanel runat="server" ID="ucSkillsPanel" />
-
-    <!-- 4. EXPERIENCE -->
-    <admin:ExperiencePanel runat="server" ID="ucExperiencePanel" />
-
-    <!-- 5. PROJECTS -->
-    <admin:ProjectsPanel runat="server" ID="ucProjectsPanel" />
-
-    <!-- 6. EDUCATION -->
-    <admin:EducationPanel runat="server" ID="ucEducationPanel" />
-
-    <!-- 7. AWARDS -->
-    <admin:AwardsPanel runat="server" ID="ucAwardsPanel" />
-
-    <!-- 8. HOBBIES -->
-    <admin:HobbiesPanel runat="server" ID="ucHobbiesPanel" />
-
-    <!-- 9. USERS -->
+    <!-- 1. USERS -->
     <admin:UsersPanel runat="server" ID="ucUsersPanel" />
 
-    <!-- 10. ADMIN ACCOUNT & CREDENTIALS -->
+    <!-- 2. ADMIN ACCOUNT & CREDENTIALS -->
     <admin:AdminProfilePanel runat="server" ID="ucAdminProfilePanel" />
 </asp:Content>
 

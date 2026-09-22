@@ -825,7 +825,7 @@ function renderBasicInfo(profile) {
 
   var ageEl = document.getElementById("infoAge");
   if (ageEl && profile.Age !== undefined && profile.Age !== null) {
-    ageEl.textContent = profile.Age + " years old";
+    ageEl.textContent = profile.Age > 0 ? (profile.Age + " years old") : "No birthday added yet";
   }
 
   var expEl = document.getElementById("infoExperience");
