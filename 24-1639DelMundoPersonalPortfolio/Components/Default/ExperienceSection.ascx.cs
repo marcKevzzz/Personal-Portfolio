@@ -18,8 +18,15 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         public void BindData(List<ExperienceDto> experiences)
         {
             Experiences = experiences ?? new List<ExperienceDto>();
-            rptExperiences.DataSource = Experiences;
-            rptExperiences.DataBind();
+            bool hasItems = Experiences.Count > 0;
+            pnlEmpty.Visible = !hasItems;
+            expList.Visible = hasItems;
+
+            if (hasItems)
+            {
+                rptExperiences.DataSource = Experiences;
+                rptExperiences.DataBind();
+            }
         }
 
         protected void rptExperiences_ItemDataBound(object sender, RepeaterItemEventArgs e)

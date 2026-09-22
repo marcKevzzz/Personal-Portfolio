@@ -5,7 +5,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
         protected global::System.Web.UI.WebControls.HiddenField hidEditingExpId;
         protected global::System.Web.UI.WebControls.TextBox txtExpRole;
         protected global::System.Web.UI.WebControls.TextBox txtExpCompany;
-        protected global::System.Web.UI.WebControls.TextBox txtExpPeriod;
+        protected global::System.Web.UI.WebControls.TextBox txtExpStartYear;
+        protected global::System.Web.UI.WebControls.TextBox txtExpEndYear;
+        protected global::System.Web.UI.WebControls.CheckBox chkExpIsCurrent;
         protected global::System.Web.UI.WebControls.Literal litExpChips;
         protected global::System.Web.UI.WebControls.HiddenField hidExpTags;
         protected global::System.Web.UI.WebControls.TextBox txtExpDescription;

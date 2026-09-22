@@ -15,6 +15,12 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+    <asp:Panel ID="pnlAdminViewingBanner" runat="server" Visible="false" CssClass="admin-viewing-banner">
+        <div class="banner-inner">
+            <span>Viewing <strong><asp:Literal ID="litViewingUserName" runat="server" /></strong>'s Personal Website (Admin Mode)</span>
+            <a href="<%= ResolveUrl("~/Pages/Admin/Admin.aspx") %>" class="btn btn-secondary" style="padding: 4px 12px; font-size: 11px; text-decoration: none;">&larr; Back to Admin Console</a>
+        </div>
+    </asp:Panel>
     <portfolio:NavSection ID="NavSectionControl" runat="server" />
     <portfolio:HeroSection ID="HeroSectionControl" runat="server" />
     <portfolio:BasicInfoSection ID="BasicInfoSectionControl" runat="server" />

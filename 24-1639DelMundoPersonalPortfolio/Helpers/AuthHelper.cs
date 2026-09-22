@@ -266,6 +266,22 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
         }
 
         /// <summary>
+        /// Gets the logged-in user's unique ID.
+        /// </summary>
+        public static int GetCurrentUserId()
+        {
+            if (!IsAuthenticated()) return 0;
+            var context = HttpContext.Current;
+            var uidObj = context?.Session?[SessionUserIdKey];
+            if (uidObj != null && int.TryParse(uidObj.ToString(), out int id))
+            {
+                return id;
+            }
+            var user = GetCurrentUser();
+            return user?.UserId ?? 0;
+        }
+
+        /// <summary>
         /// Gets the logged-in user's email.
         /// </summary>
         public static string GetCurrentEmail()

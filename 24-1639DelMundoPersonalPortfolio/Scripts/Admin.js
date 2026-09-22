@@ -426,10 +426,12 @@ function initAdminNavigation() {
     }
   });
 
-  // Initial active panel (defaults to dashboard)
+  // Initial active panel (respects role: dashboard for admin, profile for user)
+  var firstNav = document.querySelector(".admin-nav a[data-panel].active") || document.querySelector(".admin-nav a[data-panel]");
+  var defaultFallback = firstNav ? firstNav.getAttribute("data-panel") : "profile";
   var savedPanel = localStorage.getItem("admin_active_panel");
-  var initial =
-    hidden && hidden.value ? hidden.value : savedPanel || "dashboard";
+  var savedIsValid = savedPanel && document.querySelector('.admin-nav a[data-panel="' + savedPanel + '"]');
+  var initial = (hidden && hidden.value) ? hidden.value : (savedIsValid ? savedPanel : defaultFallback);
   activatePanel(initial);
 }
 

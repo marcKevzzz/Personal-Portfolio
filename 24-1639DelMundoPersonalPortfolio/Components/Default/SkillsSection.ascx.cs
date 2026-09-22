@@ -16,8 +16,15 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         public void BindData(List<SkillDto> skills)
         {
             Skills = skills ?? new List<SkillDto>();
-            rptSkills.DataSource = Skills;
-            rptSkills.DataBind();
+            bool hasItems = Skills.Count > 0;
+            pnlEmpty.Visible = !hasItems;
+            skillsList.Visible = hasItems;
+
+            if (hasItems)
+            {
+                rptSkills.DataSource = Skills;
+                rptSkills.DataBind();
+            }
         }
     }
 }

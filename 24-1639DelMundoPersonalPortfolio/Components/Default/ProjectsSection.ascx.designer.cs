@@ -8,6 +8,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
 {
     public partial class ProjectsSection
     {
+        protected global::System.Web.UI.WebControls.Panel pnlEmpty;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl projectsBento;
         protected global::System.Web.UI.WebControls.Repeater rptProjects;
     }
 }

@@ -8,7 +8,10 @@
   </div>
 
   <div class="wrap">
-    <div class="stack-groups" id="techStackGroups">
+    <asp:Panel ID="pnlEmpty" runat="server" Visible="false" CssClass="section-empty-state">
+      <span>No tech stack added yet.</span>
+    </asp:Panel>
+    <div class="stack-groups" id="techStackGroups" runat="server">
       <asp:Repeater ID="rptGroups" runat="server" OnItemDataBound="rptGroups_ItemDataBound">
         <ItemTemplate>
           <div class="stack-group reveal">

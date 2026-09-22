@@ -16,8 +16,15 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         public void BindData(List<HobbyDto> hobbies)
         {
             Hobbies = hobbies ?? new List<HobbyDto>();
-            rptHobbies.DataSource = Hobbies;
-            rptHobbies.DataBind();
+            bool hasItems = Hobbies.Count > 0;
+            pnlEmpty.Visible = !hasItems;
+            hobbiesList.Visible = hasItems;
+
+            if (hasItems)
+            {
+                rptHobbies.DataSource = Hobbies;
+                rptHobbies.DataBind();
+            }
         }
     }
 }

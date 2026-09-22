@@ -16,8 +16,15 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         public void BindData(List<EducationDto> educations)
         {
             Educations = educations ?? new List<EducationDto>();
-            rptEducations.DataSource = Educations;
-            rptEducations.DataBind();
+            bool hasItems = Educations.Count > 0;
+            pnlEmpty.Visible = !hasItems;
+            eduList.Visible = hasItems;
+
+            if (hasItems)
+            {
+                rptEducations.DataSource = Educations;
+                rptEducations.DataBind();
+            }
         }
     }
 }

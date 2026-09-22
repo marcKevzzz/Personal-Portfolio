@@ -5,6 +5,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
 {
     public class PortfolioDataDto
     {
+        public int UserId { get; set; }
+        public string UserRole { get; set; } = "User";
+        public bool IsOwner { get; set; } = false;
         public ProfileDto Profile { get; set; } = new ProfileDto();
         public List<TechStackItemDto> TechStacks { get; set; } = new List<TechStackItemDto>();
         public List<SkillDto> Skills { get; set; } = new List<SkillDto>();
@@ -19,27 +22,47 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
     public class ProfileDto
     {
         public int ProfileId { get; set; }
-        public string FirstName { get; set; } = "Marc Kevin";
-        public string LastName { get; set; } = "Del Mundo";
+        public int UserId { get; set; }
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
         public string FullName => $"{FirstName} {LastName}".Trim();
         public string HeroSubline { get; set; } = "builds interfaces";
-        public string HeroNames { get; set; } = "Kevs,Marc Kevin,Del Mundo";
-        public string RoleSummary { get; set; }
+        public string HeroNames { get; set; } = "";
+        public string RoleSummary { get; set; } = "";
         public string RoleTitle { get; set; } = "Web Developer";
         public string FocusArea { get; set; } = "Interfaces & Data Systems";
         public string BasedIn { get; set; } = "Quezon City";
         public string AvatarPath { get; set; } = "Assets/Images/pixelart_portrait.png";
-        public string LocationAddress { get; set; } = "B2 L6 Emerald St. Novaliches Proper, Q.C.";
-        public int Age { get; set; } = 19;
-        public int ExperienceYears { get; set; } = 3;
-        public string Email { get; set; } = "delmundo.marckevin.ferolino@gmail.com";
-        public string GithubUrl { get; set; } = "https://github.com/marcKevzzz";
-        public string LinkedinUrl { get; set; } = "https://www.linkedin.com/in/del-mundo-marc-kevin-f-ba5050436";
+        public string LocationAddress { get; set; } = "";
+        public DateTime? BirthDate { get; set; }
+
+        private int _fallbackAge = 0;
+        public int Age
+        {
+            get
+            {
+                if (BirthDate.HasValue)
+                {
+                    var today = DateTime.Today;
+                    int age = today.Year - BirthDate.Value.Year;
+                    if (BirthDate.Value.Date > today.AddYears(-age)) age--;
+                    return age >= 0 ? age : 0;
+                }
+                return _fallbackAge;
+            }
+            set { _fallbackAge = value; }
+        }
+
+        public int ExperienceYears { get; set; } = 1;
+        public string Email { get; set; } = "";
+        public string GithubUrl { get; set; } = "";
+        public string LinkedinUrl { get; set; } = "";
     }
 
     public class TechStackItemDto
     {
         public int TechId { get; set; }
+        public int UserId { get; set; }
         public string GroupName { get; set; } = "";
         public string Label { get; set; } = "";
         public string IconPath { get; set; } = "";
@@ -50,6 +73,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
     public class SkillDto
     {
         public int SkillId { get; set; }
+        public int UserId { get; set; }
         public string SkillName { get; set; } = "";
         public int ProficiencyVal { get; set; }
         public int SortOrder { get; set; }
@@ -59,9 +83,25 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
     public class ExperienceDto
     {
         public int ExpId { get; set; }
+        public int UserId { get; set; }
         public string RoleTitle { get; set; } = "";
         public string CompanyName { get; set; } = "";
-        public string PeriodRange { get; set; } = "";
+        public int StartYear { get; set; } = 2024;
+        public int? EndYear { get; set; }
+        public bool IsCurrent { get; set; }
+
+        private string _periodRange;
+        public string PeriodRange
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_periodRange)) return _periodRange;
+                if (IsCurrent || !EndYear.HasValue) return $"{StartYear} — Present";
+                return $"{StartYear} — {EndYear.Value}";
+            }
+            set { _periodRange = value; }
+        }
+
         public string DescriptionText { get; set; } = "";
         public string Tags { get; set; } = "";
         public int SortOrder { get; set; }
@@ -71,6 +111,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
     public class ProjectDto
     {
         public int ProjectId { get; set; }
+        public int UserId { get; set; }
         public string Title { get; set; } = "";
         public string ImagePath { get; set; } = "";
         public string ProjectUrl { get; set; } = "";
@@ -82,7 +123,23 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
     public class EducationDto
     {
         public int EduId { get; set; }
-        public string YearPeriod { get; set; } = "";
+        public int UserId { get; set; }
+        public int StartYear { get; set; } = 2024;
+        public int? EndYear { get; set; }
+        public bool IsCurrent { get; set; } = true;
+
+        private string _yearPeriod;
+        public string YearPeriod
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_yearPeriod)) return _yearPeriod;
+                if (IsCurrent || !EndYear.HasValue) return $"{StartYear} — Present";
+                return $"{StartYear} — {EndYear.Value}";
+            }
+            set { _yearPeriod = value; }
+        }
+
         public string Title { get; set; } = "";
         public string Subtitle { get; set; } = "";
         public string InstitutionName { get; set; } = "";
@@ -93,6 +150,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
     public class AwardDto
     {
         public int AwardId { get; set; }
+        public int UserId { get; set; }
         public string AwardYear { get; set; } = "";
         public string Title { get; set; } = "";
         public string Subtitle { get; set; } = "";
@@ -104,7 +162,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
     public class HobbyDto
     {
         public int HobbyId { get; set; }
+        public int UserId { get; set; }
         public string HobbyName { get; set; } = "";
+        public string HobbyDescription { get; set; } = "";
         public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
@@ -150,7 +210,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public int ExperienceYears { get; set; }
         public int ProfileCompletenessPct { get; set; }
         public bool IsDatabaseConnected { get; set; }
-        public string DatabaseSource { get; set; } = "MSSQL Server";
+        public string DatabaseSource { get; set; } = "MSSQL Server (Stored Procedures)";
         public DateTime ReportGeneratedAt { get; set; } = DateTime.UtcNow;
 
         public List<CategoryStatDto> TechCategoryStats { get; set; } = new List<CategoryStatDto>();
@@ -170,6 +230,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
     public class UserSummaryDto
     {
         public int UserId { get; set; }
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
         public string Email { get; set; } = "";
         public string FullName { get; set; } = "";
         public string Role { get; set; } = "User";
@@ -177,6 +239,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public DateTime? LastLoginAt { get; set; }
         public int LoginCount { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool HasProfile { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string RoleTitle { get; set; } = "";
     }
 
     public class PasswordResetSummaryDto
@@ -189,5 +254,3 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public DateTime RequestedAt { get; set; }
     }
 }
-
-

@@ -8,6 +8,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
 {
     public partial class SkillsSection
     {
+        protected global::System.Web.UI.WebControls.Panel pnlEmpty;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl skillsList;
         protected global::System.Web.UI.WebControls.Repeater rptSkills;
     }
 }

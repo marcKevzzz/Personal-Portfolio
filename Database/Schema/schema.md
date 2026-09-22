@@ -13,14 +13,14 @@
 | [`users_tbl`](#1-users_tbl)                     | Registered user and administrator accounts & credentials     | `user_id`    | —                                     |
 | [`user_logins_tbl`](#11-user_logins_tbl)        | User authentication activity, DAU/MAU audit logging          | `login_id`   | `user_id` &rarr; `users_tbl(user_id)` |
 | [`password_resets_tbl`](#2-password_resets_tbl) | Password reset tokens and admin password removal requests    | `reset_id`   | `user_id` &rarr; `users_tbl(user_id)` |
-| [`profile_tbl`](#3-profile_tbl)                 | Hero and public personal information configuration           | `profile_id` | —                                     |
-| [`tech_stacks_tbl`](#4-tech_stacks_tbl)         | Technologies, frameworks, and tools with icon badges         | `tech_id`    | —                                     |
-| [`skills_tbl`](#5-skills_tbl)                   | Technical competencies and animated percentage progress bars | `skill_id`   | —                                     |
-| [`experiences_tbl`](#6-experiences_tbl)         | Work experience history, companies, and roles                | `exp_id`     | —                                     |
-| [`projects_tbl`](#7-projects_tbl)               | Portfolio showcase projects, screenshots, and URLs           | `project_id` | —                                     |
-| [`educations_tbl`](#8-educations_tbl)           | Educational degrees, periods, and institutions               | `edu_id`     | —                                     |
-| [`awards_tbl`](#9-awards_tbl)                   | Competitions, awards, and certificates                       | `award_id`   | —                                     |
-| [`hobbies_tbl`](#10-hobbies_tbl)                | Personal interests and hobby tags                            | `hobby_id`   | —                                     |
+| [`profile_tbl`](#3-profile_tbl)                 | User personal profile and showcase configuration             | `profile_id` | `user_id` &rarr; `users_tbl(user_id)` |
+| [`tech_stacks_tbl`](#4-tech_stacks_tbl)         | User technologies and frameworks with icon badges            | `tech_id`    | `user_id` &rarr; `users_tbl(user_id)` |
+| [`skills_tbl`](#5-skills_tbl)                   | User competencies and animated percentage progress bars      | `skill_id`   | `user_id` &rarr; `users_tbl(user_id)` |
+| [`experiences_tbl`](#6-experiences_tbl)         | User work experience history (start/end year)                | `exp_id`     | `user_id` &rarr; `users_tbl(user_id)` |
+| [`projects_tbl`](#7-projects_tbl)               | User portfolio showcase projects and URLs                    | `project_id` | `user_id` &rarr; `users_tbl(user_id)` |
+| [`educations_tbl`](#8-educations_tbl)           | User educational attainment (start/end year)                 | `edu_id`     | `user_id` &rarr; `users_tbl(user_id)` |
+| [`awards_tbl`](#9-awards_tbl)                   | User competitions, awards, and certificates                  | `award_id`   | `user_id` &rarr; `users_tbl(user_id)` |
+| [`hobbies_tbl`](#10-hobbies_tbl)                | User personal interests and descriptions                     | `hobby_id`   | `user_id` &rarr; `users_tbl(user_id)` |
 
 ---
 

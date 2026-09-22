@@ -8,6 +8,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
 {
     public partial class ExperienceSection
     {
+        protected global::System.Web.UI.WebControls.Panel pnlEmpty;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl expList;
         protected global::System.Web.UI.WebControls.Repeater rptExperiences;
     }
 }

@@ -59,17 +59,10 @@ namespace _24_1639DelMundoPersonalPortfolio
                     }
                 }
 
-                // If already logged in, redirect to appropriate destination
+                // If already logged in, redirect to management console
                 if (AuthHelper.IsAuthenticated())
                 {
-                    if (AuthHelper.IsAdmin())
-                    {
-                        Response.Redirect("~/Pages/Admin/Admin.aspx");
-                    }
-                    else
-                    {
-                        Response.Redirect("~/Default.aspx");
-                    }
+                    Response.Redirect("~/Pages/Admin/Admin.aspx");
                 }
             }
         }
@@ -175,27 +168,13 @@ namespace _24_1639DelMundoPersonalPortfolio
                     && !returnUrl.StartsWith("//")
                     && !returnUrl.Contains("://");
 
-                if (string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase))
+                if (hasReturnUrl)
                 {
-                    if (hasReturnUrl && returnUrl.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        Response.Redirect(returnUrl);
-                    }
-                    else
-                    {
-                        Response.Redirect("~/Pages/Admin/Admin.aspx?login=true");
-                    }
+                    Response.Redirect(returnUrl);
                 }
                 else
                 {
-                    if (hasReturnUrl && returnUrl.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) < 0)
-                    {
-                        Response.Redirect(returnUrl);
-                    }
-                    else
-                    {
-                        Response.Redirect("~/Default.aspx?login=true");
-                    }
+                    Response.Redirect("~/Pages/Admin/Admin.aspx?login=true");
                 }
             }
             catch (System.Threading.ThreadAbortException)

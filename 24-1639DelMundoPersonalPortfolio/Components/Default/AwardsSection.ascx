@@ -6,7 +6,10 @@
     <div class="field-label reveal">07 / AWARDS</div>
     <h2 class="section-title reveal">Recognition</h2>
  
-    <div class="award-list" id="awardList">
+    <asp:Panel ID="pnlEmpty" runat="server" Visible="false" CssClass="section-empty-state">
+      <span>No awards added yet.</span>
+    </asp:Panel>
+    <div class="award-list" id="awardList" runat="server">
       <asp:Repeater ID="rptAwards" runat="server">
         <ItemTemplate>
           <div class="list-line reveal">

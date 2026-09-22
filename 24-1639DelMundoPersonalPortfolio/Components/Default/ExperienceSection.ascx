@@ -6,7 +6,10 @@
     <div class="field-label reveal">04 / EXPERIENCE</div>
     <h2 class="section-title reveal">Where I've worked</h2>
 
-    <div class="exp-list" id="expList">
+    <asp:Panel ID="pnlEmpty" runat="server" Visible="false" CssClass="section-empty-state">
+      <span>No experience added yet.</span>
+    </asp:Panel>
+    <div class="exp-list" id="expList" runat="server">
       <asp:Repeater ID="rptExperiences" runat="server" OnItemDataBound="rptExperiences_ItemDataBound">
         <ItemTemplate>
           <div class="exp-card reveal">

@@ -18,8 +18,15 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         public void BindData(List<ProjectDto> projects)
         {
             Projects = projects ?? new List<ProjectDto>();
-            rptProjects.DataSource = Projects;
-            rptProjects.DataBind();
+            bool hasItems = Projects.Count > 0;
+            pnlEmpty.Visible = !hasItems;
+            projectsBento.Visible = hasItems;
+
+            if (hasItems)
+            {
+                rptProjects.DataSource = Projects;
+                rptProjects.DataBind();
+            }
         }
 
         protected void rptProjects_ItemDataBound(object sender, RepeaterItemEventArgs e)

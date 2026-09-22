@@ -128,6 +128,11 @@
                                 </td>
                                 <td><%# ((DateTime)Eval("CreatedAt")).ToString("MMM d, yyyy") %></td>
                                 <td>
+                                    <a href='<%# ResolveUrl("~/Default.aspx?userId=" + Eval("UserId")) %>' target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; font-size: var(--t-xs); text-decoration: none;">
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        <span>View Website</span>
+                                    </a>
+                                    &nbsp;|&nbsp;
                                     <asp:LinkButton ID="btnResetUserPassword" runat="server"
                                         CommandName="ResetUserPassword"
                                         CommandArgument='<%# Eval("UserId") %>'
@@ -147,14 +152,6 @@
                                         data-confirm-type='<%# ((bool)Eval("IsActive")) ? "danger" : "primary" %>'
                                         data-confirm-btn='<%# ((bool)Eval("IsActive")) ? "Deactivate" : "Reactivate" %>'>
                                         <%# ((bool)Eval("IsActive")) ? "Deactivate" : "Reactivate" %>
-                                    </asp:LinkButton>
-                                    &nbsp;|&nbsp;
-                                    <asp:LinkButton ID="btnDeleteUser" runat="server" CssClass="danger" CommandName="DeleteUser" CommandArgument='<%# Eval("UserId") %>'
-                                        data-confirm-title="Delete User"
-                                        data-confirm-msg='<%# "Are you sure you want to permanently delete user " + Eval("FirstName") + " " + Eval("LastName") + "? This action cannot be undone." %>'
-                                        data-confirm-type="danger"
-                                        data-confirm-btn="Delete">
-                                        Delete
                                     </asp:LinkButton>
                                 </td>
                             </tr>

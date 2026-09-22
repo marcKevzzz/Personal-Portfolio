@@ -17,24 +17,25 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         {
             ProfileData = profile ?? new ProfileDto();
 
-            string heroNames = string.IsNullOrWhiteSpace(ProfileData.HeroNames) ? "Kevs,Marc Kevin,Del Mundo" : ProfileData.HeroNames;
+            string userFallback = _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.GetCurrentUserName();
+            string heroNames = string.IsNullOrWhiteSpace(ProfileData.HeroNames) ? (string.IsNullOrWhiteSpace(userFallback) ? "Portfolio,Developer" : userFallback) : ProfileData.HeroNames;
             heroDynamicName.Attributes["data-names"] = heroNames;
 
             litHeroDynamicName.Text = GetHeroNameSpans();
             litHeroSubline.Text = GetHeroSublineSpans();
-            litHeroRoleSummary.Text = Server.HtmlEncode(string.IsNullOrWhiteSpace(ProfileData.RoleSummary) ? "Web developer working across front-end interfaces and the structured data systems behind them — from motion-driven product pages to large-scale JSON datasets." : ProfileData.RoleSummary);
+            litHeroRoleSummary.Text = Server.HtmlEncode(string.IsNullOrWhiteSpace(ProfileData.RoleSummary) ? "Web developer creating clean interfaces and responsive web experiences." : ProfileData.RoleSummary);
             litRoleTitle.Text = Server.HtmlEncode(string.IsNullOrWhiteSpace(ProfileData.RoleTitle) ? "Web Developer" : ProfileData.RoleTitle);
-            litFocusArea.Text = Server.HtmlEncode(string.IsNullOrWhiteSpace(ProfileData.FocusArea) ? "Interfaces & Data Systems" : ProfileData.FocusArea);
+            litFocusArea.Text = Server.HtmlEncode(string.IsNullOrWhiteSpace(ProfileData.FocusArea) ? "Interfaces & Web Systems" : ProfileData.FocusArea);
             litBasedIn.Text = Server.HtmlEncode(string.IsNullOrWhiteSpace(ProfileData.BasedIn) ? "Quezon City" : ProfileData.BasedIn);
 
             string avatarUrl = string.IsNullOrWhiteSpace(ProfileData.AvatarPath) ? "Assets/Images/pixelart_portrait.png" : ProfileData.AvatarPath;
             imgAvatar.ImageUrl = ResolveUrl("~/" + avatarUrl.TrimStart('~', '/'));
-            imgAvatar.AlternateText = string.IsNullOrWhiteSpace(ProfileData.FullName) ? "Marc Kevin Del Mundo" : ProfileData.FullName;
+            imgAvatar.AlternateText = string.IsNullOrWhiteSpace(ProfileData.FullName) ? "Portfolio Avatar" : ProfileData.FullName;
         }
 
         private string GetHeroNameSpans()
         {
-            string name = string.IsNullOrWhiteSpace(ProfileData?.FirstName) ? "Marc Kevin" : ProfileData.FirstName;
+            string name = string.IsNullOrWhiteSpace(ProfileData?.FirstName) ? (_24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.GetCurrentUser()?.FirstName ?? "Portfolio") : ProfileData.FirstName;
             var sb = new StringBuilder();
             foreach (char c in name)
             {

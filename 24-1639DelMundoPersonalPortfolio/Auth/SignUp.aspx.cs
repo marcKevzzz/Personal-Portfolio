@@ -85,11 +85,12 @@ namespace _24_1639DelMundoPersonalPortfolio
                     role = "Admin";
                 }
 
-                // 4. Insert new user into users_tbl
+                // 4. Insert new user into users_tbl and seed initial profile
                 string insertQuery = @"INSERT INTO users_tbl 
                                        (first_name, last_name, email, password_hash, user_role, is_active, created_at)
                                        VALUES 
-                                       (@FirstName, @LastName, @Email, @PasswordHash, @UserRole, 1, GETDATE());";
+                                       (@FirstName, @LastName, @Email, @PasswordHash, @UserRole, 1, GETDATE());
+                                       SELECT SCOPE_IDENTITY();";
 
                 var parameters = new SqlParameter[]
                 {
@@ -100,10 +101,23 @@ namespace _24_1639DelMundoPersonalPortfolio
                     new SqlParameter("@UserRole", role)
                 };
 
-                int rows = DatabaseHelper.ExecuteNonQuery(insertQuery, parameters);
+                object newIdObj = DatabaseHelper.ExecuteScalar(insertQuery, parameters);
+                int newUserId = (newIdObj != null && newIdObj != DBNull.Value) ? Convert.ToInt32(newIdObj) : 0;
 
-                if (rows > 0)
+                if (newUserId > 0)
                 {
+                    try
+                    {
+                        string profileInsert = @"INSERT INTO profile_tbl (user_id, first_name, last_name, email, role_title, focus_area, based_in, avatar_path, updated_at)
+                                                 VALUES (@UserId, @FirstName, @LastName, @Email, 'Web Developer', 'Interfaces & Data Systems', 'Quezon City', 'Assets/Images/pixelart_portrait.png', GETDATE());";
+                        DatabaseHelper.ExecuteNonQuery(profileInsert,
+                            new SqlParameter("@UserId", newUserId),
+                            new SqlParameter("@FirstName", fName),
+                            new SqlParameter("@LastName", lName),
+                            new SqlParameter("@Email", emailVal));
+                    }
+                    catch { }
+
                     Response.Redirect("~/Auth/SignIn.aspx?registered=true&email=" + Server.UrlEncode(emailVal));
                 }
                 else

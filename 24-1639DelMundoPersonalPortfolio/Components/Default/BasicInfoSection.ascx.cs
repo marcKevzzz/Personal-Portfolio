@@ -1,5 +1,6 @@
 using System;
 using System.Web.UI;
+using _24_1639DelMundoPersonalPortfolio.Helpers;
 using _24_1639DelMundoPersonalPortfolio.Models;
 
 namespace _24_1639DelMundoPersonalPortfolio.Components.Default
@@ -16,15 +17,17 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         {
             ProfileData = profile ?? new ProfileDto();
 
-            string fullName = string.IsNullOrWhiteSpace(ProfileData.FullName) ? "Del Mundo, Marc Kevin F." : ProfileData.FullName;
-            string location = string.IsNullOrWhiteSpace(ProfileData.LocationAddress) ? "B2 L6 Emerald St. Novaliches Proper, Q.C." : ProfileData.LocationAddress;
-            int age = ProfileData.Age > 0 ? ProfileData.Age : 19;
-            int exp = ProfileData.ExperienceYears > 0 ? ProfileData.ExperienceYears : 3;
+            string fullName = string.IsNullOrWhiteSpace(ProfileData.FullName)
+                ? (AuthHelper.GetCurrentUser() != null ? $"{AuthHelper.GetCurrentUser().FirstName} {AuthHelper.GetCurrentUser().LastName}" : "Portfolio Owner")
+                : ProfileData.FullName;
+            string location = string.IsNullOrWhiteSpace(ProfileData.LocationAddress) ? "No location added yet" : ProfileData.LocationAddress;
+            string ageText = ProfileData.Age > 0 ? $"{ProfileData.Age} years old" : "No birthday added yet";
+            string expText = ProfileData.ExperienceYears > 0 ? $"{ProfileData.ExperienceYears} years of coding" : "0 years of coding";
 
             litName.Text = Server.HtmlEncode(fullName);
             litLocation.Text = Server.HtmlEncode(location);
-            litAge.Text = $"{age} years old";
-            litExperience.Text = $"{exp} years of coding";
+            litAge.Text = Server.HtmlEncode(ageText);
+            litExperience.Text = Server.HtmlEncode(expText);
         }
     }
 }

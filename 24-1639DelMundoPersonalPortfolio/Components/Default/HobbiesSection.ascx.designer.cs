@@ -8,6 +8,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
 {
     public partial class HobbiesSection
     {
+        protected global::System.Web.UI.WebControls.Panel pnlEmpty;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl hobbiesList;
         protected global::System.Web.UI.WebControls.Repeater rptHobbies;
     }
 }

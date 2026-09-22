@@ -16,8 +16,15 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         public void BindData(List<AwardDto> awards)
         {
             Awards = awards ?? new List<AwardDto>();
-            rptAwards.DataSource = Awards;
-            rptAwards.DataBind();
+            bool hasItems = Awards.Count > 0;
+            pnlEmpty.Visible = !hasItems;
+            awardList.Visible = hasItems;
+
+            if (hasItems)
+            {
+                rptAwards.DataSource = Awards;
+                rptAwards.DataBind();
+            }
         }
     }
 }

@@ -8,7 +8,10 @@
   </div>
  
   <div class="wrap">
-    <div class="bento" id="projectsBento">
+    <asp:Panel ID="pnlEmpty" runat="server" Visible="false" CssClass="section-empty-state">
+      <span>No projects added yet.</span>
+    </asp:Panel>
+    <div class="bento" id="projectsBento" runat="server">
       <asp:Repeater ID="rptProjects" runat="server" OnItemDataBound="rptProjects_ItemDataBound">
         <ItemTemplate>
           <asp:HyperLink ID="lnkProject" runat="server" Target="_blank" rel="noopener noreferrer">

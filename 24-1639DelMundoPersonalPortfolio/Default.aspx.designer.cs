@@ -13,6 +13,8 @@ namespace _24_1639DelMundoPersonalPortfolio
 
     public partial class Default
     {
+        protected global::System.Web.UI.WebControls.Panel pnlAdminViewingBanner;
+        protected global::System.Web.UI.WebControls.Literal litViewingUserName;
 
         /// <summary>
         /// NavSectionControl control.

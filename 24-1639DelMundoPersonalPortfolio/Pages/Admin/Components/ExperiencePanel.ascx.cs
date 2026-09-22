@@ -55,12 +55,27 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
             int expId = int.TryParse(hidEditingExpId.Value, out int id) ? id : 0;
 
+            int startYear = int.TryParse(txtExpStartYear.Text.Trim(), out int sy) ? sy : DateTime.Today.Year;
+            int? endYear = int.TryParse(txtExpEndYear.Text.Trim(), out int ey) ? ey : (int?)null;
+            bool isCurrent = chkExpIsCurrent.Checked;
+
+            string periodRange = "";
+            if (isCurrent)
+                periodRange = $"{startYear} — Present";
+            else if (endYear.HasValue)
+                periodRange = $"{startYear} — {endYear.Value}";
+            else
+                periodRange = startYear.ToString();
+
             var exp = new ExperienceDto
             {
                 ExpId = expId,
                 RoleTitle = txtExpRole.Text.Trim(),
                 CompanyName = txtExpCompany.Text.Trim(),
-                PeriodRange = txtExpPeriod.Text.Trim(),
+                StartYear = startYear,
+                EndYear = endYear,
+                IsCurrent = isCurrent,
+                PeriodRange = periodRange,
                 DescriptionText = txtExpDescription.Text.Trim(),
                 Tags = hidExpTags.Value.Trim(),
                 SortOrder = 1,
@@ -101,7 +116,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                     hidEditingExpId.Value = item.ExpId.ToString();
                     txtExpRole.Text = item.RoleTitle;
                     txtExpCompany.Text = item.CompanyName;
-                    txtExpPeriod.Text = item.PeriodRange;
+                    txtExpStartYear.Text = item.StartYear > 0 ? item.StartYear.ToString() : "";
+                    txtExpEndYear.Text = item.EndYear.HasValue ? item.EndYear.Value.ToString() : "";
+                    chkExpIsCurrent.Checked = item.IsCurrent;
                     txtExpDescription.Text = item.DescriptionText;
                     hidExpTags.Value = item.Tags;
                     RenderChips(item.Tags);
@@ -124,7 +141,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             hidEditingExpId.Value = "0";
             txtExpRole.Text = "";
             txtExpCompany.Text = "";
-            txtExpPeriod.Text = "";
+            txtExpStartYear.Text = "";
+            txtExpEndYear.Text = "";
+            chkExpIsCurrent.Checked = false;
             txtExpDescription.Text = "";
             hidExpTags.Value = "React,Tailwind CSS";
             RenderChips("React,Tailwind CSS");

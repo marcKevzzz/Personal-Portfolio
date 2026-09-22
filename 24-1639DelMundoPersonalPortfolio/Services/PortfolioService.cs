@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
+using System.Data.SqlClient;
 using System.Web;
 using System.Web.Caching;
 using _24_1639DelMundoPersonalPortfolio.Data;
@@ -10,65 +10,252 @@ using _24_1639DelMundoPersonalPortfolio.Models;
 
 namespace _24_1639DelMundoPersonalPortfolio.Services
 {
+    /// <summary>
+    /// PortfolioService manages all multi-user portfolio data persistence,
+    /// executing MS SQL Stored Procedures for high performance and clean architecture.
+    /// </summary>
     public static class PortfolioService
     {
-        private const string CacheKey = "PORTFOLIO_DATA_AGGREGATE_CACHE";
         private static readonly object CacheLock = new object();
 
+        private static string GetCacheKey(int userId)
+        {
+            return $"PORTFOLIO_DATA_USER_{userId}";
+        }
+
         /// <summary>
-        /// Retrieves the complete portfolio data with server memory caching.
-        /// Gracefully falls back to complete default data if the database is unreachable, empty, or has blank columns.
+        /// Retrieves the portfolio data for the current authenticated user.
         /// </summary>
         public static PortfolioDataDto GetPortfolioData(bool forceRefresh = false)
         {
+            return GetPortfolioData(0, forceRefresh);
+        }
+
+        /// <summary>
+        /// Retrieves the complete portfolio data for a specific user using sp_GetUserPortfolioData.
+        /// </summary>
+        public static PortfolioDataDto GetPortfolioData(int userId, bool forceRefresh = false)
+        {
+            if (userId <= 0)
+            {
+                userId = AuthHelper.GetCurrentUserId();
+                if (userId <= 0) userId = 1;
+            }
+
+            string cacheKey = GetCacheKey(userId);
+
             if (!forceRefresh)
             {
-                var cached = HttpRuntime.Cache?.Get(CacheKey) as PortfolioDataDto;
-                if (cached != null)
-                {
-                    return cached;
-                }
+                var cached = HttpRuntime.Cache?.Get(cacheKey) as PortfolioDataDto;
+                if (cached != null) return cached;
             }
 
             lock (CacheLock)
             {
                 if (!forceRefresh)
                 {
-                    var cached = HttpRuntime.Cache?.Get(CacheKey) as PortfolioDataDto;
-                    if (cached != null)
-                    {
-                        return cached;
-                    }
+                    var cached = HttpRuntime.Cache?.Get(cacheKey) as PortfolioDataDto;
+                    if (cached != null) return cached;
                 }
 
-                PortfolioDataDto data = null;
+                var data = new PortfolioDataDto
+                {
+                    UserId = userId,
+                    IsOwner = (AuthHelper.GetCurrentUserId() == userId)
+                };
+
                 try
                 {
-                    data = FetchFromDatabase();
+                    var pUser = new SqlParameter("@user_id", userId);
+                    var ds = DatabaseHelper.ExecuteStoredProcedureDataSet("sp_GetUserPortfolioData", pUser);
+
+                    if (ds != null && ds.Tables.Count > 0)
+                    {
+                        // 1. Profile Table (Table 0)
+                        if (ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+                        {
+                            var r = ds.Tables[0].Rows[0];
+                            data.Profile = new ProfileDto
+                            {
+                                ProfileId = Convert.ToInt32(r["profile_id"]),
+                                UserId = Convert.ToInt32(r["user_id"]),
+                                FirstName = r["first_name"]?.ToString() ?? "",
+                                LastName = r["last_name"]?.ToString() ?? "",
+                                HeroNames = r["hero_names"]?.ToString() ?? "",
+                                RoleSummary = r["role_summary"]?.ToString() ?? "",
+                                RoleTitle = r["role_title"]?.ToString() ?? "Web Developer",
+                                FocusArea = r["focus_area"]?.ToString() ?? "Interfaces & Data Systems",
+                                BasedIn = r["based_in"]?.ToString() ?? "Quezon City",
+                                AvatarPath = r["avatar_path"]?.ToString() ?? "Assets/Images/pixelart_portrait.png",
+                                LocationAddress = r["location_address"]?.ToString() ?? "",
+                                BirthDate = r["birth_date"] != DBNull.Value ? Convert.ToDateTime(r["birth_date"]) : (DateTime?)null,
+                                Age = Convert.ToInt32(r["derived_age"]),
+                                ExperienceYears = r["experience_years"] != DBNull.Value ? Convert.ToInt32(r["experience_years"]) : 1,
+                                Email = r["email"]?.ToString() ?? "",
+                                GithubUrl = r["github_url"]?.ToString() ?? "",
+                                LinkedinUrl = r["linkedin_url"]?.ToString() ?? ""
+                            };
+                            data.UserRole = r["user_role"]?.ToString() ?? "User";
+                        }
+                        else
+                        {
+                            // If user has not created profile yet, seed initial metadata from users_tbl
+                            data.Profile = GetInitialProfileFromUser(userId);
+                        }
+
+                        // 2. Tech Stack (Table 1)
+                        if (ds.Tables.Count > 1)
+                        {
+                            foreach (DataRow r in ds.Tables[1].Rows)
+                            {
+                                data.TechStacks.Add(new TechStackItemDto
+                                {
+                                    TechId = Convert.ToInt32(r["tech_id"]),
+                                    UserId = Convert.ToInt32(r["user_id"]),
+                                    GroupName = r["group_name"]?.ToString() ?? "",
+                                    Label = r["label"]?.ToString() ?? "",
+                                    IconPath = r["icon_path"]?.ToString() ?? "",
+                                    SortOrder = Convert.ToInt32(r["sort_order"]),
+                                    IsActive = Convert.ToBoolean(r["is_active"])
+                                });
+                            }
+                        }
+
+                        // 3. Skills (Table 2)
+                        if (ds.Tables.Count > 2)
+                        {
+                            foreach (DataRow r in ds.Tables[2].Rows)
+                            {
+                                data.Skills.Add(new SkillDto
+                                {
+                                    SkillId = Convert.ToInt32(r["skill_id"]),
+                                    UserId = Convert.ToInt32(r["user_id"]),
+                                    SkillName = r["skill_name"]?.ToString() ?? "",
+                                    ProficiencyVal = Convert.ToInt32(r["proficiency_val"]),
+                                    SortOrder = Convert.ToInt32(r["sort_order"]),
+                                    IsActive = Convert.ToBoolean(r["is_active"])
+                                });
+                            }
+                        }
+
+                        // 4. Experiences (Table 3)
+                        if (ds.Tables.Count > 3)
+                        {
+                            foreach (DataRow r in ds.Tables[3].Rows)
+                            {
+                                data.Experiences.Add(new ExperienceDto
+                                {
+                                    ExpId = Convert.ToInt32(r["exp_id"]),
+                                    UserId = Convert.ToInt32(r["user_id"]),
+                                    RoleTitle = r["role_title"]?.ToString() ?? "",
+                                    CompanyName = r["company_name"]?.ToString() ?? "",
+                                    StartYear = Convert.ToInt32(r["start_year"]),
+                                    EndYear = r["end_year"] != DBNull.Value ? Convert.ToInt32(r["end_year"]) : (int?)null,
+                                    IsCurrent = Convert.ToBoolean(r["is_current"]),
+                                    PeriodRange = r["period_display"]?.ToString() ?? "",
+                                    DescriptionText = r["description_text"]?.ToString() ?? "",
+                                    Tags = r["tags"]?.ToString() ?? "",
+                                    SortOrder = Convert.ToInt32(r["sort_order"]),
+                                    IsActive = Convert.ToBoolean(r["is_active"])
+                                });
+                            }
+                        }
+
+                        // 5. Projects (Table 4)
+                        if (ds.Tables.Count > 4)
+                        {
+                            foreach (DataRow r in ds.Tables[4].Rows)
+                            {
+                                data.Projects.Add(new ProjectDto
+                                {
+                                    ProjectId = Convert.ToInt32(r["project_id"]),
+                                    UserId = Convert.ToInt32(r["user_id"]),
+                                    Title = r["title"]?.ToString() ?? "",
+                                    ImagePath = r["image_path"]?.ToString() ?? "",
+                                    ProjectUrl = r["project_url"]?.ToString() ?? "",
+                                    Tags = r["tags"]?.ToString() ?? "",
+                                    SortOrder = Convert.ToInt32(r["sort_order"]),
+                                    IsActive = Convert.ToBoolean(r["is_active"])
+                                });
+                            }
+                        }
+
+                        // 6. Educations (Table 5)
+                        if (ds.Tables.Count > 5)
+                        {
+                            foreach (DataRow r in ds.Tables[5].Rows)
+                            {
+                                data.Educations.Add(new EducationDto
+                                {
+                                    EduId = Convert.ToInt32(r["edu_id"]),
+                                    UserId = Convert.ToInt32(r["user_id"]),
+                                    StartYear = Convert.ToInt32(r["start_year"]),
+                                    EndYear = r["end_year"] != DBNull.Value ? Convert.ToInt32(r["end_year"]) : (int?)null,
+                                    IsCurrent = Convert.ToBoolean(r["is_current"]),
+                                    YearPeriod = r["year_display"]?.ToString() ?? "",
+                                    Title = r["title"]?.ToString() ?? "",
+                                    Subtitle = r["subtitle"]?.ToString() ?? "",
+                                    InstitutionName = r["institution_name"]?.ToString() ?? "",
+                                    SortOrder = Convert.ToInt32(r["sort_order"]),
+                                    IsActive = Convert.ToBoolean(r["is_active"])
+                                });
+                            }
+                        }
+
+                        // 7. Awards (Table 6)
+                        if (ds.Tables.Count > 6)
+                        {
+                            foreach (DataRow r in ds.Tables[6].Rows)
+                            {
+                                data.Awards.Add(new AwardDto
+                                {
+                                    AwardId = Convert.ToInt32(r["award_id"]),
+                                    UserId = Convert.ToInt32(r["user_id"]),
+                                    AwardYear = r["award_year"]?.ToString() ?? "",
+                                    Title = r["title"]?.ToString() ?? "",
+                                    Subtitle = r["subtitle"]?.ToString() ?? "",
+                                    OrganizationName = r["organization_name"]?.ToString() ?? "",
+                                    SortOrder = Convert.ToInt32(r["sort_order"]),
+                                    IsActive = Convert.ToBoolean(r["is_active"])
+                                });
+                            }
+                        }
+
+                        // 8. Hobbies (Table 7)
+                        if (ds.Tables.Count > 7)
+                        {
+                            foreach (DataRow r in ds.Tables[7].Rows)
+                            {
+                                data.Hobbies.Add(new HobbyDto
+                                {
+                                    HobbyId = Convert.ToInt32(r["hobby_id"]),
+                                    UserId = Convert.ToInt32(r["user_id"]),
+                                    HobbyName = r["hobby_name"]?.ToString() ?? "",
+                                    HobbyDescription = r["hobby_description"]?.ToString() ?? "",
+                                    SortOrder = Convert.ToInt32(r["sort_order"]),
+                                    IsActive = Convert.ToBoolean(r["is_active"])
+                                });
+                            }
+                        }
+                    }
+                    else
+                    {
+                        data.Profile = GetInitialProfileFromUser(userId);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[PortfolioService] Database fetch error: {ex.Message}");
-                }
-
-                // If database failed or returned empty data, use complete default fallback
-                if (data == null || data.Profile == null)
-                {
-                    data = GetDefaultFallbackData();
-                }
-                else
-                {
-                    // Ensure each collection has defaults if empty or incomplete
-                    EnsureDefaults(data);
+                    System.Diagnostics.Debug.WriteLine($"[PortfolioService] Error fetching user {userId} data: {ex.Message}");
+                    data.Profile = GetInitialProfileFromUser(userId);
                 }
 
                 if (HttpRuntime.Cache != null && data != null)
                 {
                     HttpRuntime.Cache.Insert(
-                        CacheKey,
+                        cacheKey,
                         data,
                         null,
-                        DateTime.Now.AddMinutes(30),
+                        DateTime.Now.AddMinutes(15),
                         Cache.NoSlidingExpiration,
                         CacheItemPriority.High,
                         null
@@ -79,1595 +266,613 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             }
         }
 
-        /// <summary>
-        /// Invalidates the server-side portfolio cache (e.g., after admin edits).
-        /// </summary>
-        public static void InvalidateCache()
+        private static ProfileDto GetInitialProfileFromUser(int userId)
         {
-            try
+            var p = new ProfileDto
             {
-                HttpRuntime.Cache?.Remove(CacheKey);
-            }
-            catch
-            {
-                // Ignore cache removal errors
-            }
-        }
-
-        private static string GetStringWithFallback(DataRow row, string colName, string fallback)
-        {
-            if (row == null || !row.Table.Columns.Contains(colName) || row[colName] == DBNull.Value)
-            {
-                return CleanMojibake(fallback);
-            }
-            string val = row[colName]?.ToString();
-            return string.IsNullOrWhiteSpace(val) ? CleanMojibake(fallback) : CleanMojibake(val.Trim());
-        }
-
-
-        private static int GetIntWithFallback(DataRow row, string colName, int fallback)
-        {
-            if (row == null || !row.Table.Columns.Contains(colName) || row[colName] == DBNull.Value)
-            {
-                return fallback;
-            }
-            return int.TryParse(row[colName]?.ToString(), out int parsed) ? parsed : fallback;
-        }
-
-        private static PortfolioDataDto FetchFromDatabase()
-        {
-            var result = new PortfolioDataDto();
-            var fallback = GetDefaultFallbackData();
-
-            // 1. Profile
-            try
-            {
-                DataTable profileDt = DatabaseHelper.ExecuteDataTable("SELECT TOP 1 * FROM profile_tbl ORDER BY profile_id DESC");
-                if (profileDt != null && profileDt.Rows.Count > 0)
-                {
-                    var row = profileDt.Rows[0];
-                    result.Profile = new ProfileDto
-                    {
-                        ProfileId = GetIntWithFallback(row, "profile_id", 1),
-                        FirstName = GetStringWithFallback(row, "first_name", fallback.Profile.FirstName),
-                        LastName = GetStringWithFallback(row, "last_name", fallback.Profile.LastName),
-                        HeroSubline = GetStringWithFallback(row, "hero_subline", fallback.Profile.HeroSubline),
-                        HeroNames = GetStringWithFallback(row, "hero_names", fallback.Profile.HeroNames),
-                        RoleSummary = GetStringWithFallback(row, "role_summary", fallback.Profile.RoleSummary),
-                        RoleTitle = GetStringWithFallback(row, "role_title", fallback.Profile.RoleTitle),
-                        FocusArea = GetStringWithFallback(row, "focus_area", fallback.Profile.FocusArea),
-                        BasedIn = GetStringWithFallback(row, "based_in", fallback.Profile.BasedIn),
-                        AvatarPath = GetStringWithFallback(row, "avatar_path", fallback.Profile.AvatarPath),
-                        LocationAddress = GetStringWithFallback(row, "location_address", fallback.Profile.LocationAddress),
-                        Age = GetIntWithFallback(row, "age", fallback.Profile.Age),
-                        ExperienceYears = GetIntWithFallback(row, "experience_years", fallback.Profile.ExperienceYears),
-                        Email = GetStringWithFallback(row, "email", fallback.Profile.Email),
-                        GithubUrl = GetStringWithFallback(row, "github_url", fallback.Profile.GithubUrl),
-                        LinkedinUrl = GetStringWithFallback(row, "linkedin_url", fallback.Profile.LinkedinUrl)
-                    };
-                }
-                else
-                {
-                    result.Profile = fallback.Profile;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] Profile fetch error: {ex.Message}");
-                result.Profile = fallback.Profile;
-            }
-
-            // 2. Tech Stack
-            try
-            {
-                DataTable techDt = DatabaseHelper.ExecuteDataTable("SELECT * FROM tech_stacks_tbl WHERE is_active = 1 OR is_active IS NULL ORDER BY group_name, sort_order, tech_id ASC");
-                if (techDt != null && techDt.Rows.Count > 0)
-                {
-                    foreach (DataRow row in techDt.Rows)
-                    {
-                        result.TechStacks.Add(new TechStackItemDto
-                        {
-                            TechId = GetIntWithFallback(row, "tech_id", 0),
-                            GroupName = GetStringWithFallback(row, "group_name", "Frontend"),
-                            Label = GetStringWithFallback(row, "label", "Tech"),
-                            IconPath = GetStringWithFallback(row, "icon_path", "Assets/Icons/csharp.svg"),
-                            SortOrder = GetIntWithFallback(row, "sort_order", 0),
-                            IsActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] TechStacks fetch error: {ex.Message}");
-            }
-            if (result.TechStacks.Count == 0)
-            {
-                result.TechStacks = new List<TechStackItemDto>(fallback.TechStacks);
-            }
-
-            // 3. Skills
-            try
-            {
-                DataTable skillsDt = DatabaseHelper.ExecuteDataTable("SELECT * FROM skills_tbl WHERE is_active = 1 OR is_active IS NULL ORDER BY sort_order, skill_id ASC");
-                if (skillsDt != null && skillsDt.Rows.Count > 0)
-                {
-                    foreach (DataRow row in skillsDt.Rows)
-                    {
-                        result.Skills.Add(new SkillDto
-                        {
-                            SkillId = GetIntWithFallback(row, "skill_id", 0),
-                            SkillName = GetStringWithFallback(row, "skill_name", "Skill"),
-                            ProficiencyVal = GetIntWithFallback(row, "proficiency_val", 80),
-                            SortOrder = GetIntWithFallback(row, "sort_order", 0),
-                            IsActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] Skills fetch error: {ex.Message}");
-            }
-            if (result.Skills.Count == 0)
-            {
-                result.Skills = new List<SkillDto>(fallback.Skills);
-            }
-
-            // 4. Experiences
-            try
-            {
-                DataTable expDt = DatabaseHelper.ExecuteDataTable("SELECT * FROM experiences_tbl WHERE is_active = 1 OR is_active IS NULL ORDER BY sort_order, exp_id ASC");
-                if (expDt != null && expDt.Rows.Count > 0)
-                {
-                    foreach (DataRow row in expDt.Rows)
-                    {
-                        result.Experiences.Add(new ExperienceDto
-                        {
-                            ExpId = GetIntWithFallback(row, "exp_id", 0),
-                            RoleTitle = GetStringWithFallback(row, "role_title", "Developer"),
-                            CompanyName = GetStringWithFallback(row, "company_name", "Company"),
-                            PeriodRange = GetStringWithFallback(row, "period_range", "2024 — Present"),
-                            DescriptionText = GetStringWithFallback(row, "description_text", ""),
-                            Tags = GetStringWithFallback(row, "tags", ""),
-                            SortOrder = GetIntWithFallback(row, "sort_order", 0),
-                            IsActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] Experiences fetch error: {ex.Message}");
-            }
-            if (result.Experiences.Count == 0)
-            {
-                result.Experiences = new List<ExperienceDto>(fallback.Experiences);
-            }
-
-            // 5. Projects
-            try
-            {
-                DataTable projDt = DatabaseHelper.ExecuteDataTable("SELECT * FROM projects_tbl WHERE is_active = 1 OR is_active IS NULL ORDER BY sort_order, project_id ASC");
-                if (projDt != null && projDt.Rows.Count > 0)
-                {
-                    foreach (DataRow row in projDt.Rows)
-                    {
-                        result.Projects.Add(new ProjectDto
-                        {
-                            ProjectId = GetIntWithFallback(row, "project_id", 0),
-                            Title = GetStringWithFallback(row, "title", "Project"),
-                            ImagePath = GetStringWithFallback(row, "image_path", "Assets/Images/samsondentalcenter.png"),
-                            ProjectUrl = GetStringWithFallback(row, "project_url", "https://github.com/marcKevzzz"),
-                            Tags = GetStringWithFallback(row, "tags", ""),
-                            SortOrder = GetIntWithFallback(row, "sort_order", 0),
-                            IsActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] Projects fetch error: {ex.Message}");
-            }
-            if (result.Projects.Count == 0)
-            {
-                result.Projects = new List<ProjectDto>(fallback.Projects);
-            }
-
-            // 6. Education
-            try
-            {
-                DataTable eduDt = DatabaseHelper.ExecuteDataTable("SELECT * FROM educations_tbl WHERE is_active = 1 OR is_active IS NULL ORDER BY sort_order, edu_id ASC");
-                if (eduDt != null && eduDt.Rows.Count > 0)
-                {
-                    foreach (DataRow row in eduDt.Rows)
-                    {
-                        result.Educations.Add(new EducationDto
-                        {
-                            EduId = GetIntWithFallback(row, "edu_id", 0),
-                            YearPeriod = GetStringWithFallback(row, "year_period", "2024 — Present"),
-                            Title = GetStringWithFallback(row, "title", "Education Title"),
-                            Subtitle = GetStringWithFallback(row, "subtitle", "Degree / Major"),
-                            InstitutionName = GetStringWithFallback(row, "institution_name", "Institution"),
-                            SortOrder = GetIntWithFallback(row, "sort_order", 0),
-                            IsActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] Educations fetch error: {ex.Message}");
-            }
-            if (result.Educations.Count == 0)
-            {
-                result.Educations = new List<EducationDto>(fallback.Educations);
-            }
-
-            // 7. Awards
-            try
-            {
-                DataTable awardsDt = DatabaseHelper.ExecuteDataTable("SELECT * FROM awards_tbl WHERE is_active = 1 OR is_active IS NULL ORDER BY sort_order, award_id ASC");
-                if (awardsDt != null && awardsDt.Rows.Count > 0)
-                {
-                    foreach (DataRow row in awardsDt.Rows)
-                    {
-                        result.Awards.Add(new AwardDto
-                        {
-                            AwardId = GetIntWithFallback(row, "award_id", 0),
-                            AwardYear = GetStringWithFallback(row, "award_year", "2026"),
-                            Title = GetStringWithFallback(row, "title", "Award Title"),
-                            Subtitle = GetStringWithFallback(row, "subtitle", "Achievement"),
-                            OrganizationName = GetStringWithFallback(row, "organization_name", "Organization"),
-                            SortOrder = GetIntWithFallback(row, "sort_order", 0),
-                            IsActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] Awards fetch error: {ex.Message}");
-            }
-            if (result.Awards.Count == 0)
-            {
-                result.Awards = new List<AwardDto>(fallback.Awards);
-            }
-
-            // 8. Hobbies
-            try
-            {
-                DataTable hobbiesDt = DatabaseHelper.ExecuteDataTable("SELECT * FROM hobbies_tbl WHERE is_active = 1 OR is_active IS NULL ORDER BY sort_order, hobby_id ASC");
-                if (hobbiesDt != null && hobbiesDt.Rows.Count > 0)
-                {
-                    foreach (DataRow row in hobbiesDt.Rows)
-                    {
-                        result.Hobbies.Add(new HobbyDto
-                        {
-                            HobbyId = GetIntWithFallback(row, "hobby_id", 0),
-                            HobbyName = GetStringWithFallback(row, "hobby_name", "Hobby"),
-                            SortOrder = GetIntWithFallback(row, "sort_order", 0),
-                            IsActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] Hobbies fetch error: {ex.Message}");
-            }
-            if (result.Hobbies.Count == 0)
-            {
-                result.Hobbies = new List<HobbyDto>(fallback.Hobbies);
-            }
-
-            return result;
-        }
-
-        private static void EnsureDefaults(PortfolioDataDto data)
-        {
-            var def = GetDefaultFallbackData();
-
-            if (data.Profile == null || string.IsNullOrWhiteSpace(data.Profile.FirstName))
-            {
-                data.Profile = def.Profile;
-            }
-
-            if (data.TechStacks == null || data.TechStacks.Count == 0)
-            {
-                data.TechStacks = new List<TechStackItemDto>(def.TechStacks);
-            }
-
-            if (data.Skills == null || data.Skills.Count == 0)
-            {
-                data.Skills = new List<SkillDto>(def.Skills);
-            }
-
-            if (data.Experiences == null || data.Experiences.Count == 0)
-            {
-                data.Experiences = new List<ExperienceDto>(def.Experiences);
-            }
-
-            if (data.Projects == null || data.Projects.Count == 0)
-            {
-                data.Projects = new List<ProjectDto>(def.Projects);
-            }
-
-            if (data.Educations == null || data.Educations.Count == 0)
-            {
-                data.Educations = new List<EducationDto>(def.Educations);
-            }
-
-            if (data.Awards == null || data.Awards.Count == 0)
-            {
-                data.Awards = new List<AwardDto>(def.Awards);
-            }
-
-            if (data.Hobbies == null || data.Hobbies.Count == 0)
-            {
-                data.Hobbies = new List<HobbyDto>(def.Hobbies);
-            }
-        }
-
-        public static PortfolioDataDto GetDefaultFallbackData()
-        {
-            return new PortfolioDataDto
-            {
-                Profile = new ProfileDto
-                {
-                    ProfileId = 1,
-                    FirstName = "Marc Kevin",
-                    LastName = "Del Mundo",
-                    HeroSubline = "builds interfaces",
-                    HeroNames = "Kevs,Marc Kevin,Del Mundo",
-                    RoleSummary = "Web developer working across front-end interfaces and the structured data systems behind them — from motion-driven product pages to large-scale JSON datasets.",
-                    RoleTitle = "Web Developer",
-                    FocusArea = "Interfaces & Data Systems",
-                    BasedIn = "Quezon City",
-                    AvatarPath = "Assets/Images/pixelart_portrait.png",
-                    LocationAddress = "B2 L6 Emerald St. Novaliches Proper, Q.C.",
-                    Age = 19,
-                    ExperienceYears = 3,
-                    Email = "delmundo.marckevin.ferolino@gmail.com",
-                    GithubUrl = "https://github.com/marcKevzzz",
-                    LinkedinUrl = "https://www.linkedin.com/in/del-mundo-marc-kevin-f-ba5050436"
-                },
-                TechStacks = new List<TechStackItemDto>
-                {
-                    new TechStackItemDto { TechId = 1, GroupName = "Frontend", Label = "HTML5", IconPath = "Assets/Icons/html5.svg", SortOrder = 1 },
-                    new TechStackItemDto { TechId = 2, GroupName = "Frontend", Label = "CSS3", IconPath = "Assets/Icons/css3.svg", SortOrder = 2 },
-                    new TechStackItemDto { TechId = 3, GroupName = "Frontend", Label = "JavaScript", IconPath = "Assets/Icons/javascript.svg", SortOrder = 3 },
-                    new TechStackItemDto { TechId = 4, GroupName = "Frontend", Label = "React", IconPath = "Assets/Icons/react.svg", SortOrder = 4 },
-                    new TechStackItemDto { TechId = 5, GroupName = "3D & Motion", Label = "Three.js", IconPath = "Assets/Icons/threejs.svg", SortOrder = 1 },
-                    new TechStackItemDto { TechId = 6, GroupName = "3D & Motion", Label = "GSAP", IconPath = "Assets/Icons/gsap.svg", SortOrder = 2 },
-                    new TechStackItemDto { TechId = 7, GroupName = "Backend & Database", Label = "Node.js", IconPath = "Assets/Icons/nodejs.svg", SortOrder = 1 },
-                    new TechStackItemDto { TechId = 8, GroupName = "Backend & Database", Label = "Express", IconPath = "Assets/Icons/express.svg", SortOrder = 2 },
-                    new TechStackItemDto { TechId = 9, GroupName = "Backend & Database", Label = "C#", IconPath = "Assets/Icons/csharp.svg", SortOrder = 3 },
-                    new TechStackItemDto { TechId = 10, GroupName = "Backend & Database", Label = "MySQL", IconPath = "Assets/Icons/mysql.svg", SortOrder = 4 },
-                    new TechStackItemDto { TechId = 11, GroupName = "Backend & Database", Label = "MongoDB", IconPath = "Assets/Icons/mongodb.svg", SortOrder = 5 },
-                    new TechStackItemDto { TechId = 12, GroupName = "Tools & DevOps", Label = "Git", IconPath = "Assets/Icons/git.svg", SortOrder = 1 },
-                    new TechStackItemDto { TechId = 13, GroupName = "Tools & DevOps", Label = "GitHub", IconPath = "Assets/Icons/github.svg", SortOrder = 2 },
-                    new TechStackItemDto { TechId = 14, GroupName = "Tools & DevOps", Label = "Figma", IconPath = "Assets/Icons/figma.svg", SortOrder = 3 },
-                    new TechStackItemDto { TechId = 15, GroupName = "Tools & DevOps", Label = "VS Code", IconPath = "Assets/Icons/vscode.svg", SortOrder = 4 }
-                },
-                Skills = new List<SkillDto>
-                {
-                    new SkillDto { SkillId = 1, SkillName = "Frontend Development", ProficiencyVal = 90, SortOrder = 1 },
-                    new SkillDto { SkillId = 2, SkillName = "C# & ASP.NET", ProficiencyVal = 85, SortOrder = 2 },
-                    new SkillDto { SkillId = 3, SkillName = "Database Architecture", ProficiencyVal = 82, SortOrder = 3 },
-                    new SkillDto { SkillId = 4, SkillName = "GSAP & Creative Motion", ProficiencyVal = 80, SortOrder = 4 },
-                    new SkillDto { SkillId = 5, SkillName = "API & Backend Services", ProficiencyVal = 84, SortOrder = 5 },
-                    new SkillDto { SkillId = 6, SkillName = "UI/UX & Responsive Systems", ProficiencyVal = 88, SortOrder = 6 }
-                },
-                Experiences = new List<ExperienceDto>
-                {
-                    new ExperienceDto
-                    {
-                        ExpId = 1,
-                        RoleTitle = "Lead Full-Stack Developer",
-                        CompanyName = "Samson Dental Center",
-                        PeriodRange = "2025 — Present",
-                        DescriptionText = "Architected clinic management platform with real-time patient queue, dynamic charting, and appointment scheduling.",
-                        Tags = "ASP.NET, C#, SQLite, JavaScript, GSAP",
-                        SortOrder = 1
-                    },
-                    new ExperienceDto
-                    {
-                        ExpId = 2,
-                        RoleTitle = "Front-End Developer & UI Designer",
-                        CompanyName = "Freelance / Independent",
-                        PeriodRange = "2023 — 2025",
-                        DescriptionText = "Built bespoke web applications, interactive visual calculators, algorithmic simulators, and data dashboards.",
-                        Tags = "HTML5, CSS3, JavaScript, GSAP, UI/UX",
-                        SortOrder = 2
-                    }
-                },
-                Projects = new List<ProjectDto>
-                {
-                    new ProjectDto
-                    {
-                        ProjectId = 1,
-                        Title = "Samson Dental Center",
-                        ImagePath = "Assets/Images/samsondentalcenter.png",
-                        ProjectUrl = "https://github.com/marcKevzzz/SamsonDentalCenterManagementSystem",
-                        Tags = "HTML5, CSS3, JavaScript, Healthcare UX, Responsive",
-                        SortOrder = 1
-                    },
-                    new ProjectDto
-                    {
-                        ProjectId = 2,
-                        Title = "Review Bot Assistant",
-                        ImagePath = "Assets/Images/reviewbot.png",
-                        ProjectUrl = "https://github.com/marcKevzzz/reviewbot",
-                        Tags = "Chatbot AI, Conversational UI, DOM Scripting",
-                        SortOrder = 2
-                    },
-                    new ProjectDto
-                    {
-                        ProjectId = 3,
-                        Title = "CPU Scheduling Calculator",
-                        ImagePath = "Assets/Images/cpu_scheduler.png",
-                        ProjectUrl = "https://github.com/marcKevzzz/cpu-scheduling-calculator",
-                        Tags = "OS Scheduling, Gantt Chart, Algorithm Visualizer",
-                        SortOrder = 3
-                    },
-                    new ProjectDto
-                    {
-                        ProjectId = 4,
-                        Title = "MLBB Mayhem",
-                        ImagePath = "Assets/Images/mlbb_mayhem.png",
-                        ProjectUrl = "https://github.com/marcKevzzz/MLBB-Meyhem",
-                        Tags = "Esports UI, Draft Simulator, Interactive Gaming",
-                        SortOrder = 4
-                    },
-                    new ProjectDto
-                    {
-                        ProjectId = 5,
-                        Title = "AeroStack Payroll System",
-                        ImagePath = "Assets/Images/payroll.png",
-                        ProjectUrl = "https://github.com/marcKevzzz/Payroll-Web-System",
-                        Tags = "Enterprise UI, Data Analytics, Payroll Engine, DTR Logging",
-                        SortOrder = 5
-                    },
-                    new ProjectDto
-                    {
-                        ProjectId = 6,
-                        Title = "Tower of Hanoi",
-                        ImagePath = "Assets/Images/tower_of_hanoi.png",
-                        ProjectUrl = "https://github.com/marcKevzzz/towerOfHanoi",
-                        Tags = "Game Physics, Leaderboards, Performance Stats",
-                        SortOrder = 6
-                    }
-                },
-                Educations = new List<EducationDto>
-                {
-                    new EducationDto
-                    {
-                        EduId = 1,
-                        YearPeriod = "2024 — Present",
-                        Title = "Collegiate Level",
-                        Subtitle = "Bachelor of Science in Information Technology",
-                        InstitutionName = "Quezon City University",
-                        SortOrder = 1
-                    },
-                    new EducationDto
-                    {
-                        EduId = 2,
-                        YearPeriod = "June — 2024",
-                        Title = "Senior High School",
-                        Subtitle = "Information and Communication Technology",
-                        InstitutionName = "Gardner College Diliman",
-                        SortOrder = 2
-                    }
-                },
-                Awards = new List<AwardDto>
-                {
-                    new AwardDto
-                    {
-                        AwardId = 1,
-                        AwardYear = "2026",
-                        Title = "DevCup 2026 Competition",
-                        Subtitle = "2nd Place QCU",
-                        OrganizationName = "Quezon City University",
-                        SortOrder = 1
-                    },
-                    new AwardDto
-                    {
-                        AwardId = 2,
-                        AwardYear = "2025",
-                        Title = "Code Quest 2025",
-                        Subtitle = "Certificate of Participation",
-                        OrganizationName = "Quezon City University",
-                        SortOrder = 2
-                    },
-                    new AwardDto
-                    {
-                        AwardId = 3,
-                        AwardYear = "2026",
-                        Title = "AWS Learning Club QCU",
-                        Subtitle = "Operational Member",
-                        OrganizationName = "AWS Learning Club",
-                        SortOrder = 3
-                    },
-                    new AwardDto
-                    {
-                        AwardId = 4,
-                        AwardYear = "2025",
-                        Title = "The Hour of Code",
-                        Subtitle = "Certificate of Completion",
-                        OrganizationName = "ASEAN Youth Organization",
-                        SortOrder = 4
-                    }
-                },
-                Hobbies = new List<HobbyDto>
-                {
-                    new HobbyDto { HobbyId = 1, HobbyName = "Reading Manhwa, Manhua & Manga", SortOrder = 1 },
-                    new HobbyDto { HobbyId = 2, HobbyName = "Online Games", SortOrder = 2 },
-                    new HobbyDto { HobbyId = 3, HobbyName = "Coding", SortOrder = 3 },
-                    new HobbyDto { HobbyId = 4, HobbyName = "Basketball", SortOrder = 4 }
-                }
+                UserId = userId,
+                RoleTitle = "Web Developer",
+                FocusArea = "Interfaces & Data Systems",
+                BasedIn = "Quezon City",
+                AvatarPath = "Assets/Images/pixelart_portrait.png",
+                ExperienceYears = 1
             };
-        }
 
-        #region CRUD Operations for Admin Console
-
-        public static string CleanMojibake(string text)
-        {
-            if (string.IsNullOrEmpty(text)) return text;
-            return text.Replace("â€”", "—")
-                       .Replace("â€“", "–")
-                       .Replace("âˆ’", "−")
-                       .Replace("â€™", "'")
-                       .Replace("â€˜", "'")
-                       .Replace("â€œ", "\"")
-                       .Replace("â€ ", "\"")
-                       .Replace("â€ ", "\"")
-                       .Replace("Â", "");
-        }
-
-        public static bool SaveProfile(ProfileDto profile)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            if (profile == null) return false;
             try
             {
-                profile.HeroSubline = CleanMojibake(profile.HeroSubline);
-                profile.RoleSummary = CleanMojibake(profile.RoleSummary);
-
-                int count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM profile_tbl") ?? 0);
-                string query;
-                if (count > 0)
-                {
-                    query = @"UPDATE profile_tbl SET 
-                                first_name = @FirstName,
-                                last_name = @LastName,
-                                hero_subline = @HeroSubline,
-                                hero_names = @HeroNames,
-                                role_summary = @RoleSummary,
-                                role_title = @RoleTitle,
-                                focus_area = @FocusArea,
-                                based_in = @BasedIn,
-                                avatar_path = @AvatarPath,
-                                location_address = @LocationAddress,
-                                age = @Age,
-                                experience_years = @ExperienceYears,
-                                email = @Email,
-                                github_url = @GithubUrl,
-                                linkedin_url = @LinkedinUrl,
-                                updated_at = GETDATE()
-                              WHERE profile_id = (SELECT TOP 1 profile_id FROM profile_tbl ORDER BY profile_id DESC)";
-                }
-                else
-                {
-                    query = @"INSERT INTO profile_tbl (first_name, last_name, hero_subline, hero_names, role_summary, role_title, focus_area, based_in, avatar_path, location_address, age, experience_years, email, github_url, linkedin_url, updated_at)
-                              VALUES (@FirstName, @LastName, @HeroSubline, @HeroNames, @RoleSummary, @RoleTitle, @FocusArea, @BasedIn, @AvatarPath, @LocationAddress, @Age, @ExperienceYears, @Email, @GithubUrl, @LinkedinUrl, GETDATE())";
-                }
-
-                DatabaseHelper.ExecuteNonQuery(query,
-                    new System.Data.SqlClient.SqlParameter("@FirstName", (object)profile.FirstName ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@LastName", (object)profile.LastName ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@HeroSubline", (object)profile.HeroSubline ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@HeroNames", (object)profile.HeroNames ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@RoleSummary", (object)profile.RoleSummary ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@RoleTitle", (object)profile.RoleTitle ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@FocusArea", (object)profile.FocusArea ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@BasedIn", (object)profile.BasedIn ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@AvatarPath", (object)profile.AvatarPath ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@LocationAddress", (object)profile.LocationAddress ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@Age", profile.Age),
-                    new System.Data.SqlClient.SqlParameter("@ExperienceYears", profile.ExperienceYears),
-                    new System.Data.SqlClient.SqlParameter("@Email", (object)profile.Email ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@GithubUrl", (object)profile.GithubUrl ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@LinkedinUrl", (object)profile.LinkedinUrl ?? DBNull.Value)
-                );
-
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] SaveProfile error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool SaveTechStack(TechStackItemDto item, string svgContent = null)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            if (item == null) return false;
-            try
-            {
-                // If raw or base64-encoded SVG markup was provided, decode and write to Assets/Icons
-                if (!string.IsNullOrWhiteSpace(svgContent))
-                {
-                    string rawSvg = svgContent.Trim();
-                    if (rawSvg.StartsWith("base64:", StringComparison.OrdinalIgnoreCase))
-                    {
-                        try
-                        {
-                            byte[] bytes = Convert.FromBase64String(rawSvg.Substring(7));
-                            rawSvg = System.Text.Encoding.UTF8.GetString(bytes);
-                        }
-                        catch { }
-                    }
-
-                    if (rawSvg.IndexOf("<svg", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        string safeName = System.Text.RegularExpressions.Regex.Replace(item.Label ?? "icon", @"[^a-zA-Z0-9_\-]", "").ToLowerInvariant();
-                        if (string.IsNullOrEmpty(safeName)) safeName = "tech_" + DateTime.Now.Ticks;
-                        string fileName = $"{safeName}.svg";
-
-                        string iconsDir = HttpContext.Current?.Server.MapPath("~/Assets/Icons");
-                        if (!string.IsNullOrEmpty(iconsDir))
-                        {
-                            if (!System.IO.Directory.Exists(iconsDir))
-                            {
-                                System.IO.Directory.CreateDirectory(iconsDir);
-                            }
-                            string fullPath = System.IO.Path.Combine(iconsDir, fileName);
-                            System.IO.File.WriteAllText(fullPath, rawSvg.Trim(), System.Text.Encoding.UTF8);
-                            item.IconPath = $"Assets/Icons/{fileName}";
-                        }
-                    }
-                }
-
-                if (string.IsNullOrWhiteSpace(item.IconPath))
-                {
-                    item.IconPath = "Assets/Icons/csharp.svg";
-                }
-
-                string query;
-                if (item.TechId > 0)
-                {
-                    query = @"UPDATE tech_stacks_tbl SET group_name = @GroupName, label = @Label, icon_path = @IconPath, sort_order = @SortOrder, is_active = @IsActive WHERE tech_id = @TechId";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@GroupName", item.GroupName ?? "Frontend"),
-                        new System.Data.SqlClient.SqlParameter("@Label", item.Label ?? "Tech"),
-                        new System.Data.SqlClient.SqlParameter("@IconPath", item.IconPath),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", item.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", item.IsActive),
-                        new System.Data.SqlClient.SqlParameter("@TechId", item.TechId)
-                    );
-                }
-                else
-                {
-                    query = @"INSERT INTO tech_stacks_tbl (group_name, label, icon_path, sort_order, is_active) VALUES (@GroupName, @Label, @IconPath, @SortOrder, @IsActive)";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@GroupName", item.GroupName ?? "Frontend"),
-                        new System.Data.SqlClient.SqlParameter("@Label", item.Label ?? "Tech"),
-                        new System.Data.SqlClient.SqlParameter("@IconPath", item.IconPath),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", item.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", item.IsActive)
-                    );
-                }
-
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] SaveTechStack error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool DeleteTechStack(int techId)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            try
-            {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM tech_stacks_tbl WHERE tech_id = @TechId",
-                    new System.Data.SqlClient.SqlParameter("@TechId", techId));
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] DeleteTechStack error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool SaveSkill(SkillDto skill)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            if (skill == null) return false;
-            try
-            {
-                string query;
-                if (skill.SkillId > 0)
-                {
-                    query = @"UPDATE skills_tbl SET skill_name = @SkillName, proficiency_val = @ProficiencyVal, sort_order = @SortOrder, is_active = @IsActive WHERE skill_id = @SkillId";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@SkillName", skill.SkillName ?? "Skill"),
-                        new System.Data.SqlClient.SqlParameter("@ProficiencyVal", Math.Max(0, Math.Min(100, skill.ProficiencyVal))),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", skill.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", skill.IsActive),
-                        new System.Data.SqlClient.SqlParameter("@SkillId", skill.SkillId)
-                    );
-                }
-                else
-                {
-                    query = @"INSERT INTO skills_tbl (skill_name, proficiency_val, sort_order, is_active) VALUES (@SkillName, @ProficiencyVal, @SortOrder, @IsActive)";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@SkillName", skill.SkillName ?? "Skill"),
-                        new System.Data.SqlClient.SqlParameter("@ProficiencyVal", Math.Max(0, Math.Min(100, skill.ProficiencyVal))),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", skill.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", skill.IsActive)
-                    );
-                }
-
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] SaveSkill error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool DeleteSkill(int skillId)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            try
-            {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM skills_tbl WHERE skill_id = @SkillId",
-                    new System.Data.SqlClient.SqlParameter("@SkillId", skillId));
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] DeleteSkill error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool SaveExperience(ExperienceDto exp)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            if (exp == null) return false;
-            try
-            {
-                exp.PeriodRange = CleanMojibake(exp.PeriodRange);
-                exp.DescriptionText = CleanMojibake(exp.DescriptionText);
-                string query;
-                if (exp.ExpId > 0)
-                {
-                    query = @"UPDATE experiences_tbl SET role_title = @RoleTitle, company_name = @CompanyName, period_range = @PeriodRange, description_text = @DescriptionText, tags = @Tags, sort_order = @SortOrder, is_active = @IsActive WHERE exp_id = @ExpId";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@RoleTitle", exp.RoleTitle ?? "Role"),
-                        new System.Data.SqlClient.SqlParameter("@CompanyName", exp.CompanyName ?? "Company"),
-                        new System.Data.SqlClient.SqlParameter("@PeriodRange", exp.PeriodRange ?? "2026"),
-                        new System.Data.SqlClient.SqlParameter("@DescriptionText", exp.DescriptionText ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@Tags", exp.Tags ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", exp.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", exp.IsActive),
-                        new System.Data.SqlClient.SqlParameter("@ExpId", exp.ExpId)
-                    );
-                }
-                else
-                {
-                    query = @"INSERT INTO experiences_tbl (role_title, company_name, period_range, description_text, tags, sort_order, is_active) VALUES (@RoleTitle, @CompanyName, @PeriodRange, @DescriptionText, @Tags, @SortOrder, @IsActive)";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@RoleTitle", exp.RoleTitle ?? "Role"),
-                        new System.Data.SqlClient.SqlParameter("@CompanyName", exp.CompanyName ?? "Company"),
-                        new System.Data.SqlClient.SqlParameter("@PeriodRange", exp.PeriodRange ?? "2026"),
-                        new System.Data.SqlClient.SqlParameter("@DescriptionText", exp.DescriptionText ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@Tags", exp.Tags ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", exp.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", exp.IsActive)
-                    );
-                }
-
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] SaveExperience error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool DeleteExperience(int expId)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            try
-            {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM experiences_tbl WHERE exp_id = @ExpId",
-                    new System.Data.SqlClient.SqlParameter("@ExpId", expId));
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] DeleteExperience error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool SaveProject(ProjectDto project)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            if (project == null) return false;
-            try
-            {
-                string query;
-                if (project.ProjectId > 0)
-                {
-                    query = @"UPDATE projects_tbl SET title = @Title, image_path = @ImagePath, project_url = @ProjectUrl, tags = @Tags, sort_order = @SortOrder, is_active = @IsActive WHERE project_id = @ProjectId";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@Title", project.Title ?? "Project"),
-                        new System.Data.SqlClient.SqlParameter("@ImagePath", project.ImagePath ?? "Assets/Images/samsondentalcenter.png"),
-                        new System.Data.SqlClient.SqlParameter("@ProjectUrl", project.ProjectUrl ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@Tags", project.Tags ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", project.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", project.IsActive),
-                        new System.Data.SqlClient.SqlParameter("@ProjectId", project.ProjectId)
-                    );
-                }
-                else
-                {
-                    query = @"INSERT INTO projects_tbl (title, image_path, project_url, tags, sort_order, is_active) VALUES (@Title, @ImagePath, @ProjectUrl, @Tags, @SortOrder, @IsActive)";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@Title", project.Title ?? "Project"),
-                        new System.Data.SqlClient.SqlParameter("@ImagePath", project.ImagePath ?? "Assets/Images/samsondentalcenter.png"),
-                        new System.Data.SqlClient.SqlParameter("@ProjectUrl", project.ProjectUrl ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@Tags", project.Tags ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", project.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", project.IsActive)
-                    );
-                }
-
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] SaveProject error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool DeleteProject(int projectId)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            try
-            {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM projects_tbl WHERE project_id = @ProjectId",
-                    new System.Data.SqlClient.SqlParameter("@ProjectId", projectId));
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] DeleteProject error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool SaveEducation(EducationDto edu)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            if (edu == null) return false;
-            try
-            {
-                edu.YearPeriod = CleanMojibake(edu.YearPeriod);
-                edu.Title = CleanMojibake(edu.Title);
-                edu.Subtitle = CleanMojibake(edu.Subtitle);
-                string query;
-                if (edu.EduId > 0)
-                {
-                    query = @"UPDATE educations_tbl SET year_period = @YearPeriod, title = @Title, subtitle = @Subtitle, institution_name = @InstitutionName, sort_order = @SortOrder, is_active = @IsActive WHERE edu_id = @EduId";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@YearPeriod", edu.YearPeriod ?? "2026"),
-                        new System.Data.SqlClient.SqlParameter("@Title", edu.Title ?? "Education"),
-                        new System.Data.SqlClient.SqlParameter("@Subtitle", edu.Subtitle ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@InstitutionName", edu.InstitutionName ?? "Institution"),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", edu.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", edu.IsActive),
-                        new System.Data.SqlClient.SqlParameter("@EduId", edu.EduId)
-                    );
-                }
-                else
-                {
-                    query = @"INSERT INTO educations_tbl (year_period, title, subtitle, institution_name, sort_order, is_active) VALUES (@YearPeriod, @Title, @Subtitle, @InstitutionName, @SortOrder, @IsActive)";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@YearPeriod", edu.YearPeriod ?? "2026"),
-                        new System.Data.SqlClient.SqlParameter("@Title", edu.Title ?? "Education"),
-                        new System.Data.SqlClient.SqlParameter("@Subtitle", edu.Subtitle ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@InstitutionName", edu.InstitutionName ?? "Institution"),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", edu.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", edu.IsActive)
-                    );
-                }
-
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] SaveEducation error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool DeleteEducation(int eduId)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            try
-            {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM educations_tbl WHERE edu_id = @EduId",
-                    new System.Data.SqlClient.SqlParameter("@EduId", eduId));
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] DeleteEducation error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool SaveAward(AwardDto award)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            if (award == null) return false;
-            try
-            {
-                string query;
-                if (award.AwardId > 0)
-                {
-                    query = @"UPDATE awards_tbl SET award_year = @AwardYear, title = @Title, subtitle = @Subtitle, organization_name = @OrganizationName, sort_order = @SortOrder, is_active = @IsActive WHERE award_id = @AwardId";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@AwardYear", award.AwardYear ?? "2026"),
-                        new System.Data.SqlClient.SqlParameter("@Title", award.Title ?? "Award"),
-                        new System.Data.SqlClient.SqlParameter("@Subtitle", award.Subtitle ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@OrganizationName", award.OrganizationName ?? "Organization"),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", award.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", award.IsActive),
-                        new System.Data.SqlClient.SqlParameter("@AwardId", award.AwardId)
-                    );
-                }
-                else
-                {
-                    query = @"INSERT INTO awards_tbl (award_year, title, subtitle, organization_name, sort_order, is_active) VALUES (@AwardYear, @Title, @Subtitle, @OrganizationName, @SortOrder, @IsActive)";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@AwardYear", award.AwardYear ?? "2026"),
-                        new System.Data.SqlClient.SqlParameter("@Title", award.Title ?? "Award"),
-                        new System.Data.SqlClient.SqlParameter("@Subtitle", award.Subtitle ?? ""),
-                        new System.Data.SqlClient.SqlParameter("@OrganizationName", award.OrganizationName ?? "Organization"),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", award.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", award.IsActive)
-                    );
-                }
-
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] SaveAward error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool DeleteAward(int awardId)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            try
-            {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM awards_tbl WHERE award_id = @AwardId",
-                    new System.Data.SqlClient.SqlParameter("@AwardId", awardId));
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] DeleteAward error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool SaveHobby(HobbyDto hobby)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            if (hobby == null) return false;
-            try
-            {
-                string query;
-                if (hobby.HobbyId > 0)
-                {
-                    query = @"UPDATE hobbies_tbl SET hobby_name = @HobbyName, sort_order = @SortOrder, is_active = @IsActive WHERE hobby_id = @HobbyId";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@HobbyName", hobby.HobbyName ?? "Hobby"),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", hobby.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", hobby.IsActive),
-                        new System.Data.SqlClient.SqlParameter("@HobbyId", hobby.HobbyId)
-                    );
-                }
-                else
-                {
-                    query = @"INSERT INTO hobbies_tbl (hobby_name, sort_order, is_active) VALUES (@HobbyName, @SortOrder, @IsActive)";
-                    DatabaseHelper.ExecuteNonQuery(query,
-                        new System.Data.SqlClient.SqlParameter("@HobbyName", hobby.HobbyName ?? "Hobby"),
-                        new System.Data.SqlClient.SqlParameter("@SortOrder", hobby.SortOrder),
-                        new System.Data.SqlClient.SqlParameter("@IsActive", hobby.IsActive)
-                    );
-                }
-
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] SaveHobby error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static bool DeleteHobby(int hobbyId)
-        {
-            if (!AuthHelper.IsAdmin()) return false;
-            try
-            {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM hobbies_tbl WHERE hobby_id = @HobbyId",
-                    new System.Data.SqlClient.SqlParameter("@HobbyId", hobbyId));
-                InvalidateCache();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] DeleteHobby error: {ex.Message}");
-                return false;
-            }
-        }
-
-        public static List<User> GetAllUsers()
-        {
-            var list = new List<User>();
-            try
-            {
-                DataTable dt = DatabaseHelper.ExecuteDataTable("SELECT * FROM users_tbl ORDER BY created_at DESC");
+                var dt = DatabaseHelper.ExecuteQuery("SELECT first_name, last_name, email FROM users_tbl WHERE user_id = @UserId",
+                    new SqlParameter("@UserId", userId));
                 if (dt != null && dt.Rows.Count > 0)
                 {
-                    foreach (DataRow row in dt.Rows)
+                    p.FirstName = dt.Rows[0]["first_name"]?.ToString() ?? "";
+                    p.LastName = dt.Rows[0]["last_name"]?.ToString() ?? "";
+                    p.Email = dt.Rows[0]["email"]?.ToString() ?? "";
+                    p.HeroNames = $"{p.FirstName},{p.LastName}".Trim(',');
+                }
+            }
+            catch { }
+
+            return p;
+        }
+
+        public static void InvalidateCache(int userId = 0)
+        {
+            try
+            {
+                if (userId > 0)
+                {
+                    HttpRuntime.Cache?.Remove(GetCacheKey(userId));
+                }
+                else
+                {
+                    int currentUid = AuthHelper.GetCurrentUserId();
+                    if (currentUid > 0) HttpRuntime.Cache?.Remove(GetCacheKey(currentUid));
+                }
+            }
+            catch { }
+        }
+
+        // -------------------------------------------------------------
+        // CRUD Operations with Stored Procedures
+        // -------------------------------------------------------------
+
+        public static bool SaveProfile(ProfileDto p, int userId = 0)
+        {
+            if (userId <= 0) userId = p.UserId > 0 ? p.UserId : AuthHelper.GetCurrentUserId();
+            if (userId <= 0) userId = 1;
+
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@user_id", userId),
+                new SqlParameter("@first_name", (object)p.FirstName ?? DBNull.Value),
+                new SqlParameter("@last_name", (object)p.LastName ?? DBNull.Value),
+                new SqlParameter("@hero_names", (object)p.HeroNames ?? DBNull.Value),
+                new SqlParameter("@role_summary", (object)p.RoleSummary ?? DBNull.Value),
+                new SqlParameter("@role_title", (object)p.RoleTitle ?? DBNull.Value),
+                new SqlParameter("@focus_area", (object)p.FocusArea ?? DBNull.Value),
+                new SqlParameter("@based_in", (object)p.BasedIn ?? DBNull.Value),
+                new SqlParameter("@avatar_path", (object)p.AvatarPath ?? DBNull.Value),
+                new SqlParameter("@location_address", (object)p.LocationAddress ?? DBNull.Value),
+                new SqlParameter("@birth_date", p.BirthDate.HasValue ? (object)p.BirthDate.Value : DBNull.Value),
+                new SqlParameter("@experience_years", p.ExperienceYears),
+                new SqlParameter("@email", (object)p.Email ?? DBNull.Value),
+                new SqlParameter("@github_url", (object)p.GithubUrl ?? DBNull.Value),
+                new SqlParameter("@linkedin_url", (object)p.LinkedinUrl ?? DBNull.Value)
+            };
+
+            try
+            {
+                int rows = DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveProfile", parameters);
+                InvalidateCache(userId);
+                return rows >= 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[PortfolioService] SaveProfile error: " + ex.Message);
+                return false;
+            }
+        }
+
+        public static bool SaveTechStack(TechStackItemDto item, string rawSvg, int userId = 0)
+        {
+            if (userId <= 0) userId = item.UserId > 0 ? item.UserId : AuthHelper.GetCurrentUserId();
+            if (userId <= 0) userId = 1;
+
+            if (!string.IsNullOrWhiteSpace(rawSvg))
+            {
+                try
+                {
+                    string iconName = (item.Label ?? "tech").ToLowerInvariant().Replace(" ", "_").Replace("#", "sharp").Replace(".", "_") + "_" + DateTime.UtcNow.Ticks + ".svg";
+                    string targetDir = HttpContext.Current != null ? HttpContext.Current.Server.MapPath("~/Assets/Icons/") : null;
+                    if (!string.IsNullOrEmpty(targetDir))
                     {
-                        list.Add(new User
+                        if (!System.IO.Directory.Exists(targetDir)) System.IO.Directory.CreateDirectory(targetDir);
+                        string fullPath = System.IO.Path.Combine(targetDir, iconName);
+                        System.IO.File.WriteAllText(fullPath, rawSvg);
+                        item.IconPath = "Assets/Icons/" + iconName;
+                    }
+                }
+                catch { }
+            }
+
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@tech_id", item.TechId),
+                new SqlParameter("@user_id", userId),
+                new SqlParameter("@group_name", item.GroupName ?? "Frontend"),
+                new SqlParameter("@label", item.Label ?? ""),
+                new SqlParameter("@icon_path", item.IconPath ?? ""),
+                new SqlParameter("@sort_order", item.SortOrder)
+            };
+
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveTechStack", parameters);
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool SaveTechStack(TechStackItemDto item, int userId = 0)
+        {
+            return SaveTechStack(item, null, userId);
+        }
+
+        public static bool DeleteTechStack(int techId, int userId = 0)
+        {
+            if (userId <= 0) userId = AuthHelper.GetCurrentUserId();
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_DeleteTechStack",
+                    new SqlParameter("@tech_id", techId),
+                    new SqlParameter("@user_id", userId));
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool SaveSkill(SkillDto skill, int userId = 0)
+        {
+            if (userId <= 0) userId = skill.UserId > 0 ? skill.UserId : AuthHelper.GetCurrentUserId();
+            if (userId <= 0) userId = 1;
+
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@skill_id", skill.SkillId),
+                new SqlParameter("@user_id", userId),
+                new SqlParameter("@skill_name", skill.SkillName ?? ""),
+                new SqlParameter("@proficiency_val", skill.ProficiencyVal),
+                new SqlParameter("@sort_order", skill.SortOrder)
+            };
+
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveSkill", parameters);
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool DeleteSkill(int skillId, int userId = 0)
+        {
+            if (userId <= 0) userId = AuthHelper.GetCurrentUserId();
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_DeleteSkill",
+                    new SqlParameter("@skill_id", skillId),
+                    new SqlParameter("@user_id", userId));
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool SaveExperience(ExperienceDto exp, int userId = 0)
+        {
+            if (userId <= 0) userId = exp.UserId > 0 ? exp.UserId : AuthHelper.GetCurrentUserId();
+            if (userId <= 0) userId = 1;
+
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@exp_id", exp.ExpId),
+                new SqlParameter("@user_id", userId),
+                new SqlParameter("@role_title", exp.RoleTitle ?? ""),
+                new SqlParameter("@company_name", exp.CompanyName ?? ""),
+                new SqlParameter("@start_year", exp.StartYear),
+                new SqlParameter("@end_year", exp.EndYear.HasValue ? (object)exp.EndYear.Value : DBNull.Value),
+                new SqlParameter("@is_current", exp.IsCurrent),
+                new SqlParameter("@description_text", (object)exp.DescriptionText ?? DBNull.Value),
+                new SqlParameter("@tags", (object)exp.Tags ?? DBNull.Value),
+                new SqlParameter("@sort_order", exp.SortOrder)
+            };
+
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveExperience", parameters);
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool DeleteExperience(int expId, int userId = 0)
+        {
+            if (userId <= 0) userId = AuthHelper.GetCurrentUserId();
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_DeleteExperience",
+                    new SqlParameter("@exp_id", expId),
+                    new SqlParameter("@user_id", userId));
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool SaveProject(ProjectDto project, int userId = 0)
+        {
+            if (userId <= 0) userId = project.UserId > 0 ? project.UserId : AuthHelper.GetCurrentUserId();
+            if (userId <= 0) userId = 1;
+
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@project_id", project.ProjectId),
+                new SqlParameter("@user_id", userId),
+                new SqlParameter("@title", project.Title ?? ""),
+                new SqlParameter("@image_path", project.ImagePath ?? ""),
+                new SqlParameter("@project_url", (object)project.ProjectUrl ?? DBNull.Value),
+                new SqlParameter("@tags", (object)project.Tags ?? DBNull.Value),
+                new SqlParameter("@sort_order", project.SortOrder)
+            };
+
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveProject", parameters);
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool DeleteProject(int projectId, int userId = 0)
+        {
+            if (userId <= 0) userId = AuthHelper.GetCurrentUserId();
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_DeleteProject",
+                    new SqlParameter("@project_id", projectId),
+                    new SqlParameter("@user_id", userId));
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool SaveEducation(EducationDto edu, int userId = 0)
+        {
+            if (userId <= 0) userId = edu.UserId > 0 ? edu.UserId : AuthHelper.GetCurrentUserId();
+            if (userId <= 0) userId = 1;
+
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@edu_id", edu.EduId),
+                new SqlParameter("@user_id", userId),
+                new SqlParameter("@title", edu.Title ?? ""),
+                new SqlParameter("@subtitle", edu.Subtitle ?? ""),
+                new SqlParameter("@institution_name", edu.InstitutionName ?? ""),
+                new SqlParameter("@start_year", edu.StartYear),
+                new SqlParameter("@end_year", edu.EndYear.HasValue ? (object)edu.EndYear.Value : DBNull.Value),
+                new SqlParameter("@is_current", edu.IsCurrent),
+                new SqlParameter("@sort_order", edu.SortOrder)
+            };
+
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveEducation", parameters);
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool DeleteEducation(int eduId, int userId = 0)
+        {
+            if (userId <= 0) userId = AuthHelper.GetCurrentUserId();
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_DeleteEducation",
+                    new SqlParameter("@edu_id", eduId),
+                    new SqlParameter("@user_id", userId));
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool SaveAward(AwardDto award, int userId = 0)
+        {
+            if (userId <= 0) userId = award.UserId > 0 ? award.UserId : AuthHelper.GetCurrentUserId();
+            if (userId <= 0) userId = 1;
+
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@award_id", award.AwardId),
+                new SqlParameter("@user_id", userId),
+                new SqlParameter("@award_year", award.AwardYear ?? ""),
+                new SqlParameter("@title", award.Title ?? ""),
+                new SqlParameter("@subtitle", award.Subtitle ?? ""),
+                new SqlParameter("@organization_name", award.OrganizationName ?? ""),
+                new SqlParameter("@sort_order", award.SortOrder)
+            };
+
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveAward", parameters);
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool DeleteAward(int awardId, int userId = 0)
+        {
+            if (userId <= 0) userId = AuthHelper.GetCurrentUserId();
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_DeleteAward",
+                    new SqlParameter("@award_id", awardId),
+                    new SqlParameter("@user_id", userId));
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool SaveHobby(HobbyDto hobby, int userId = 0)
+        {
+            if (userId <= 0) userId = hobby.UserId > 0 ? hobby.UserId : AuthHelper.GetCurrentUserId();
+            if (userId <= 0) userId = 1;
+
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@hobby_id", hobby.HobbyId),
+                new SqlParameter("@user_id", userId),
+                new SqlParameter("@hobby_name", hobby.HobbyName ?? ""),
+                new SqlParameter("@hobby_description", (object)hobby.HobbyDescription ?? DBNull.Value),
+                new SqlParameter("@sort_order", hobby.SortOrder)
+            };
+
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveHobby", parameters);
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public static bool DeleteHobby(int hobbyId, int userId = 0)
+        {
+            if (userId <= 0) userId = AuthHelper.GetCurrentUserId();
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_DeleteHobby",
+                    new SqlParameter("@hobby_id", hobbyId),
+                    new SqlParameter("@user_id", userId));
+                InvalidateCache(userId);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // -------------------------------------------------------------
+        // User Supervision & Admin Services
+        // -------------------------------------------------------------
+
+        public static List<UserSummaryDto> GetAllUsers()
+        {
+            var list = new List<UserSummaryDto>();
+            try
+            {
+                var dt = DatabaseHelper.ExecuteStoredProcedureDataTable("sp_GetAllUsers");
+                if (dt != null)
+                {
+                    foreach (DataRow r in dt.Rows)
+                    {
+                        list.Add(new UserSummaryDto
                         {
-                            UserId = row["user_id"] != DBNull.Value ? Convert.ToInt32(row["user_id"]) : 0,
-                            FirstName = row["first_name"]?.ToString() ?? "",
-                            LastName = row["last_name"]?.ToString() ?? "",
-                            Email = row["email"]?.ToString() ?? "",
-                            Role = row.Table.Columns.Contains("user_role") && row["user_role"] != DBNull.Value ? row["user_role"].ToString() : "User",
-                            ProfileImage = row.Table.Columns.Contains("profile_image") && row["profile_image"] != DBNull.Value ? row["profile_image"].ToString() : (row.Table.Columns.Contains("avatar_url") && row["avatar_url"] != DBNull.Value ? row["avatar_url"].ToString() : ""),
-                            IsActive = row["is_active"] != DBNull.Value && Convert.ToBoolean(row["is_active"]),
-                            CreatedAt = row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : DateTime.UtcNow
+                            UserId = Convert.ToInt32(r["UserId"]),
+                            FirstName = r["FirstName"]?.ToString() ?? "",
+                            LastName = r["LastName"]?.ToString() ?? "",
+                            FullName = $"{r["FirstName"]} {r["LastName"]}".Trim(),
+                            Email = r["Email"]?.ToString() ?? "",
+                            Role = r["Role"]?.ToString() ?? "User",
+                            IsActive = Convert.ToBoolean(r["IsActive"]),
+                            CreatedAt = Convert.ToDateTime(r["CreatedAt"]),
+                            LastLoginAt = r["LastLoginAt"] != DBNull.Value ? Convert.ToDateTime(r["LastLoginAt"]) : (DateTime?)null,
+                            LoginCount = Convert.ToInt32(r["LoginCount"]),
+                            HasProfile = Convert.ToBoolean(r["HasProfile"]),
+                            BirthDate = r["BirthDate"] != DBNull.Value ? Convert.ToDateTime(r["BirthDate"]) : (DateTime?)null,
+                            RoleTitle = r["RoleTitle"]?.ToString() ?? ""
                         });
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] GetAllUsers error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine("[PortfolioService] GetAllUsers error: " + ex.Message);
             }
-
-            if (list.Count == 0)
-            {
-                list.Add(new User
-                {
-                    UserId = 1,
-                    FirstName = "Marc Kevin",
-                    LastName = "Del Mundo",
-                    Email = "delmundo.marckevin.ferolino@gmail.com",
-                    Role = "Admin",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow.AddMonths(-3)
-                });
-            }
-
             return list;
         }
 
-        public static bool SetUserActiveStatus(int userId, bool isActive)
+        public static bool ToggleUserStatus(int targetUserId, bool isActive)
         {
-            if (!AuthHelper.IsAdmin()) return false;
             try
             {
-                DatabaseHelper.ExecuteNonQuery("UPDATE users_tbl SET is_active = @IsActive WHERE user_id = @UserId",
-                    new System.Data.SqlClient.SqlParameter("@IsActive", isActive),
-                    new System.Data.SqlClient.SqlParameter("@UserId", userId));
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_ToggleUserStatus",
+                    new SqlParameter("@user_id", targetUserId),
+                    new SqlParameter("@is_active", isActive));
                 return true;
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] SetUserActiveStatus error: {ex.Message}");
-                return false;
-            }
+            catch { return false; }
         }
 
-        public static bool DeleteUser(int userId)
+        public static bool ResetUserPassword(int targetUserId)
         {
-            if (!AuthHelper.IsAdmin()) return false;
             try
             {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM users_tbl WHERE user_id = @UserId",
-                    new System.Data.SqlClient.SqlParameter("@UserId", userId));
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_ResetUserPassword",
+                    new SqlParameter("@user_id", targetUserId));
                 return true;
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] DeleteUser error: {ex.Message}");
-                return false;
-            }
+            catch { return false; }
         }
 
-        public static bool UpdateAdminCredentials(int userId, string firstName, string lastName, string email, string newPassword, string avatarPath = null)
+        public static DashboardStatsDto GetDashboardStats()
         {
-            if (!AuthHelper.IsAdmin()) return false;
+            var stats = new DashboardStatsDto();
             try
             {
-                var paramList = new List<System.Data.SqlClient.SqlParameter>
+                var dt = DatabaseHelper.ExecuteStoredProcedureDataTable("sp_GetDashboardStats");
+                if (dt != null && dt.Rows.Count > 0)
                 {
-                    new System.Data.SqlClient.SqlParameter("@FirstName", firstName ?? "Admin"),
-                    new System.Data.SqlClient.SqlParameter("@LastName", lastName ?? "User"),
-                    new System.Data.SqlClient.SqlParameter("@Email", email ?? ""),
-                    new System.Data.SqlClient.SqlParameter("@UserId", userId)
-                };
-
-                var updates = new List<string>
-                {
-                    "first_name = @FirstName",
-                    "last_name = @LastName",
-                    "email = @Email"
-                };
-
-                if (!string.IsNullOrWhiteSpace(newPassword))
-                {
-                    string hash = Helpers.AuthHelper.HashPassword(newPassword);
-                    updates.Add("password_hash = @PasswordHash");
-                    paramList.Add(new System.Data.SqlClient.SqlParameter("@PasswordHash", hash));
+                    var r = dt.Rows[0];
+                    stats.TotalUsers = Convert.ToInt32(r["TotalUsers"]);
+                    stats.ActiveUsers = Convert.ToInt32(r["ActiveUsers"]);
+                    stats.InactiveUsers = Convert.ToInt32(r["InactiveUsers"]);
+                    stats.AdminUsers = Convert.ToInt32(r["AdminUsers"]);
+                    stats.SignUpsToday = Convert.ToInt32(r["SignUpsToday"]);
+                    stats.SignUpsThisWeek = Convert.ToInt32(r["SignUpsThisWeek"]);
+                    stats.SignUpsThisMonth = Convert.ToInt32(r["SignUpsThisMonth"]);
+                    stats.TotalLogins = Convert.ToInt32(r["TotalLogins"]);
+                    stats.DailyActiveUsers = Convert.ToInt32(r["DailyActiveUsers"]);
+                    stats.MonthlyActiveUsers = Convert.ToInt32(r["MonthlyActiveUsers"]);
+                    stats.PendingPasswordResets = Convert.ToInt32(r["PendingPasswordResets"]);
+                    stats.TotalProjects = Convert.ToInt32(r["TotalProjects"]);
+                    stats.TotalSkills = Convert.ToInt32(r["TotalSkills"]);
+                    stats.TotalTechStacks = Convert.ToInt32(r["TotalTechStacks"]);
+                    stats.TotalExperiences = Convert.ToInt32(r["TotalExperiences"]);
+                    stats.TotalEducations = Convert.ToInt32(r["TotalEducations"]);
+                    stats.TotalAwards = Convert.ToInt32(r["TotalAwards"]);
+                    stats.TotalHobbies = Convert.ToInt32(r["TotalHobbies"]);
                 }
 
-                if (!string.IsNullOrWhiteSpace(avatarPath))
-                {
-                    updates.Add("profile_image = @ProfileImage");
-                    paramList.Add(new System.Data.SqlClient.SqlParameter("@ProfileImage", avatarPath));
-                }
-
-                string query = $"UPDATE users_tbl SET {string.Join(", ", updates)} WHERE user_id = @UserId";
-                DatabaseHelper.ExecuteNonQuery(query, paramList.ToArray());
-                return true;
+                stats.RecentUsers = GetAllUsers();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] UpdateAdminCredentials error: {ex.Message}");
-                return false;
+                System.Diagnostics.Debug.WriteLine("[PortfolioService] GetDashboardStats error: " + ex.Message);
             }
+            return stats;
         }
 
-        public static List<PasswordResetRequestDto> GetPasswordResetRequests()
+        public static void RecordUserLogin(int userId, string ip, string ua)
+        {
+            try
+            {
+                string sql = @"UPDATE dbo.users_tbl 
+                               SET last_login_at = GETDATE(), login_count = ISNULL(login_count, 0) + 1 
+                               WHERE user_id = @UserId;
+                               INSERT INTO dbo.user_logins_tbl (user_id, login_time, ip_address, user_agent)
+                               VALUES (@UserId, GETDATE(), @Ip, @Ua);";
+                DatabaseHelper.ExecuteNonQuery(sql,
+                    new SqlParameter("@UserId", userId),
+                    new SqlParameter("@Ip", (object)ip ?? DBNull.Value),
+                    new SqlParameter("@Ua", (object)ua ?? DBNull.Value));
+            }
+            catch { }
+        }
+
+        public static List<PasswordResetRequestDto> GetPendingPasswordResets()
         {
             var list = new List<PasswordResetRequestDto>();
             try
             {
                 string query = @"SELECT r.reset_id, r.user_id, r.email, r.reason, r.status, r.created_at,
-                                        u.first_name, u.last_name
+                                        ISNULL(u.first_name + ' ' + u.last_name, r.email) AS user_name
                                  FROM password_resets_tbl r
                                  LEFT JOIN users_tbl u ON r.user_id = u.user_id
-                                 ORDER BY r.reset_id DESC";
-                DataTable dt = DatabaseHelper.ExecuteDataTable(query);
+                                 WHERE r.status = 'pending'
+                                 ORDER BY r.reset_id DESC;";
+                var dt = DatabaseHelper.ExecuteDataTable(query);
                 if (dt != null)
                 {
                     foreach (DataRow row in dt.Rows)
                     {
-                        string fName = row["first_name"] != DBNull.Value ? row["first_name"].ToString() : "";
-                        string lName = row["last_name"] != DBNull.Value ? row["last_name"].ToString() : "";
-                        string fullName = $"{fName} {lName}".Trim();
-                        if (string.IsNullOrEmpty(fullName)) fullName = row["email"].ToString();
-
                         list.Add(new PasswordResetRequestDto
                         {
                             ResetId = Convert.ToInt32(row["reset_id"]),
-                            UserId = row["user_id"] != DBNull.Value ? (int?)Convert.ToInt32(row["user_id"]) : null,
-                            UserName = fullName,
+                            UserId = row["user_id"] != DBNull.Value ? Convert.ToInt32(row["user_id"]) : (int?)null,
+                            UserName = row["user_name"]?.ToString() ?? "",
                             Email = row["email"]?.ToString() ?? "",
-                            Reason = row["reason"] != DBNull.Value ? row["reason"].ToString() : "",
-                            Status = (row["status"]?.ToString() ?? "pending").Trim().ToLowerInvariant(),
-                            CreatedAt = row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : DateTime.UtcNow
+                            Reason = row["reason"]?.ToString() ?? "",
+                            Status = row["status"]?.ToString() ?? "pending",
+                            CreatedAt = Convert.ToDateTime(row["created_at"])
                         });
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] GetPasswordResetRequests error: {ex.Message}");
-            }
+            catch { }
             return list;
         }
 
-        public static bool ApprovePasswordResetRequest(int resetId)
+        public static bool ApprovePasswordReset(int resetId)
         {
-            if (!AuthHelper.IsAdmin()) return false;
             try
             {
-                string query = "UPDATE password_resets_tbl SET status = 'password_removed' WHERE reset_id = @ResetId";
-                DatabaseHelper.ExecuteNonQuery(query, new System.Data.SqlClient.SqlParameter("@ResetId", resetId));
+                string sql = "UPDATE password_resets_tbl SET status = 'password_removed' WHERE reset_id = @ResetId;";
+                DatabaseHelper.ExecuteNonQuery(sql, new SqlParameter("@ResetId", resetId));
                 return true;
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] ApprovePasswordResetRequest error: {ex.Message}");
-                return false;
-            }
+            catch { return false; }
         }
 
-        public static bool RejectPasswordResetRequest(int resetId)
+        public static bool RejectPasswordReset(int resetId)
         {
-            if (!AuthHelper.IsAdmin()) return false;
             try
             {
-                string query = "UPDATE password_resets_tbl SET status = 'expired' WHERE reset_id = @ResetId";
-                DatabaseHelper.ExecuteNonQuery(query, new System.Data.SqlClient.SqlParameter("@ResetId", resetId));
+                string sql = "UPDATE password_resets_tbl SET status = 'used' WHERE reset_id = @ResetId;";
+                DatabaseHelper.ExecuteNonQuery(sql, new SqlParameter("@ResetId", resetId));
                 return true;
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] RejectPasswordResetRequest error: {ex.Message}");
-                return false;
-            }
+            catch { return false; }
         }
 
-        public static bool AdminResetUserPassword(int userId)
+        public static bool SetUserActiveStatus(int userId, bool isActive) => ToggleUserStatus(userId, isActive);
+        public static bool AdminResetUserPassword(int userId) => ResetUserPassword(userId);
+        public static List<PasswordResetRequestDto> GetPasswordResetRequests() => GetPendingPasswordResets();
+        public static bool ApprovePasswordResetRequest(int resetId) => ApprovePasswordReset(resetId);
+        public static bool RejectPasswordResetRequest(int resetId) => RejectPasswordReset(resetId);
+
+        public static bool DeleteUser(int userId)
         {
-            if (!AuthHelper.IsAdmin()) return false;
             try
             {
-                string userEmailQuery = "SELECT email FROM users_tbl WHERE user_id = @UserId";
-                object emailObj = DatabaseHelper.ExecuteScalar(userEmailQuery, new System.Data.SqlClient.SqlParameter("@UserId", userId));
-                if (emailObj == null) return false;
-
-                string email = emailObj.ToString();
-                string insertQuery = @"INSERT INTO password_resets_tbl (user_id, email, reason, status, created_at)
-                                       VALUES (@UserId, @Email, 'Direct Admin Password Reset', 'password_removed', GETDATE())";
-                DatabaseHelper.ExecuteNonQuery(insertQuery,
-                    new System.Data.SqlClient.SqlParameter("@UserId", userId),
-                    new System.Data.SqlClient.SqlParameter("@Email", email));
+                DatabaseHelper.ExecuteNonQuery("DELETE FROM users_tbl WHERE user_id = @UserId", new SqlParameter("@UserId", userId));
                 return true;
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] AdminResetUserPassword error: {ex.Message}");
-                return false;
-            }
+            catch { return false; }
         }
 
-        #endregion
-
-        #region Dashboard & Statistic Reports
-
-        /// <summary>
-        /// Retrieves comprehensive system, portfolio, user, engagement, and security statistics for the Admin Dashboard.
-        /// Executes sp_GetDashboardStatistics or aggregates directly from database/cache with full resilience.
-        /// </summary>
-        public static DashboardStatsDto GetDashboardStats()
+        public static bool UpdateAdminCredentials(int userId, string firstName, string lastName, string email, string newPassword, string avatarPath = null)
         {
-            var stats = new DashboardStatsDto
-            {
-                ReportGeneratedAt = DateTime.UtcNow
-            };
-
-            // Attempt 1: Execute MSSQL Stored Procedure sp_GetDashboardStatistics
             try
             {
-                DataSet ds = DatabaseHelper.ExecuteStoredProcedureDataSet("sp_GetDashboardStatistics");
-                if (ds != null && ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+                var paramList = new List<SqlParameter>
                 {
-                    DataRow kpiRow = ds.Tables[0].Rows[0];
-                    stats.IsDatabaseConnected = true;
-                    stats.DatabaseSource = "MSSQL Server (Stored Procedure)";
-                    stats.TotalProjects = kpiRow.Table.Columns.Contains("TotalActiveProjects") && kpiRow["TotalActiveProjects"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalActiveProjects"]) : 0;
-                    stats.TotalFeaturedProjects = kpiRow.Table.Columns.Contains("TotalProjects") && kpiRow["TotalProjects"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalProjects"]) : 0;
-                    stats.TotalTechStacks = kpiRow.Table.Columns.Contains("TotalTechStacks") && kpiRow["TotalTechStacks"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalTechStacks"]) : 0;
-                    stats.TotalTechCategories = kpiRow.Table.Columns.Contains("TotalTechCategories") && kpiRow["TotalTechCategories"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalTechCategories"]) : 0;
-                    stats.TotalSkills = kpiRow.Table.Columns.Contains("TotalSkills") && kpiRow["TotalSkills"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalSkills"]) : 0;
-                    stats.TotalExperiences = kpiRow.Table.Columns.Contains("TotalExperiences") && kpiRow["TotalExperiences"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalExperiences"]) : 0;
-                    stats.TotalEducations = kpiRow.Table.Columns.Contains("TotalEducations") && kpiRow["TotalEducations"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalEducations"]) : 0;
-                    stats.TotalAwards = kpiRow.Table.Columns.Contains("TotalAwards") && kpiRow["TotalAwards"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalAwards"]) : 0;
-                    stats.TotalHobbies = kpiRow.Table.Columns.Contains("TotalHobbies") && kpiRow["TotalHobbies"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalHobbies"]) : 0;
-                    
-                    // User accounts overview
-                    stats.TotalUsers = kpiRow.Table.Columns.Contains("TotalUsers") && kpiRow["TotalUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalUsers"]) : 0;
-                    stats.ActiveUsers = kpiRow.Table.Columns.Contains("ActiveUsers") && kpiRow["ActiveUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["ActiveUsers"]) : 0;
-                    stats.InactiveUsers = kpiRow.Table.Columns.Contains("InactiveUsers") && kpiRow["InactiveUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["InactiveUsers"]) : (stats.TotalUsers - stats.ActiveUsers);
-                    stats.AdminUsers = kpiRow.Table.Columns.Contains("AdminUsers") && kpiRow["AdminUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["AdminUsers"]) : 0;
-                    stats.SignUpsToday = kpiRow.Table.Columns.Contains("SignUpsToday") && kpiRow["SignUpsToday"] != DBNull.Value ? Convert.ToInt32(kpiRow["SignUpsToday"]) : 0;
-                    stats.SignUpsThisWeek = kpiRow.Table.Columns.Contains("SignUpsThisWeek") && kpiRow["SignUpsThisWeek"] != DBNull.Value ? Convert.ToInt32(kpiRow["SignUpsThisWeek"]) : 0;
-                    stats.SignUpsThisMonth = kpiRow.Table.Columns.Contains("SignUpsThisMonth") && kpiRow["SignUpsThisMonth"] != DBNull.Value ? Convert.ToInt32(kpiRow["SignUpsThisMonth"]) : 0;
+                    new SqlParameter("@FirstName", firstName ?? "Admin"),
+                    new SqlParameter("@LastName", lastName ?? "User"),
+                    new SqlParameter("@Email", email ?? ""),
+                    new SqlParameter("@UserId", userId)
+                };
 
-                    // User activity & engagement
-                    stats.TotalLogins = kpiRow.Table.Columns.Contains("TotalLogins") && kpiRow["TotalLogins"] != DBNull.Value ? Convert.ToInt32(kpiRow["TotalLogins"]) : 0;
-                    stats.DailyActiveUsers = kpiRow.Table.Columns.Contains("DailyActiveUsers") && kpiRow["DailyActiveUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["DailyActiveUsers"]) : 0;
-                    stats.MonthlyActiveUsers = kpiRow.Table.Columns.Contains("MonthlyActiveUsers") && kpiRow["MonthlyActiveUsers"] != DBNull.Value ? Convert.ToInt32(kpiRow["MonthlyActiveUsers"]) : 0;
-
-                    stats.PendingPasswordResets = kpiRow.Table.Columns.Contains("PendingPasswordResets") && kpiRow["PendingPasswordResets"] != DBNull.Value ? Convert.ToInt32(kpiRow["PendingPasswordResets"]) : 0;
-                    stats.ExperienceYears = kpiRow.Table.Columns.Contains("ExperienceYears") && kpiRow["ExperienceYears"] != DBNull.Value ? Convert.ToInt32(kpiRow["ExperienceYears"]) : 0;
-
-                    // Table 1: Tech Categories
-                    if (ds.Tables.Count > 1 && ds.Tables[1].Rows.Count > 0)
-                    {
-                        foreach (DataRow row in ds.Tables[1].Rows)
-                        {
-                            int count = Convert.ToInt32(row["ItemCount"]);
-                            stats.TechCategoryStats.Add(new CategoryStatDto
-                            {
-                                Category = row["Category"]?.ToString() ?? "General",
-                                ItemCount = count,
-                                Percentage = stats.TotalTechStacks > 0 ? Math.Round((double)count / stats.TotalTechStacks * 100, 1) : 0
-                            });
-                        }
-                    }
-
-                    // Table 2: Recent Users
-                    if (ds.Tables.Count > 2 && ds.Tables[2].Rows.Count > 0)
-                    {
-                        foreach (DataRow row in ds.Tables[2].Rows)
-                        {
-                            stats.RecentUsers.Add(new UserSummaryDto
-                            {
-                                UserId = Convert.ToInt32(row["user_id"]),
-                                Email = row["email"]?.ToString() ?? "",
-                                FullName = $"{row["first_name"]} {row["last_name"]}".Trim(),
-                                Role = row.Table.Columns.Contains("user_role") ? (row["user_role"]?.ToString() ?? "User") : (row["role"]?.ToString() ?? "User"),
-                                IsActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true,
-                                LastLoginAt = row.Table.Columns.Contains("last_login_at") && row["last_login_at"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["last_login_at"]) : null,
-                                LoginCount = row.Table.Columns.Contains("login_count") && row["login_count"] != DBNull.Value ? Convert.ToInt32(row["login_count"]) : 0,
-                                CreatedAt = row.Table.Columns.Contains("created_at") && row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : DateTime.UtcNow
-                            });
-                        }
-                    }
-
-                    // Table 3: Pending Resets
-                    if (ds.Tables.Count > 3 && ds.Tables[3].Rows.Count > 0)
-                    {
-                        foreach (DataRow row in ds.Tables[3].Rows)
-                        {
-                            stats.RecentPendingResets.Add(new PasswordResetSummaryDto
-                            {
-                                ResetId = Convert.ToInt32(row["reset_id"]),
-                                UserId = row.Table.Columns.Contains("user_id") && row["user_id"] != DBNull.Value ? Convert.ToInt32(row["user_id"]) : 0,
-                                Email = row["email"]?.ToString() ?? "",
-                                FullName = $"{row["first_name"]} {row["last_name"]}".Trim(),
-                                Status = row["status"]?.ToString() ?? "Pending",
-                                RequestedAt = row.Table.Columns.Contains("created_at") && row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : DateTime.UtcNow
-                            });
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] sp_GetDashboardStatistics failed, falling back to direct aggregation: {ex.Message}");
-            }
-
-            // Attempt 2: If SP didn't populate (or threw exception), aggregate directly
-            if (!stats.IsDatabaseConnected || (stats.TotalProjects == 0 && stats.TotalTechStacks == 0))
-            {
-                try
+                string query;
+                if (!string.IsNullOrWhiteSpace(newPassword))
                 {
-                    var data = GetPortfolioData(false);
-                    stats.TotalProjects = data.Projects?.Count ?? 0;
-                    stats.TotalFeaturedProjects = data.Projects?.Count(p => p.IsActive) ?? 0;
-                    stats.TotalTechStacks = data.TechStacks?.Count ?? 0;
-                    stats.TotalTechCategories = data.TechStacks?.Select(t => t.GroupName).Distinct().Count() ?? 0;
-                    stats.TotalSkills = data.Skills?.Count ?? 0;
-                    stats.TotalExperiences = data.Experiences?.Count ?? 0;
-                    stats.TotalEducations = data.Educations?.Count ?? 0;
-                    stats.TotalAwards = data.Awards?.Count ?? 0;
-                    stats.TotalHobbies = data.Hobbies?.Count ?? 0;
-                    stats.ExperienceYears = data.Profile?.ExperienceYears ?? 3;
-
-                    // Group tech stacks by group_name
-                    if (data.TechStacks != null && data.TechStacks.Count > 0)
-                    {
-                        var groups = data.TechStacks.GroupBy(t => string.IsNullOrWhiteSpace(t.GroupName) ? "General" : t.GroupName);
-                        foreach (var g in groups)
-                        {
-                            int count = g.Count();
-                            stats.TechCategoryStats.Add(new CategoryStatDto
-                            {
-                                Category = g.Key,
-                                ItemCount = count,
-                                Percentage = stats.TotalTechStacks > 0 ? Math.Round((double)count / stats.TotalTechStacks * 100, 1) : 0
-                            });
-                        }
-                    }
-
-                    // Query users from database directly
-                    try
-                    {
-                        DataTable userDt = DatabaseHelper.ExecuteDataTable("SELECT * FROM users_tbl ORDER BY created_at DESC");
-                        if (userDt != null)
-                        {
-                            stats.TotalUsers = userDt.Rows.Count;
-                            stats.IsDatabaseConnected = true;
-                            stats.DatabaseSource = "MSSQL Server (Direct Query)";
-                            int activeCount = 0;
-                            int adminCount = 0;
-                            int todayCount = 0;
-                            int weekCount = 0;
-                            int monthCount = 0;
-                            int totalLoginsSum = 0;
-                            int dauCount = 0;
-                            int mauCount = 0;
-
-                            DateTime now = DateTime.Now;
-                            DateTime todayStart = now.Date;
-                            DateTime weekAgo = now.AddDays(-7);
-                            DateTime monthStart = new DateTime(now.Year, now.Month, 1);
-                            DateTime monthAgo = now.AddDays(-30);
-
-                            foreach (DataRow row in userDt.Rows)
-                            {
-                                bool isActive = row.Table.Columns.Contains("is_active") && row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true;
-                                string role = row.Table.Columns.Contains("user_role") ? (row["user_role"]?.ToString() ?? "User") : (row["role"]?.ToString() ?? "User");
-                                DateTime created = row.Table.Columns.Contains("created_at") && row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : now;
-                                DateTime? lastLogin = row.Table.Columns.Contains("last_login_at") && row["last_login_at"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["last_login_at"]) : null;
-                                int lCount = row.Table.Columns.Contains("login_count") && row["login_count"] != DBNull.Value ? Convert.ToInt32(row["login_count"]) : 0;
-
-                                if (isActive) activeCount++;
-                                if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase)) adminCount++;
-                                if (created >= todayStart) todayCount++;
-                                if (created >= weekAgo) weekCount++;
-                                if (created >= monthStart) monthCount++;
-
-                                totalLoginsSum += lCount;
-                                if (lastLogin.HasValue && lastLogin.Value >= todayStart) dauCount++;
-                                if (lastLogin.HasValue && lastLogin.Value >= monthAgo) mauCount++;
-
-                                if (stats.RecentUsers.Count < 10)
-                                {
-                                    stats.RecentUsers.Add(new UserSummaryDto
-                                    {
-                                        UserId = Convert.ToInt32(row["user_id"]),
-                                        Email = row["email"]?.ToString() ?? "",
-                                        FullName = $"{row["first_name"]} {row["last_name"]}".Trim(),
-                                        Role = role,
-                                        IsActive = isActive,
-                                        LastLoginAt = lastLogin,
-                                        LoginCount = lCount,
-                                        CreatedAt = created
-                                    });
-                                }
-                            }
-                            stats.ActiveUsers = activeCount;
-                            stats.InactiveUsers = stats.TotalUsers - activeCount;
-                            stats.AdminUsers = adminCount;
-                            stats.SignUpsToday = todayCount;
-                            stats.SignUpsThisWeek = weekCount;
-                            stats.SignUpsThisMonth = monthCount;
-                            stats.TotalLogins = totalLoginsSum;
-                            stats.DailyActiveUsers = dauCount;
-                            stats.MonthlyActiveUsers = mauCount;
-                        }
-
-                        // Query pending resets
-                        DataTable resetDt = DatabaseHelper.ExecuteDataTable(@"
-                            SELECT r.reset_id, r.user_id, r.status, r.created_at, u.email, u.first_name, u.last_name
-                            FROM password_resets_tbl r
-                            LEFT JOIN users_tbl u ON r.user_id = u.user_id
-                            WHERE LOWER(r.status) = 'pending'
-                            ORDER BY r.created_at DESC");
-                        if (resetDt != null)
-                        {
-                            stats.PendingPasswordResets = resetDt.Rows.Count;
-                            foreach (DataRow rRow in resetDt.Rows)
-                            {
-                                if (stats.RecentPendingResets.Count < 5)
-                                {
-                                    stats.RecentPendingResets.Add(new PasswordResetSummaryDto
-                                    {
-                                        ResetId = Convert.ToInt32(rRow["reset_id"]),
-                                        UserId = rRow.Table.Columns.Contains("user_id") && rRow["user_id"] != DBNull.Value ? Convert.ToInt32(rRow["user_id"]) : 0,
-                                        Email = rRow["email"]?.ToString() ?? "",
-                                        FullName = $"{rRow["first_name"]} {rRow["last_name"]}".Trim(),
-                                        Status = rRow["status"]?.ToString() ?? "Pending",
-                                        RequestedAt = rRow.Table.Columns.Contains("created_at") && rRow["created_at"] != DBNull.Value ? Convert.ToDateTime(rRow["created_at"]) : DateTime.UtcNow
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        stats.TotalUsers = 1;
-                        stats.ActiveUsers = 1;
-                        stats.InactiveUsers = 0;
-                        stats.AdminUsers = 1;
-                    }
+                    string hash = AuthHelper.HashPassword(newPassword);
+                    query = "UPDATE users_tbl SET first_name = @FirstName, last_name = @LastName, email = @Email, password_hash = @PasswordHash";
+                    paramList.Add(new SqlParameter("@PasswordHash", hash));
                 }
-                catch (Exception ex)
+                else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[PortfolioService] Direct aggregation fallback error: {ex.Message}");
-                    stats.IsDatabaseConnected = false;
-                    stats.DatabaseSource = "Local Server Cache / Memory Fallback";
+                    query = "UPDATE users_tbl SET first_name = @FirstName, last_name = @LastName, email = @Email";
                 }
+
+                if (!string.IsNullOrWhiteSpace(avatarPath))
+                {
+                    query += ", profile_image = @ProfileImage";
+                    paramList.Add(new SqlParameter("@ProfileImage", avatarPath));
+                }
+
+                query += " WHERE user_id = @UserId;";
+                DatabaseHelper.ExecuteNonQuery(query, paramList.ToArray());
+                InvalidateCache(userId);
+                return true;
             }
-
-            // Calculate Profile Completeness Percentage
-            var profileData = GetPortfolioData(false).Profile;
-            int completenessScore = 0;
-            int totalFactors = 10;
-
-            if (!string.IsNullOrWhiteSpace(profileData?.FirstName)) completenessScore++;
-            if (!string.IsNullOrWhiteSpace(profileData?.LastName)) completenessScore++;
-            if (!string.IsNullOrWhiteSpace(profileData?.RoleTitle)) completenessScore++;
-            if (!string.IsNullOrWhiteSpace(profileData?.RoleSummary)) completenessScore++;
-            if (!string.IsNullOrWhiteSpace(profileData?.FocusArea)) completenessScore++;
-            if (!string.IsNullOrWhiteSpace(profileData?.AvatarPath)) completenessScore++;
-            if (!string.IsNullOrWhiteSpace(profileData?.Email)) completenessScore++;
-            if (!string.IsNullOrWhiteSpace(profileData?.GithubUrl)) completenessScore++;
-            if (!string.IsNullOrWhiteSpace(profileData?.LinkedinUrl)) completenessScore++;
-            if (profileData?.ExperienceYears > 0) completenessScore++;
-
-            stats.ProfileCompletenessPct = (int)Math.Round((double)completenessScore / totalFactors * 100);
-
-            return stats;
+            catch { return false; }
         }
-
-        /// <summary>
-        /// Records user sign-in timestamp and increments total login count via sp_RecordUserLogin.
-        /// </summary>
-        public static void RecordUserLogin(int userId, string ipAddress = null, string userAgent = null)
-        {
-            if (userId <= 0) return;
-            try
-            {
-                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_RecordUserLogin",
-                    new System.Data.SqlClient.SqlParameter("@UserId", userId),
-                    new System.Data.SqlClient.SqlParameter("@IpAddress", (object)ipAddress ?? DBNull.Value),
-                    new System.Data.SqlClient.SqlParameter("@UserAgent", (object)userAgent ?? DBNull.Value)
-                );
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PortfolioService] RecordUserLogin SP failed, attempting direct query: {ex.Message}");
-                try
-                {
-                    DatabaseHelper.ExecuteNonQuery(
-                        "UPDATE users_tbl SET last_login_at = GETDATE(), login_count = ISNULL(login_count, 0) + 1 WHERE user_id = @UserId",
-                        new System.Data.SqlClient.SqlParameter("@UserId", userId)
-                    );
-                }
-                catch { }
-            }
-        }
-
-        #endregion
     }
 }
-
-

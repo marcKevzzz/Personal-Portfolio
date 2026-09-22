@@ -37,9 +37,18 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             {
                 profileAvatarPreviewBox.Style["display"] = "none";
             }
-            txtFullName.Text = p.FullName ?? "Marc Kevin Del Mundo";
-            txtLocationAddress.Text = p.LocationAddress ?? "B2 L6 Emerald St. Novaliches Proper, Q.C.";
-            txtAge.Text = p.Age.ToString();
+            txtFullName.Text = p.FullName ?? "";
+            txtLocationAddress.Text = p.LocationAddress ?? "";
+            if (p.BirthDate.HasValue)
+            {
+                txtBirthDate.Text = p.BirthDate.Value.ToString("yyyy-MM-dd");
+                lblDerivedAgeDisplay.Text = $"Derived Age: {p.Age} years old";
+            }
+            else
+            {
+                txtBirthDate.Text = "";
+                lblDerivedAgeDisplay.Text = "Enter your birthday to derive age automatically.";
+            }
             txtExperienceYears.Text = p.ExperienceYears.ToString();
             txtEmail.Text = p.Email ?? "delmundo.marckevin.ferolino@gmail.com";
             txtGithubUrl.Text = p.GithubUrl ?? "https://github.com/marcKevzzz";
@@ -75,8 +84,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 return;
             }
 
-            int age = int.TryParse(txtAge.Text, out int a) ? a : 19;
-            int exp = int.TryParse(txtExperienceYears.Text, out int ex) ? ex : 3;
+            DateTime? birthDate = null;
+            if (DateTime.TryParse(txtBirthDate.Text, out DateTime parsedDate))
+            {
+                birthDate = parsedDate;
+            }
+            int exp = int.TryParse(txtExperienceYears.Text, out int ex) ? ex : 0;
 
             string firstName = fullName;
             string lastName = "";
@@ -138,7 +151,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 BasedIn = txtBasedIn.Text.Trim(),
                 AvatarPath = avatarPath,
                 LocationAddress = txtLocationAddress.Text.Trim(),
-                Age = age,
+                BirthDate = birthDate,
+                Age = 0,
                 ExperienceYears = exp,
                 Email = txtEmail.Text.Trim(),
                 GithubUrl = txtGithubUrl.Text.Trim(),
@@ -146,6 +160,17 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             };
 
             bool success = PortfolioService.SaveProfile(profile);
+
+            if (birthDate.HasValue)
+            {
+                int derivedAge = DateTime.Today.Year - birthDate.Value.Year;
+                if (birthDate.Value.Date > DateTime.Today.AddYears(-derivedAge)) derivedAge--;
+                lblDerivedAgeDisplay.Text = $"Derived Age: {derivedAge} years old";
+            }
+            else
+            {
+                lblDerivedAgeDisplay.Text = "Enter your birthday to derive age automatically.";
+            }
 
             RenderHeroChips(profile.HeroNames);
 

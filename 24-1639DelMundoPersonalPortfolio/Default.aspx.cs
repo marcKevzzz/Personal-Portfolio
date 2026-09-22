@@ -18,8 +18,31 @@ namespace _24_1639DelMundoPersonalPortfolio
                 return;
             }
 
-            // Fetch cached portfolio data from C# service (with automatic fallback if DB unreachable)
-            var data = PortfolioService.GetPortfolioData();
+            int currentUserId = AuthHelper.GetCurrentUserId();
+            int? targetUserId = null;
+            if (int.TryParse(Request.QueryString["userId"], out int qUserId))
+            {
+                if (AuthHelper.IsAdmin() || qUserId == currentUserId)
+                {
+                    targetUserId = qUserId;
+                }
+            }
+
+            int effectiveUserId = targetUserId ?? currentUserId;
+            var data = PortfolioService.GetPortfolioData(forceRefresh: false, userId: effectiveUserId);
+
+            if (AuthHelper.IsAdmin() && targetUserId.HasValue && targetUserId.Value != currentUserId)
+            {
+                pnlAdminViewingBanner.Visible = true;
+                string name = data?.Profile?.FullName;
+                if (string.IsNullOrWhiteSpace(name)) name = $"User #{targetUserId.Value}";
+                litViewingUserName.Text = Server.HtmlEncode(name);
+            }
+            else
+            {
+                pnlAdminViewingBanner.Visible = false;
+            }
+
             if (data != null)
             {
                 HeroSectionControl.BindData(data.Profile);

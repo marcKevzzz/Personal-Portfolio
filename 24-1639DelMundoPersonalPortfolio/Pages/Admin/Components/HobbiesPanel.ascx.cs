@@ -43,12 +43,14 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             var hobby = new HobbyDto
             {
                 HobbyName = name,
+                HobbyDescription = txtHobbyDescription.Text.Trim(),
                 SortOrder = sort,
                 IsActive = true
             };
 
             bool success = PortfolioService.SaveHobby(hobby);
             txtHobbyName.Text = "";
+            txtHobbyDescription.Text = "";
             BindHobbies();
 
             string script = success 

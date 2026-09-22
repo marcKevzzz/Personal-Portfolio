@@ -6,7 +6,10 @@
     <div class="field-label reveal">06 / EDUCATION</div>
     <h2 class="section-title reveal">Background</h2>
  
-    <div class="edu-list" id="eduList">
+    <asp:Panel ID="pnlEmpty" runat="server" Visible="false" CssClass="section-empty-state">
+      <span>No education added yet.</span>
+    </asp:Panel>
+    <div class="edu-list" id="eduList" runat="server">
       <asp:Repeater ID="rptEducations" runat="server">
         <ItemTemplate>
           <div class="list-line reveal">

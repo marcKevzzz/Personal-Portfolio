@@ -16,9 +16,10 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         {
             ProfileData = profile ?? new ProfileDto();
 
-            string email = string.IsNullOrWhiteSpace(ProfileData.Email) ? "delmundo.marckevin.ferolino@gmail.com" : ProfileData.Email;
-            string github = string.IsNullOrWhiteSpace(ProfileData.GithubUrl) ? "https://github.com/marcKevzzz" : ProfileData.GithubUrl;
-            string linkedin = string.IsNullOrWhiteSpace(ProfileData.LinkedinUrl) ? "https://www.linkedin.com/in/del-mundo-marc-kevin-f-ba5050436/" : ProfileData.LinkedinUrl;
+            var user = _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.GetCurrentUser();
+            string email = string.IsNullOrWhiteSpace(ProfileData.Email) ? (user?.Email ?? "contact@example.com") : ProfileData.Email;
+            string github = string.IsNullOrWhiteSpace(ProfileData.GithubUrl) ? "https://github.com" : ProfileData.GithubUrl;
+            string linkedin = string.IsNullOrWhiteSpace(ProfileData.LinkedinUrl) ? "https://linkedin.com" : ProfileData.LinkedinUrl;
 
             contactEmailLink.NavigateUrl = $"mailto:{email}";
             contactGithubLink.NavigateUrl = github;

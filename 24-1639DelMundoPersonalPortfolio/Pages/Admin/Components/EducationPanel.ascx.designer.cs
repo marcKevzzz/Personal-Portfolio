@@ -3,7 +3,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
     public partial class EducationPanel
     {
         protected global::System.Web.UI.WebControls.HiddenField hidEditingEduId;
-        protected global::System.Web.UI.WebControls.TextBox txtEduPeriod;
+        protected global::System.Web.UI.WebControls.TextBox txtEduStartYear;
+        protected global::System.Web.UI.WebControls.TextBox txtEduEndYear;
+        protected global::System.Web.UI.WebControls.CheckBox chkEduIsCurrent;
         protected global::System.Web.UI.WebControls.TextBox txtEduTitle;
         protected global::System.Web.UI.WebControls.TextBox txtEduSubtitle;
         protected global::System.Web.UI.WebControls.TextBox txtEduInstitution;

@@ -5,16 +5,10 @@
     <p class="admin-sub">Configure hero heading, basic personal information, and social links for the public portfolio page.</p>
 
     <div class="admin-fieldgroup">
-        <div class="field">
-            <label>Hero kicker</label>
-            <div class="input-row">
-                <asp:TextBox ID="txtHeroKicker" runat="server" Text="PERSONAL PORTFOLIO" />
-            </div>
-        </div>
-        <div class="field">
+        <div class="field" style="grid-column: 1 / -1;">
             <label>Hero subline</label>
             <div class="input-row">
-                <asp:TextBox ID="txtHeroSubline" runat="server" Text="builds interfaces" />
+                <asp:TextBox ID="txtHeroSubline" runat="server" placeholder="e.g. builds interfaces, solves problems" />
             </div>
         </div>
     </div>
@@ -78,10 +72,11 @@
             </div>
         </div>
         <div class="field">
-            <label>Age</label>
+            <label>Birth Date (Age derived automatically)</label>
             <div class="input-row">
-                <asp:TextBox ID="txtAge" runat="server" TextMode="Number" min="0" max="150" Text="19" />
+                <asp:TextBox ID="txtBirthDate" runat="server" TextMode="Date" placeholder="YYYY-MM-DD" />
             </div>
+            <asp:Label ID="lblDerivedAgeDisplay" runat="server" CssClass="derived-age-hint" style="font-size: var(--t-xs); color: var(--blue-light); margin-top: 4px; display: block;" />
         </div>
         <div class="field">
             <label>Experience (Years)</label>

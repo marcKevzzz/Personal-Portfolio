@@ -1190,6 +1190,53 @@ h2.section-title {
     background: var(--grad-soft);
 }
 
+.hobby-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.hobby-card {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    transition: border-color 0.25s ease, transform 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hobby-card:hover {
+    border-color: var(--blue-light);
+    transform: translateY(-2px);
+}
+
+.hobby-card-title {
+    font-family: var(--f-display);
+    font-size: var(--t-sm);
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hobby-card-title::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--cyan);
+    border-radius: 50%;
+}
+
+.hobby-card-desc {
+    font-size: var(--t-xs);
+    color: var(--text-mid);
+    line-height: 1.5;
+}
+
 /* ---- contact / footer ---- */
 #contact {
     padding-bottom: 120px;
@@ -2607,3 +2654,43 @@ button.submit:disabled {
 .app-toast-card.toast-info .app-toast-progress-bar {
     background: var(--blue-light);
 }
+
+/* Multi-user Portfolio Empty State & Admin Banner */
+.section-empty-state {
+    padding: 36px 24px;
+    border: 1px dashed var(--line);
+    background: rgba(15, 19, 26, 0.4);
+    color: var(--text-dim);
+    font-family: var(--f-display);
+    font-size: var(--t-sm);
+    letter-spacing: 0.04em;
+    text-align: center;
+    border-radius: var(--radius);
+    margin: 16px 0;
+}
+
+.admin-viewing-banner {
+    position: sticky;
+    top: 0;
+    z-index: 10001;
+    background: rgba(20, 38, 92, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--blue);
+    padding: 10px 24px;
+}
+
+.admin-viewing-banner .banner-inner {
+    max-width: var(--col-wide);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: var(--t-sm);
+    color: var(--text);
+}
+
+.admin-viewing-banner strong {
+    color: var(--cyan);
+}
+

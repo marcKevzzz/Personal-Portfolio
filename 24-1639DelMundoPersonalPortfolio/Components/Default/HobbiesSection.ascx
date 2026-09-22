@@ -6,10 +6,16 @@
     <div class="field-label reveal">08 / HOBBIES</div>
     <h2 class="section-title reveal">Off the clock</h2>
  
-    <div class="chip-row" id="hobbiesList">
+    <asp:Panel ID="pnlEmpty" runat="server" Visible="false" CssClass="section-empty-state">
+      <span>No hobbies added yet.</span>
+    </asp:Panel>
+    <div class="hobby-cards-grid" id="hobbiesList" runat="server">
       <asp:Repeater ID="rptHobbies" runat="server">
         <ItemTemplate>
-          <span class="chip real reveal"><%# Server.HtmlEncode(Eval("HobbyName").ToString()) %></span>
+          <div class="hobby-card reveal">
+            <div class="hobby-card-title"><%# Server.HtmlEncode(Eval("HobbyName").ToString()) %></div>
+            <%# !string.IsNullOrWhiteSpace(Eval("HobbyDescription") as string) ? "<div class=\"hobby-card-desc\">" + Server.HtmlEncode(Eval("HobbyDescription").ToString()) + "</div>" : "" %>
+          </div>
         </ItemTemplate>
       </asp:Repeater>
     </div>

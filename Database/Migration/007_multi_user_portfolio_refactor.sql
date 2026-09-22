@@ -1,6 +1,15 @@
 -- ============================================================================
+-- Migration: 007_multi_user_portfolio_refactor.sql
 -- Project: 24-1639DelMundoPersonalPortfolio
--- Description: Complete MSSQL stored procedures for Multi-User Portfolio System
+-- Description: Transforms database into a multi-tenant / multi-user portfolio system.
+--              Each registered user owns their portfolio content.
+--              - Adds telemetry columns (last_login_at, login_count, user_logins_tbl)
+--              - Adds user_id FK across all portfolio tables
+--              - Replaces age with birth_date (derived age)
+--              - Replaces period_range / year_period with start_year and end_year
+--              - Adds hobby_description to hobbies_tbl
+--              - Drops hero_kicker / hero_subline
+--              - Creates comprehensive MSSQL Stored Procedures for all operations
 -- ============================================================================
 
 USE personal_portfolio_db;
@@ -10,7 +19,232 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
--- 1. sp_GetUserPortfolioData
+-- ============================================================================
+-- 0. TELEMETRY & USER TABLE PREREQUISITES
+-- ============================================================================
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.users_tbl') AND name = 'last_login_at')
+BEGIN
+    ALTER TABLE dbo.users_tbl ADD last_login_at DATETIME NULL;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.users_tbl') AND name = 'login_count')
+BEGIN
+    ALTER TABLE dbo.users_tbl ADD login_count INT NOT NULL CONSTRAINT DF_users_login_count DEFAULT 0;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.users_tbl') AND name = 'profile_image')
+BEGIN
+    ALTER TABLE dbo.users_tbl ADD profile_image NVARCHAR(500) NULL;
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[user_logins_tbl]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE dbo.user_logins_tbl (
+        login_id INT IDENTITY(1,1) PRIMARY KEY,
+        user_id INT NOT NULL,
+        login_time DATETIME NOT NULL DEFAULT GETDATE(),
+        ip_address NVARCHAR(100) NULL,
+        user_agent NVARCHAR(500) NULL,
+        CONSTRAINT FK_user_logins_users FOREIGN KEY (user_id) REFERENCES users_tbl(user_id) ON DELETE CASCADE
+    );
+END
+GO
+
+-- Ensure users_tbl has fallback accounts if empty
+IF NOT EXISTS (SELECT 1 FROM users_tbl WHERE user_role = 'Admin')
+BEGIN
+    INSERT INTO users_tbl (first_name, last_name, email, password_hash, user_role, is_active, created_at)
+    VALUES (N'Marc Kevin', N'Del Mundo', N'delmundo.marckevin.ferolino@gmail.com', 
+            N'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', N'Admin', 1, GETDATE());
+END
+GO
+
+-- ============================================================================
+-- 1. SCHEMA REFACTORING: ALTER TABLES TO MULTI-USER ARCHITECTURE
+-- ============================================================================
+
+-- -------------------------------------------------------------
+-- 1.1 profile_tbl
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.profile_tbl') AND name = 'user_id')
+BEGIN
+    ALTER TABLE dbo.profile_tbl ADD user_id INT NULL;
+    DECLARE @DefUid1 INT;
+    SELECT TOP 1 @DefUid1 = user_id FROM users_tbl ORDER BY user_id ASC;
+    EXEC('UPDATE dbo.profile_tbl SET user_id = ' + @DefUid1 + ' WHERE user_id IS NULL;');
+    ALTER TABLE dbo.profile_tbl ALTER COLUMN user_id INT NOT NULL;
+    ALTER TABLE dbo.profile_tbl ADD CONSTRAINT FK_profile_users FOREIGN KEY (user_id) REFERENCES dbo.users_tbl(user_id) ON DELETE CASCADE;
+    ALTER TABLE dbo.profile_tbl ADD CONSTRAINT UQ_profile_user UNIQUE (user_id);
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.profile_tbl') AND name = 'birth_date')
+BEGIN
+    ALTER TABLE dbo.profile_tbl ADD birth_date DATE NULL;
+    EXEC('UPDATE dbo.profile_tbl SET birth_date = ''2005-03-15'' WHERE birth_date IS NULL;');
+END
+GO
+
+-- -------------------------------------------------------------
+-- 1.2 tech_stacks_tbl
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.tech_stacks_tbl') AND name = 'user_id')
+BEGIN
+    ALTER TABLE dbo.tech_stacks_tbl ADD user_id INT NULL;
+    DECLARE @DefUid2 INT;
+    SELECT TOP 1 @DefUid2 = user_id FROM users_tbl ORDER BY user_id ASC;
+    EXEC('UPDATE dbo.tech_stacks_tbl SET user_id = ' + @DefUid2 + ' WHERE user_id IS NULL;');
+    ALTER TABLE dbo.tech_stacks_tbl ALTER COLUMN user_id INT NOT NULL;
+    ALTER TABLE dbo.tech_stacks_tbl ADD CONSTRAINT FK_tech_stacks_users FOREIGN KEY (user_id) REFERENCES dbo.users_tbl(user_id) ON DELETE CASCADE;
+END
+GO
+
+-- -------------------------------------------------------------
+-- 1.3 skills_tbl
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.skills_tbl') AND name = 'user_id')
+BEGIN
+    ALTER TABLE dbo.skills_tbl ADD user_id INT NULL;
+    DECLARE @DefUid3 INT;
+    SELECT TOP 1 @DefUid3 = user_id FROM users_tbl ORDER BY user_id ASC;
+    EXEC('UPDATE dbo.skills_tbl SET user_id = ' + @DefUid3 + ' WHERE user_id IS NULL;');
+    ALTER TABLE dbo.skills_tbl ALTER COLUMN user_id INT NOT NULL;
+    ALTER TABLE dbo.skills_tbl ADD CONSTRAINT FK_skills_users FOREIGN KEY (user_id) REFERENCES dbo.users_tbl(user_id) ON DELETE CASCADE;
+END
+GO
+
+-- -------------------------------------------------------------
+-- 1.4 experiences_tbl
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.experiences_tbl') AND name = 'user_id')
+BEGIN
+    ALTER TABLE dbo.experiences_tbl ADD user_id INT NULL;
+    DECLARE @DefUid4 INT;
+    SELECT TOP 1 @DefUid4 = user_id FROM users_tbl ORDER BY user_id ASC;
+    EXEC('UPDATE dbo.experiences_tbl SET user_id = ' + @DefUid4 + ' WHERE user_id IS NULL;');
+    ALTER TABLE dbo.experiences_tbl ALTER COLUMN user_id INT NOT NULL;
+    ALTER TABLE dbo.experiences_tbl ADD CONSTRAINT FK_experiences_users FOREIGN KEY (user_id) REFERENCES dbo.users_tbl(user_id) ON DELETE CASCADE;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.experiences_tbl') AND name = 'start_year')
+BEGIN
+    ALTER TABLE dbo.experiences_tbl ADD start_year INT NOT NULL CONSTRAINT DF_exp_start_year DEFAULT 2024;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.experiences_tbl') AND name = 'end_year')
+BEGIN
+    ALTER TABLE dbo.experiences_tbl ADD end_year INT NULL;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.experiences_tbl') AND name = 'is_current')
+BEGIN
+    ALTER TABLE dbo.experiences_tbl ADD is_current BIT NOT NULL CONSTRAINT DF_exp_is_current DEFAULT 0;
+END
+GO
+
+-- -------------------------------------------------------------
+-- 1.5 educations_tbl
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.educations_tbl') AND name = 'user_id')
+BEGIN
+    ALTER TABLE dbo.educations_tbl ADD user_id INT NULL;
+    DECLARE @DefUid5 INT;
+    SELECT TOP 1 @DefUid5 = user_id FROM users_tbl ORDER BY user_id ASC;
+    EXEC('UPDATE dbo.educations_tbl SET user_id = ' + @DefUid5 + ' WHERE user_id IS NULL;');
+    ALTER TABLE dbo.educations_tbl ALTER COLUMN user_id INT NOT NULL;
+    ALTER TABLE dbo.educations_tbl ADD CONSTRAINT FK_educations_users FOREIGN KEY (user_id) REFERENCES dbo.users_tbl(user_id) ON DELETE CASCADE;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.educations_tbl') AND name = 'start_year')
+BEGIN
+    ALTER TABLE dbo.educations_tbl ADD start_year INT NOT NULL CONSTRAINT DF_edu_start_year DEFAULT 2024;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.educations_tbl') AND name = 'end_year')
+BEGIN
+    ALTER TABLE dbo.educations_tbl ADD end_year INT NULL;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.educations_tbl') AND name = 'is_current')
+BEGIN
+    ALTER TABLE dbo.educations_tbl ADD is_current BIT NOT NULL CONSTRAINT DF_edu_is_current DEFAULT 1;
+END
+GO
+
+-- -------------------------------------------------------------
+-- 1.6 projects_tbl
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.projects_tbl') AND name = 'user_id')
+BEGIN
+    ALTER TABLE dbo.projects_tbl ADD user_id INT NULL;
+    DECLARE @DefUid6 INT;
+    SELECT TOP 1 @DefUid6 = user_id FROM users_tbl ORDER BY user_id ASC;
+    EXEC('UPDATE dbo.projects_tbl SET user_id = ' + @DefUid6 + ' WHERE user_id IS NULL;');
+    ALTER TABLE dbo.projects_tbl ALTER COLUMN user_id INT NOT NULL;
+    ALTER TABLE dbo.projects_tbl ADD CONSTRAINT FK_projects_users FOREIGN KEY (user_id) REFERENCES dbo.users_tbl(user_id) ON DELETE CASCADE;
+END
+GO
+
+-- -------------------------------------------------------------
+-- 1.7 awards_tbl
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.awards_tbl') AND name = 'user_id')
+BEGIN
+    ALTER TABLE dbo.awards_tbl ADD user_id INT NULL;
+    DECLARE @DefUid7 INT;
+    SELECT TOP 1 @DefUid7 = user_id FROM users_tbl ORDER BY user_id ASC;
+    EXEC('UPDATE dbo.awards_tbl SET user_id = ' + @DefUid7 + ' WHERE user_id IS NULL;');
+    ALTER TABLE dbo.awards_tbl ALTER COLUMN user_id INT NOT NULL;
+    ALTER TABLE dbo.awards_tbl ADD CONSTRAINT FK_awards_users FOREIGN KEY (user_id) REFERENCES dbo.users_tbl(user_id) ON DELETE CASCADE;
+END
+GO
+
+-- -------------------------------------------------------------
+-- 1.8 hobbies_tbl
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.hobbies_tbl') AND name = 'user_id')
+BEGIN
+    ALTER TABLE dbo.hobbies_tbl ADD user_id INT NULL;
+    DECLARE @DefUid8 INT;
+    SELECT TOP 1 @DefUid8 = user_id FROM users_tbl ORDER BY user_id ASC;
+    EXEC('UPDATE dbo.hobbies_tbl SET user_id = ' + @DefUid8 + ' WHERE user_id IS NULL;');
+    ALTER TABLE dbo.hobbies_tbl ALTER COLUMN user_id INT NOT NULL;
+    ALTER TABLE dbo.hobbies_tbl ADD CONSTRAINT FK_hobbies_users FOREIGN KEY (user_id) REFERENCES dbo.users_tbl(user_id) ON DELETE CASCADE;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.hobbies_tbl') AND name = 'hobby_description')
+BEGIN
+    ALTER TABLE dbo.hobbies_tbl ADD hobby_description NVARCHAR(500) NULL;
+END
+GO
+
+-- Duplicate seed portfolio items for user 2 if user 2 exists and has no profile
+IF EXISTS (SELECT 1 FROM users_tbl WHERE user_id = 2) AND NOT EXISTS (SELECT 1 FROM profile_tbl WHERE user_id = 2)
+BEGIN
+    INSERT INTO profile_tbl (user_id, first_name, last_name, hero_names, role_summary, role_title, focus_area, based_in, avatar_path, location_address, birth_date, experience_years, email, github_url, linkedin_url, updated_at)
+    SELECT 2, first_name, last_name, hero_names, role_summary, role_title, focus_area, based_in, avatar_path, location_address, birth_date, experience_years, email, github_url, linkedin_url, GETDATE()
+    FROM profile_tbl WHERE user_id = 1;
+END
+GO
+
+-- ============================================================================
+-- 2. STORED PROCEDURES
+-- ============================================================================
+
+-- -------------------------------------------------------------
+-- 2.1 sp_GetUserPortfolioData
+-- Retrieves all dynamic sections for a single user in multiple result sets
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_GetUserPortfolioData
     @user_id INT
 AS
@@ -102,7 +336,10 @@ BEGIN
 END;
 GO
 
--- 2. sp_SaveProfile
+-- -------------------------------------------------------------
+-- 2.2 sp_SaveProfile
+-- Upserts user profile record linked to user_id
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_SaveProfile
     @user_id INT,
     @first_name NVARCHAR(150),
@@ -157,6 +394,7 @@ BEGIN
         );
     END;
 
+    -- Also keep users_tbl first/last name in sync
     UPDATE dbo.users_tbl
     SET first_name = @first_name,
         last_name = @last_name
@@ -166,7 +404,9 @@ BEGIN
 END;
 GO
 
--- 3. Tech Stack Procedures
+-- -------------------------------------------------------------
+-- 2.3 TECH STACK PROCEDURES
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_SaveTechStack
     @tech_id INT = 0,
     @user_id INT,
@@ -210,7 +450,9 @@ BEGIN
 END;
 GO
 
--- 4. Skills Procedures
+-- -------------------------------------------------------------
+-- 2.4 SKILLS PROCEDURES
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_SaveSkill
     @skill_id INT = 0,
     @user_id INT,
@@ -252,7 +494,9 @@ BEGIN
 END;
 GO
 
--- 5. Experience Procedures
+-- -------------------------------------------------------------
+-- 2.5 EXPERIENCE PROCEDURES (start_year and end_year)
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_SaveExperience
     @exp_id INT = 0,
     @user_id INT,
@@ -307,7 +551,9 @@ BEGIN
 END;
 GO
 
--- 6. Project Procedures
+-- -------------------------------------------------------------
+-- 2.6 PROJECT PROCEDURES
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_SaveProject
     @project_id INT = 0,
     @user_id INT,
@@ -353,7 +599,9 @@ BEGIN
 END;
 GO
 
--- 7. Education Procedures
+-- -------------------------------------------------------------
+-- 2.7 EDUCATION PROCEDURES (start_year and end_year)
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_SaveEducation
     @edu_id INT = 0,
     @user_id INT,
@@ -406,7 +654,9 @@ BEGIN
 END;
 GO
 
--- 8. Award Procedures
+-- -------------------------------------------------------------
+-- 2.8 AWARDS PROCEDURES
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_SaveAward
     @award_id INT = 0,
     @user_id INT,
@@ -452,7 +702,9 @@ BEGIN
 END;
 GO
 
--- 9. Hobby Procedures
+-- -------------------------------------------------------------
+-- 2.9 HOBBIES PROCEDURES (hobby_name and hobby_description)
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_SaveHobby
     @hobby_id INT = 0,
     @user_id INT,
@@ -494,7 +746,9 @@ BEGIN
 END;
 GO
 
--- 10. User Management & Telemetry
+-- -------------------------------------------------------------
+-- 2.10 USER MANAGEMENT PROCEDURES (Admin supervision)
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_GetAllUsers
 AS
 BEGIN
@@ -557,6 +811,9 @@ BEGIN
 END;
 GO
 
+-- -------------------------------------------------------------
+-- 2.11 DASHBOARD TELEMETRY & STATS PROCEDURE
+-- -------------------------------------------------------------
 CREATE OR ALTER PROCEDURE dbo.sp_GetDashboardStats
 AS
 BEGIN
@@ -583,3 +840,5 @@ BEGIN
         (SELECT COUNT(1) FROM dbo.hobbies_tbl) AS TotalHobbies;
 END;
 GO
+
+PRINT 'Multi-user portfolio refactoring migration completed successfully.';

@@ -134,17 +134,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                     : "if(window.AdminToast) AdminToast.error('Failed to change user status.', 'Error');";
                 Page.ClientScript.RegisterStartupScript(GetType(), "userStatusToast", script, true);
             }
-            else if (e.CommandName == "DeleteUser")
-            {
-                int userId = Convert.ToInt32(e.CommandArgument);
-                bool ok = PortfolioService.DeleteUser(userId);
-                BindAll();
-
-                string script = ok 
-                    ? "if(window.AdminToast) AdminToast.success('User deleted successfully.', 'Deleted');"
-                    : "if(window.AdminToast) AdminToast.error('Failed to delete user.', 'Error');";
-                Page.ClientScript.RegisterStartupScript(GetType(), "userDelToast", script, true);
-            }
         }
     }
 }

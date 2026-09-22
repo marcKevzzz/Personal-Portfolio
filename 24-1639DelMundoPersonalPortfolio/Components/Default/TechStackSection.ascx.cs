@@ -18,9 +18,16 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         public void BindData(List<TechStackItemDto> techStacks)
         {
             TechStacks = techStacks ?? new List<TechStackItemDto>();
-            var grouped = GetGroupedStacks();
-            rptGroups.DataSource = grouped;
-            rptGroups.DataBind();
+            bool hasItems = TechStacks.Count > 0;
+            pnlEmpty.Visible = !hasItems;
+            techStackGroups.Visible = hasItems;
+
+            if (hasItems)
+            {
+                var grouped = GetGroupedStacks();
+                rptGroups.DataSource = grouped;
+                rptGroups.DataBind();
+            }
         }
 
         protected void rptGroups_ItemDataBound(object sender, RepeaterItemEventArgs e)
