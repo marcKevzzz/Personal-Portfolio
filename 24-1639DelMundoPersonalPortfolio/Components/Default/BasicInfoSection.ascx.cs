@@ -22,7 +22,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
                 : ProfileData.FullName;
             string location = string.IsNullOrWhiteSpace(ProfileData.LocationAddress) ? "No location added yet" : ProfileData.LocationAddress;
             string ageText = ProfileData.Age > 0 ? $"{ProfileData.Age} years old" : "No birthday added yet";
-            string expText = ProfileData.ExperienceYears > 0 ? $"{ProfileData.ExperienceYears} years of coding" : "0 years of coding";
+            string expText = ProfileData.ExperienceYears > 0 ? $"{ProfileData.ExperienceYears} years of coding" : "No years of experience added yet";
 
             litName.Text = Server.HtmlEncode(fullName);
             litLocation.Text = Server.HtmlEncode(location);

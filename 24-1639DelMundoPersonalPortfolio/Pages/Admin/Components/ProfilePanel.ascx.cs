@@ -24,23 +24,21 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             var data = PortfolioService.GetPortfolioData(currentUid, true);
             var p = data?.Profile ?? new ProfileDto();
 
+            // Populate User First & Last Name
+            txtProfileFirstName.Text = currentUser?.FirstName ?? "";
+            txtProfileLastName.Text = currentUser?.LastName ?? "";
+
             // Populate Profile Birth Date and live age calculation hint
             if (p.BirthDate.HasValue)
             {
                 txtProfileBirthDate.Text = p.BirthDate.Value.ToString("yyyy-MM-dd");
-                lblProfileAgeHint.Text = $"Calculated Portfolio Age: {p.Age} years old";
+                lblProfileAgeHint.Text = $"{p.Age} years old";
             }
             else
             {
                 txtProfileBirthDate.Text = "";
                 lblProfileAgeHint.Text = "Set your birth date to display your age on your portfolio.";
             }
-
-            // Populate Profile Contact Email (default to login email if profile email not yet set)
-            string loginEmail = currentUser?.Email ?? "";
-            txtProfileEmail.Text = !string.IsNullOrWhiteSpace(p.Email) 
-                ? p.Email 
-                : loginEmail;
 
             txtHeroSubline.Text = p.HeroSubline ?? "";
             hidHeroNames.Value = !string.IsNullOrWhiteSpace(p.HeroNames) 
@@ -54,17 +52,17 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             if (!string.IsNullOrWhiteSpace(p.AvatarPath))
             {
                 imgProfileAvatarThumb.ImageUrl = ResolveUrl("~/" + p.AvatarPath.TrimStart('~', '/'));
-                profileAvatarPreviewBox.Style["display"] = "flex";
+                imgProfileAvatarThumb.Style["display"] = "block";
+                profileAvatarSvgPlaceholder.Style["display"] = "none";
             }
             else
             {
-                profileAvatarPreviewBox.Style["display"] = "none";
+                imgProfileAvatarThumb.Style["display"] = "none";
+                profileAvatarSvgPlaceholder.Style["display"] = "flex";
             }
 
             txtLocationAddress.Text = p.LocationAddress ?? "";
             txtExperienceYears.Text = p.ExperienceYears > 0 ? p.ExperienceYears.ToString() : "";
-            txtGithubUrl.Text = p.GithubUrl ?? "";
-            txtLinkedinUrl.Text = p.LinkedinUrl ?? "";
 
             RenderHeroChips(hidHeroNames.Value);
         }
@@ -127,11 +125,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             if (!string.IsNullOrWhiteSpace(avatarPath))
             {
                 imgProfileAvatarThumb.ImageUrl = ResolveUrl("~/" + avatarPath.TrimStart('~', '/'));
-                profileAvatarPreviewBox.Style["display"] = "flex";
+                imgProfileAvatarThumb.Style["display"] = "block";
+                profileAvatarSvgPlaceholder.Style["display"] = "none";
             }
             else
             {
-                profileAvatarPreviewBox.Style["display"] = "none";
+                imgProfileAvatarThumb.Style["display"] = "none";
+                profileAvatarSvgPlaceholder.Style["display"] = "flex";
             }
 
             // Parse Date of Birth
@@ -149,11 +149,21 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             }
 
             int currentUid = AuthHelper.GetCurrentUserId();
+
+            // Update First and Last Name in users_tbl
+            string newFirstName = txtProfileFirstName.Text.Trim();
+            string newLastName = txtProfileLastName.Text.Trim();
+            if (!string.IsNullOrEmpty(newFirstName) || !string.IsNullOrEmpty(newLastName))
+            {
+                PortfolioService.UpdateUserDetails(currentUid, newFirstName, newLastName);
+            }
+
+            var existingProfile = PortfolioService.GetPortfolioData(currentUid, false)?.Profile;
             var profile = new ProfileDto
             {
                 UserId = currentUid,
                 BirthDate = birthDate,
-                Email = txtProfileEmail.Text.Trim(),
+                Email = existingProfile?.Email ?? "",
                 HeroSubline = txtHeroSubline.Text.Trim(),
                 HeroNames = string.IsNullOrWhiteSpace(hidHeroNames.Value) 
                     ? (AuthHelper.GetCurrentUser() != null ? $"{AuthHelper.GetCurrentUser().FirstName},{AuthHelper.GetCurrentUser().LastName}".Trim(',') : "") 
@@ -165,8 +175,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 AvatarPath = avatarPath,
                 LocationAddress = txtLocationAddress.Text.Trim(),
                 ExperienceYears = exp,
-                GithubUrl = txtGithubUrl.Text.Trim(),
-                LinkedinUrl = txtLinkedinUrl.Text.Trim()
+                GithubUrl = existingProfile?.GithubUrl ?? "",
+                LinkedinUrl = existingProfile?.LinkedinUrl ?? ""
             };
 
             bool success = PortfolioService.SaveProfile(profile, userId: currentUid);
@@ -177,7 +187,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             string script;
             if (success)
             {
-                script = "if(window.AdminToast) AdminToast.success('Public profile, birth date, and contact email have been saved successfully.', 'Profile Saved');";
+                script = "if(window.AdminToast) AdminToast.success('Public profile, birth date, and presentation details have been saved successfully.', 'Profile Saved');";
             }
             else
             {

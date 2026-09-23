@@ -8,20 +8,20 @@
 
     <div class="add-form">
         <div class="field field-col-3" style="flex: 2;">
-            <label>Skill Name</label>
+            <label>Skill Name <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtSkillName" runat="server" placeholder="e.g. Frontend Development" />
             </div>
         </div>
         <div class="field field-col-3" style="flex: 1;">
-            <label>Proficiency Percentage (0–100%)</label>
+            <label>Proficiency Percentage (0–100%) <span class="req-star">*</span></label>
             <div class="input-row">
-                <asp:TextBox ID="txtProficiencyVal" runat="server" TextMode="Number" min="0" max="100" Text="85" placeholder="85" />
+                <asp:TextBox ID="txtProficiencyVal" runat="server" TextMode="Number" min="0" max="100" placeholder="e.g. 85" />
             </div>
         </div>
         <div class=" field-col-3" style="display: flex; gap: 12px; align-items: center; margin-top: auto;">
             <asp:Button ID="btnAddSkill" runat="server" Text="Add Skill" CssClass="btn btn-primary" OnClick="btnAddSkill_Click" data-confirm-title="Add Skill" data-confirm-msg="Are you sure you want to add this skill?" data-confirm-btn="Add Skill" />
-            <asp:Button ID="btnCancelSkillEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelSkillEdit_Click" />
+            <asp:Button ID="btnCancelSkillEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelSkillEdit_Click" data-confirm-title="Discard Changes" data-confirm-msg="Are you sure you want to discard your changes?" data-confirm-type="warning" data-confirm-btn="Discard" />
         </div>
     </div>
 
@@ -29,6 +29,7 @@
         <table class="data-table">
             <thead>
                 <tr>
+                    <th style="width: 40px; text-align: center;">#</th>
                     <th>Skill Name</th>
                     <th>Proficiency</th>
                     <th>Actions</th>
@@ -38,6 +39,7 @@
                 <asp:Repeater ID="rptSkillsTable" runat="server" OnItemCommand="rptSkillsTable_ItemCommand">
                     <ItemTemplate>
                         <tr>
+                            <td class="table-row-index"><%# Container.ItemIndex + 1 %></td>
                             <td><strong><%# Eval("SkillName") %></strong></td>
                             <td>
                                 <div class="admin-skill-cell">

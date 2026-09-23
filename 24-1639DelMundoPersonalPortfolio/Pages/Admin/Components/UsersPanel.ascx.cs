@@ -12,95 +12,55 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
         {
             if (!IsPostBack)
             {
-                BindAll();
+                BindUsers();
             }
         }
 
         public void BindAll()
         {
             BindUsers();
-            BindResetRequests();
         }
+
+        public int CurrentUserId => _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.GetCurrentUserId();
 
         public void BindUsers()
         {
-            int currentUid = _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.GetCurrentUserId();
-            var list = PortfolioService.GetAllUsers(excludeAdmins: true)
-                .Where(u => u.UserId != currentUid && !u.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            var list = PortfolioService.GetAllUsers(excludeAdmins: false)
                 .ToList();
             rptUsersTable.DataSource = list;
             rptUsersTable.DataBind();
-        }
 
-        public void BindResetRequests()
-        {
-            var requests = PortfolioService.GetPasswordResetRequests();
-            if (requests == null || requests.Count == 0)
+            int pendingCount = list.Count(u => u.HasPendingReset);
+            if (pendingCount > 0)
             {
-                pnlNoRequests.Visible = true;
-                rptResetRequests.Visible = false;
-                lblPendingRequestsCount.Visible = false;
+                lblPendingResetBadge.Text = $"{pendingCount} RESET REQUEST" + (pendingCount > 1 ? "S" : "");
+                lblPendingResetBadge.Visible = true;
             }
             else
             {
-                pnlNoRequests.Visible = false;
-                rptResetRequests.Visible = true;
-                rptResetRequests.DataSource = requests;
-                rptResetRequests.DataBind();
-
-                int pendingCount = requests.Count(r => (r.Status ?? "").Trim().ToLowerInvariant() == "pending");
-                if (pendingCount > 0)
-                {
-                    lblPendingRequestsCount.Text = $"{pendingCount} PENDING";
-                    lblPendingRequestsCount.Visible = true;
-                }
-                else
-                {
-                    lblPendingRequestsCount.Visible = false;
-                }
+                lblPendingResetBadge.Visible = false;
             }
         }
 
-
-        protected void btnRefreshResetRequests_Click(object sender, EventArgs e)
+        protected void btnModalApproveReset_Click(object sender, EventArgs e)
         {
-            BindResetRequests();
-            string script = "if(window.AdminToast) AdminToast.info('Password reset requests refreshed from database.', 'Refreshed');";
-            Page.ClientScript.RegisterStartupScript(GetType(), "refreshReqToast", script, true);
-        }
-
-        protected string GetStatusBadgeClass(string status)
-        {
-            switch (status?.Trim().ToLowerInvariant())
-            {
-                case "pending":
-                    return "status-pill active";
-                case "password_removed":
-                    return "status-pill active";
-                case "used":
-                    return "status-pill";
-                default:
-                    return "status-pill inactive";
-            }
-        }
-
-        protected void rptResetRequests_ItemCommand(object source, RepeaterCommandEventArgs e)
-        {
-            int resetId = Convert.ToInt32(e.CommandArgument);
-
-            if (e.CommandName == "ApproveReset")
+            if (int.TryParse(hfSelectedResetId.Value, out int resetId) && resetId > 0)
             {
                 bool ok = PortfolioService.ApprovePasswordResetRequest(resetId);
-                BindAll();
+                BindUsers();
                 string script = ok 
                     ? "if(window.AdminToast) AdminToast.success('Password removed for user. They can now set a new password upon next sign-in.', 'Request Approved');"
                     : "if(window.AdminToast) AdminToast.error('Failed to approve password reset request.', 'Error');";
                 Page.ClientScript.RegisterStartupScript(GetType(), "resetApproveToast", script, true);
             }
-            else if (e.CommandName == "RejectReset")
+        }
+
+        protected void btnModalRejectReset_Click(object sender, EventArgs e)
+        {
+            if (int.TryParse(hfSelectedResetId.Value, out int resetId) && resetId > 0)
             {
                 bool ok = PortfolioService.RejectPasswordResetRequest(resetId);
-                BindAll();
+                BindUsers();
                 string script = ok 
                     ? "if(window.AdminToast) AdminToast.success('Password reset request has been dismissed.', 'Request Dismissed');"
                     : "if(window.AdminToast) AdminToast.error('Failed to dismiss request.', 'Error');";
@@ -114,7 +74,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             {
                 int userId = Convert.ToInt32(e.CommandArgument);
                 bool ok = PortfolioService.AdminResetUserPassword(userId);
-                BindAll();
+                BindUsers();
 
                 string script = ok 
                     ? "if(window.AdminToast) AdminToast.success('User password has been cleared. The user will be redirected to create a new password on their next sign-in.', 'Password Reset Initiated');"
@@ -127,6 +87,14 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 int userId = Convert.ToInt32(parts[0]);
                 bool currentStatus = Convert.ToBoolean(parts[1]);
                 bool newStatus = !currentStatus;
+
+                int currentAdminId = CurrentUserId;
+                if (userId == currentAdminId && !newStatus)
+                {
+                    string scriptWarn = "if(window.AdminToast) AdminToast.error('You cannot deactivate your own active admin account.', 'Action Prohibited');";
+                    Page.ClientScript.RegisterStartupScript(GetType(), "selfDeactivateErr", scriptWarn, true);
+                    return;
+                }
 
                 bool ok = PortfolioService.SetUserActiveStatus(userId, newStatus);
                 BindUsers();

@@ -17,23 +17,37 @@ function initInputFocus() {
     input.addEventListener("blur", function () {
       if (row) row.classList.remove("focused");
     });
+    input.addEventListener("input", function () {
+      var wrapper = input.closest(".field");
+      if (wrapper && wrapper.classList.contains("invalid")) {
+        wrapper.classList.remove("invalid");
+      }
+    });
   });
 }
 
 function initLoadReveal() {
   var els = document.querySelectorAll(".reveal");
-  els.forEach(function (el, i) {
-    el.style.transition = "opacity .5s ease, transform .5s ease";
-    el.style.transitionDelay = i * 0.08 + "s";
-  });
-  requestAnimationFrame(function () {
-    requestAnimationFrame(function () {
+  if (!els || els.length === 0) return;
+
+  if (typeof gsap !== "undefined") {
+    gsap.fromTo(
+      els,
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.6, stagger: 0.06, ease: "power2.out", clearProps: "transform" }
+    );
+  } else {
+    els.forEach(function (el, i) {
+      el.style.transition = "opacity .5s ease, transform .5s ease";
+      el.style.transitionDelay = i * 0.06 + "s";
+    });
+    setTimeout(function () {
       els.forEach(function (el) {
         el.style.opacity = "1";
         el.style.transform = "translateY(0)";
       });
-    });
-  });
+    }, 40);
+  }
 }
 
 function markValid(field, isValid) {
@@ -153,13 +167,32 @@ function initSignIn() {
     });
   }
 
-  // Enter key support for signin
+  // Client-side sign-in validation
   var passInput = document.getElementById("password");
   var signInBtn = document.getElementById("signInBtn");
+
+  if (signInBtn) {
+    signInBtn.addEventListener("click", function (e) {
+      var emailVal = emailInput ? emailInput.value.trim() : "";
+      var passVal = passInput ? passInput.value : "";
+
+      var emailValid = markValid(emailInput, EMAIL_RE.test(emailVal));
+      var passValid = markValid(passInput, passVal.length >= 8);
+
+      if (!emailValid || !passValid) {
+        if (e) e.preventDefault();
+        var first = !emailValid ? emailInput : passInput;
+        if (first) first.focus();
+      }
+    });
+  }
+
+  // Enter key support for signin
   [emailInput, passInput].forEach(function (el) {
     if (el) {
       el.addEventListener("keydown", function (e) {
         if (e.key === "Enter" && signInBtn) {
+          e.preventDefault();
           signInBtn.click();
         }
       });
@@ -176,6 +209,10 @@ function initSignUp() {
 
   var pwInput = document.getElementById("password");
   var meter = document.getElementById("strengthMeter");
+  var strengthLabel = document.getElementById("strengthLabel");
+  var STRENGTH_LABELS = ["", "Weak", "Fair", "Strong"];
+  var STRENGTH_COLORS = ["", "var(--danger)", "var(--blue-light)", "var(--cyan)"];
+
   if (pwInput && meter) {
     pwInput.addEventListener("input", function () {
       var v = pwInput.value;
@@ -184,6 +221,10 @@ function initSignUp() {
       if (v.length >= 8 && /[0-9]/.test(v) && /[A-Z]/.test(v)) level = 2;
       if (v.length >= 12 && /[0-9]/.test(v) && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v)) level = 3;
       meter.setAttribute("data-level", level);
+      if (strengthLabel) {
+        strengthLabel.textContent = v.length > 0 ? STRENGTH_LABELS[level] : "";
+        strengthLabel.style.color = v.length > 0 ? STRENGTH_COLORS[level] : "";
+      }
     });
   }
 
@@ -229,7 +270,21 @@ function initSignUp() {
     termsScrollBox.addEventListener("scroll", checkTermsScroll);
   }
 
+  // Enter key support — triggers createAccountBtn from any form field
+  var signupFieldIds = ["firstName", "lastName", "email", "password", "confirm"];
   var createAccountBtn = document.getElementById("createAccountBtn");
+  signupFieldIds.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && createAccountBtn) {
+          e.preventDefault();
+          createAccountBtn.click();
+        }
+      });
+    }
+  });
+
   if (createAccountBtn) {
     createAccountBtn.addEventListener("click", function (e) {
       var firstNameField = document.getElementById("firstName");
@@ -289,10 +344,55 @@ function initNewPassword() {
 }
 
 /* -------------------------------------------------------------
+   PASSWORD VISIBILITY TOGGLE HELPER
+   ------------------------------------------------------------- */
+function initPasswordToggles() {
+  document.querySelectorAll(".password-toggle-btn").forEach(function (btn) {
+    if (btn.dataset.toggleBound) return;
+    btn.dataset.toggleBound = "true";
+
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var row = btn.closest(".input-row") || btn.closest(".field");
+      if (!row) return;
+
+      var input = row.querySelector("input");
+      if (!input) return;
+
+      var eyeClosed = btn.querySelector(".eye-closed");
+      var eyeOpen = btn.querySelector(".eye-open");
+
+      if (input.type === "password") {
+        input.type = "text";
+        if (eyeClosed) eyeClosed.style.display = "none";
+        if (eyeOpen) eyeOpen.style.display = "block";
+        btn.setAttribute("aria-label", "Hide password");
+        btn.setAttribute("title", "Hide password");
+      } else {
+        input.type = "password";
+        if (eyeClosed) eyeClosed.style.display = "block";
+        if (eyeOpen) eyeOpen.style.display = "none";
+        btn.setAttribute("aria-label", "Show password");
+        btn.setAttribute("title", "Show password");
+      }
+
+      try {
+        var len = input.value.length;
+        input.setSelectionRange(len, len);
+      } catch (err) {}
+    });
+  });
+}
+
+/* -------------------------------------------------------------
    BOOTSTRAP AUTH PAGE
    ------------------------------------------------------------- */
-document.addEventListener("DOMContentLoaded", function () {
+function bootAuth() {
+  initInputFocus();
   initCustomCursor();
+  initPasswordToggles();
   if (document.getElementById("signinForm")) {
     initSignIn();
   }
@@ -302,4 +402,11 @@ document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("newPasswordForm")) {
     initNewPassword();
   }
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootAuth);
+} else {
+  bootAuth();
+}
+

@@ -26,8 +26,37 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             txtAdminFullName.Text = fullName;
             txtAdminEmail.Text = email;
 
-            imgAdminAvatar.Visible = false;
-            adminAvatarSvgPlaceholder.Visible = true;
+            int currentUserId = currentUser != null ? currentUser.UserId : AuthHelper.GetCurrentUserId();
+            var portfolioData = PortfolioService.GetPortfolioData(currentUserId);
+            string avatar = portfolioData?.Profile?.AvatarPath;
+            bool hasRealAvatar = !string.IsNullOrWhiteSpace(avatar)
+                && !avatar.Contains("image_placeholder")
+                && !avatar.Contains("pixelart_portrait");
+
+            string initial = !string.IsNullOrWhiteSpace(fullName)
+                ? fullName.Substring(0, 1).ToUpper()
+                : (!string.IsNullOrWhiteSpace(email) ? email.Substring(0, 1).ToUpper() : "M");
+
+            if (hasRealAvatar)
+            {
+                imgAdminAvatar.ImageUrl = ResolveUrl("~/" + avatar.TrimStart('~', '/'));
+                imgAdminAvatar.Visible = true;
+                adminAvatarInitials.Style["display"] = "none";
+                adminAvatarSvgPlaceholder.Style["display"] = "none";
+            }
+            else if (!string.IsNullOrEmpty(initial))
+            {
+                imgAdminAvatar.Visible = false;
+                adminAvatarInitials.InnerText = initial;
+                adminAvatarInitials.Style["display"] = "flex";
+                adminAvatarSvgPlaceholder.Style["display"] = "none";
+            }
+            else
+            {
+                imgAdminAvatar.Visible = false;
+                adminAvatarInitials.Style["display"] = "none";
+                adminAvatarSvgPlaceholder.Style["display"] = "flex";
+            }
         }
 
         protected void btnSaveAdminProfile_Click(object sender, EventArgs e)

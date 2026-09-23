@@ -47,6 +47,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnAddProject_Click(object sender, EventArgs e)
         {
+            if (_24_1639DelMundoPersonalPortfolio.Helpers.DuplicateSubmissionGuard.IsDuplicate(this.Page))
+            {
+                ResetForm();
+                BindProjects();
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(txtProjectTitle.Text))
             {
                 Page.ClientScript.RegisterStartupScript(GetType(), "projWarn", "if(window.AdminToast) AdminToast.warning('Please enter a project title.', 'Validation Error');", true);

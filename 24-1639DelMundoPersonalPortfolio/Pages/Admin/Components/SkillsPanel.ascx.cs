@@ -27,6 +27,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnAddSkill_Click(object sender, EventArgs e)
         {
+            if (_24_1639DelMundoPersonalPortfolio.Helpers.DuplicateSubmissionGuard.IsDuplicate(this.Page))
+            {
+                ResetForm();
+                BindSkills();
+                return;
+            }
+
             string name = txtSkillName.Text.Trim();
             if (string.IsNullOrWhiteSpace(name))
             {

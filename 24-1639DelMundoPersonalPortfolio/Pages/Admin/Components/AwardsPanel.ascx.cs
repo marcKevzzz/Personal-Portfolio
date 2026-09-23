@@ -27,6 +27,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnAddAward_Click(object sender, EventArgs e)
         {
+            if (_24_1639DelMundoPersonalPortfolio.Helpers.DuplicateSubmissionGuard.IsDuplicate(this.Page))
+            {
+                ResetForm();
+                BindAwards();
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(txtAwardTitle.Text))
             {
                 Page.ClientScript.RegisterStartupScript(GetType(), "awardWarn", "if(window.AdminToast) AdminToast.warning('Please enter an award or recognition title.', 'Validation Error');", true);

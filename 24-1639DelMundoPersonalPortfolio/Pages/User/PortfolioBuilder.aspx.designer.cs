@@ -20,6 +20,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.User
         protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.EducationPanel ucEducationPanel;
         protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.AwardsPanel ucAwardsPanel;
         protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.HobbiesPanel ucHobbiesPanel;
+        protected global::_24_1639DelMundoPersonalPortfolio.Pages.Admin.Components.ContactsPanel ucContactsPanel;
 
         public new _24_1639DelMundoPersonalPortfolio.AdminMaster Master
         {

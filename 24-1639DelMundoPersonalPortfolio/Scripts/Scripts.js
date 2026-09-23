@@ -329,19 +329,27 @@ function initScrollTriggersAndReveals() {
 
 /* Bento Project tile content hover transition */
 function initBentoProjectHover() {
+  if (window.innerWidth <= 768) {
+    document.querySelectorAll(".tile .tile-content").forEach(function (content) {
+      if (typeof gsap !== "undefined") gsap.set(content, { y: 0, clearProps: "transform" });
+    });
+    return;
+  }
   document.querySelectorAll(".tile").forEach(function (tile) {
     if (tile.dataset.hoverBound === "true") return;
     tile.dataset.hoverBound = "true";
 
     tile.addEventListener("mouseenter", function () {
+      if (window.innerWidth <= 768) return;
       var content = tile.querySelector(".tile-content");
-      if (content) {
+      if (content && typeof gsap !== "undefined") {
         gsap.to(content, { y: 0, duration: 0.3, ease: "power2.out" });
       }
     });
     tile.addEventListener("mouseleave", function () {
+      if (window.innerWidth <= 768) return;
       var content = tile.querySelector(".tile-content");
-      if (content) {
+      if (content && typeof gsap !== "undefined") {
         gsap.to(content, { y: 45, duration: 0.3, ease: "power2.out" });
       }
     });
@@ -727,7 +735,12 @@ function renderPortfolioData(data) {
   if (data.Profile) {
     renderHero(data.Profile);
     renderBasicInfo(data.Profile);
-    renderContact(data.Profile);
+  }
+
+  if (data.Contacts && data.Contacts.length) {
+    renderContacts(data.Contacts, data.Profile);
+  } else if (data.Profile) {
+    renderContacts([], data.Profile);
   }
 
   if (data.TechStacks && data.TechStacks.length) {
@@ -1104,6 +1117,31 @@ function renderHobbies(hobbies) {
   });
 
   list.innerHTML = html;
+}
+
+function renderContacts(contacts, profile) {
+  var container = document.querySelector("#contact .contact-links");
+  if (!container) return;
+
+  if (contacts && contacts.length) {
+    var activeContacts = contacts.filter(function (c) { return c.IsActive !== false; });
+    if (activeContacts.length) {
+      var html = "";
+      activeContacts.forEach(function (c) {
+        var label = c.DisplayLabel || c.Platform || "Contact";
+        var url = c.ComputedUrl || c.ContactUrl || "#";
+        var isDirect = (c.Platform && (c.Platform.toLowerCase() === "email" || c.Platform.toLowerCase() === "phone"));
+        var targetAttr = isDirect ? "" : ' target="_blank" rel="noopener noreferrer"';
+        html += '<a href="' + escapeHtml(url) + '" class="reveal contact-channel-link"' + targetAttr + '>[ ' + escapeHtml(label) + " ]</a>\n";
+      });
+      container.innerHTML = html;
+      return;
+    }
+  }
+
+  if (profile) {
+    renderContact(profile);
+  }
 }
 
 function renderContact(profile) {

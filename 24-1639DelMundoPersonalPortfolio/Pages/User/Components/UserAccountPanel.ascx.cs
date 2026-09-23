@@ -26,6 +26,38 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.User.Components
             txtUserFirstName.Text = currentUser.FirstName ?? "";
             txtUserLastName.Text = currentUser.LastName ?? "";
             txtUserEmail.Text = currentUser.Email ?? "";
+
+            // Check if user has uploaded avatar image
+            var portfolioData = PortfolioService.GetPortfolioData(currentUser.UserId);
+            string avatar = portfolioData?.Profile?.AvatarPath;
+            bool hasRealAvatar = !string.IsNullOrWhiteSpace(avatar)
+                && !avatar.Contains("image_placeholder")
+                && !avatar.Contains("pixelart_portrait");
+
+            string initial = !string.IsNullOrWhiteSpace(currentUser.FirstName)
+                ? currentUser.FirstName.Substring(0, 1).ToUpper()
+                : (!string.IsNullOrWhiteSpace(currentUser.Email) ? currentUser.Email.Substring(0, 1).ToUpper() : "U");
+
+            if (hasRealAvatar)
+            {
+                imgUserAccountAvatar.ImageUrl = ResolveUrl("~/" + avatar.TrimStart('~', '/'));
+                imgUserAccountAvatar.Style["display"] = "block";
+                userAccountInitials.Style["display"] = "none";
+                avatarSvgPlaceholder.Style["display"] = "none";
+            }
+            else if (!string.IsNullOrEmpty(initial))
+            {
+                imgUserAccountAvatar.Style["display"] = "none";
+                userAccountInitials.InnerText = initial;
+                userAccountInitials.Style["display"] = "flex";
+                avatarSvgPlaceholder.Style["display"] = "none";
+            }
+            else
+            {
+                imgUserAccountAvatar.Style["display"] = "none";
+                userAccountInitials.Style["display"] = "none";
+                avatarSvgPlaceholder.Style["display"] = "flex";
+            }
         }
 
         protected void btnSaveAccountDetails_Click(object sender, EventArgs e)

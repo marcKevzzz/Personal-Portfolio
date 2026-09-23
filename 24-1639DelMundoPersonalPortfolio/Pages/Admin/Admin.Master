@@ -47,8 +47,7 @@
             <nav class="admin-nav" id="adminNav">
                 <div class="admin-nav-header">
                     <div class="admin-brand">
-                        <span class="brand-dot"></span>
-                        <span class="admin-brand-title"><%= _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.IsAdmin() ? "ADMIN CONSOLE" : "PORTFOLIO BUILDER" %></span>
+                        <span class="admin-brand-title"><%= _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.IsAdmin() ? "ADMIN CONSOLE" : "WEBSITE BUILDER" %></span>
                     </div>
                     <button type="button" id="btnToggleSidebar" class="sidebar-toggle-btn" title="Toggle Sidebar" aria-label="Toggle Sidebar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -179,6 +178,16 @@
                         </span>
                         <span class="nav-label">Hobbies</span>
                     </a>
+
+                    <a href="javascript:void(0)" class="nav-item" data-panel="contacts" data-tooltip="Contacts &amp; Socials">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </span>
+                        <span class="nav-label">Contacts</span>
+                    </a>
 <% } %>
 
 <% if (!_24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.IsAdmin()) { %>
@@ -225,7 +234,7 @@
                 <!-- Top bar -->
                 <div class="admin-topbar">
                     <div class="admin-topbar-left">
-                        <div class="kicker"><%= _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.IsAdmin() ? "SYSTEM MANAGEMENT" : "PORTFOLIO BUILDER" %></div>
+                        <div class="kicker"><%= _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.IsAdmin() ? "SYSTEM MANAGEMENT" : "WEBSITE BUILDER" %></div>
                         <h2 id="currentPanelTitle" style="font-family: var(--f-display); font-weight: 400; font-size: var(--t-lg); margin-top: 4px;"><%= _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.IsAdmin() ? "Dashboard" : "Profile" %></h2>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -239,10 +248,7 @@
                             <span>View My Website</span>
                         </a>
 <% } %>
-                        <div class="admin-user-badge">
-                            <span class="admin-indicator"></span>
-                            <span><%= _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.IsAdmin() ? "Admin Active" : ("User: " + _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.GetCurrentUserName()) %></span>
-                        </div>
+                       
                     </div>
                 </div>
 
@@ -279,5 +285,12 @@
 
     <asp:ContentPlaceHolder ID="adminScripts" runat="server">
     </asp:ContentPlaceHolder>
+
+    <script>
+        // Prevent form resubmission when user refreshes the page (F5)
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, document.title, window.location.href);
+        }
+    </script>
 </body>
 </html>

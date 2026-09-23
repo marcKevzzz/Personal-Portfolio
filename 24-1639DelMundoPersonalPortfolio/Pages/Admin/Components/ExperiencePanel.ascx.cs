@@ -47,6 +47,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnAddExp_Click(object sender, EventArgs e)
         {
+            if (_24_1639DelMundoPersonalPortfolio.Helpers.DuplicateSubmissionGuard.IsDuplicate(this.Page))
+            {
+                ResetForm();
+                BindExperiences();
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(txtExpRole.Text) || string.IsNullOrWhiteSpace(txtExpCompany.Text))
             {
                 Page.ClientScript.RegisterStartupScript(GetType(), "expWarn", "if(window.AdminToast) AdminToast.warning('Please enter both role title and company name.', 'Validation Error');", true);
@@ -56,8 +63,17 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             int expId = int.TryParse(hidEditingExpId.Value, out int id) ? id : 0;
 
             int startYear = int.TryParse(txtExpStartYear.Text.Trim(), out int sy) ? sy : DateTime.Today.Year;
-            int? endYear = int.TryParse(txtExpEndYear.Text.Trim(), out int ey) ? ey : (int?)null;
-            bool isCurrent = !endYear.HasValue;
+            string endYearStr = txtExpEndYear.Text.Trim();
+            bool isCurrent = string.Equals(endYearStr, "Present", StringComparison.OrdinalIgnoreCase);
+            int? endYear = null;
+            if (!isCurrent && int.TryParse(endYearStr, out int ey))
+            {
+                endYear = ey;
+            }
+            else if (!isCurrent && string.IsNullOrEmpty(endYearStr))
+            {
+                isCurrent = true;
+            }
 
             var exp = new ExperienceDto
             {
@@ -107,7 +123,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                     txtExpRole.Text = item.RoleTitle;
                     txtExpCompany.Text = item.CompanyName;
                     txtExpStartYear.Text = item.StartYear > 0 ? item.StartYear.ToString() : "";
-                    txtExpEndYear.Text = item.EndYear.HasValue ? item.EndYear.Value.ToString() : "";
+                    txtExpEndYear.Text = (item.IsCurrent || !item.EndYear.HasValue) ? "Present" : item.EndYear.Value.ToString();
                     txtExpDescription.Text = item.DescriptionText;
                     hidExpTags.Value = item.Tags;
                     RenderChips(item.Tags);
@@ -116,6 +132,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                     btnAddExp.Attributes["data-confirm-title"] = "Update Experience";
                     btnAddExp.Attributes["data-confirm-msg"] = $"Save changes to {item.RoleTitle} at {item.CompanyName}?";
                     btnCancelExpEdit.Visible = true;
+
+                    if (item.IsCurrent || !item.EndYear.HasValue)
+                    {
+                        Page.ClientScript.RegisterStartupScript(GetType(), "chkExpPresentInit", "setTimeout(function(){ var cb = document.getElementById('chkExpPresent'); if(cb) cb.checked = true; }, 50);", true);
+                    }
                 }
             }
         }

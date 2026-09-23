@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Data;
 using System.Data.SqlClient;
 using System.Web;
@@ -107,9 +108,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                     r["experience_years"] != DBNull.Value
                                         ? Convert.ToInt32(r["experience_years"])
                                         : 1,
-                                Email = r["email"]?.ToString() ?? "",
-                                GithubUrl = r["github_url"]?.ToString() ?? "",
-                                LinkedinUrl = r["linkedin_url"]?.ToString() ?? "",
+                                Email = ds.Tables[0].Columns.Contains("email") ? (r["email"]?.ToString() ?? "") : "",
+                                GithubUrl = ds.Tables[0].Columns.Contains("github_url") ? (r["github_url"]?.ToString() ?? "") : "",
+                                LinkedinUrl = ds.Tables[0].Columns.Contains("linkedin_url") ? (r["linkedin_url"]?.ToString() ?? "") : "",
                             };
                             data.UserRole = r["user_role"]?.ToString() ?? "User";
                         }
@@ -278,6 +279,21 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                     data.Profile = GetInitialProfileFromUser(userId);
                 }
 
+                try
+                {
+                    data.Contacts = GetContacts(userId);
+                    if (data.Profile != null)
+                    {
+                        if (string.IsNullOrWhiteSpace(data.Profile.Email))
+                            data.Profile.Email = data.Contacts.FirstOrDefault(c => string.Equals(c.Platform, "Email", StringComparison.OrdinalIgnoreCase))?.ContactValue ?? "";
+                        if (string.IsNullOrWhiteSpace(data.Profile.GithubUrl))
+                            data.Profile.GithubUrl = data.Contacts.FirstOrDefault(c => string.Equals(c.Platform, "GitHub", StringComparison.OrdinalIgnoreCase))?.ComputedUrl ?? "";
+                        if (string.IsNullOrWhiteSpace(data.Profile.LinkedinUrl))
+                            data.Profile.LinkedinUrl = data.Contacts.FirstOrDefault(c => string.Equals(c.Platform, "LinkedIn", StringComparison.OrdinalIgnoreCase))?.ComputedUrl ?? "";
+                    }
+                }
+                catch { }
+
                 if (HttpRuntime.Cache != null && data != null)
                 {
                     HttpRuntime.Cache.Insert(
@@ -355,7 +371,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             if (userId <= 0)
                 userId = 1;
 
-            var parameters = new SqlParameter[]
+            var baseParams = new List<SqlParameter>
             {
                 new SqlParameter("@user_id", userId),
                 new SqlParameter("@hero_subline", (object)p.HeroSubline ?? DBNull.Value),
@@ -370,25 +386,38 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                     "@birth_date",
                     p.BirthDate.HasValue ? (object)p.BirthDate.Value.Date : DBNull.Value
                 ),
-                new SqlParameter("@email", (object)p.Email ?? DBNull.Value),
-                new SqlParameter("@experience_years", p.ExperienceYears),
-                new SqlParameter("@github_url", (object)p.GithubUrl ?? DBNull.Value),
-                new SqlParameter("@linkedin_url", (object)p.LinkedinUrl ?? DBNull.Value),
+                new SqlParameter("@experience_years", p.ExperienceYears)
             };
 
             try
             {
-                int rows = DatabaseHelper.ExecuteStoredProcedureNonQuery(
+                DatabaseHelper.ExecuteStoredProcedureNonQuery(
                     "sp_SaveProfile",
-                    parameters
+                    baseParams.ToArray()
                 );
                 InvalidateCache(userId);
-                // SET NOCOUNT ON in the SP causes ExecuteNonQuery to return -1,
-                // which is still a successful execution — only throw on exception.
                 return true;
             }
             catch (Exception ex)
             {
+                // Fallback: If DB stored procedure still expects legacy contact parameters, supply them
+                if (ex.Message.IndexOf("@email", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    ex.Message.IndexOf("expects parameter", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    try
+                    {
+                        var legacyParams = new List<SqlParameter>(baseParams)
+                        {
+                            new SqlParameter("@email", (object)p.Email ?? DBNull.Value),
+                            new SqlParameter("@github_url", (object)p.GithubUrl ?? DBNull.Value),
+                            new SqlParameter("@linkedin_url", (object)p.LinkedinUrl ?? DBNull.Value)
+                        };
+                        DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveProfile", legacyParams.ToArray());
+                        InvalidateCache(userId);
+                        return true;
+                    }
+                    catch { }
+                }
                 System.Diagnostics.Debug.WriteLine(
                     "[PortfolioService] SaveProfile error: " + ex.Message
                 );
@@ -453,30 +482,49 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             if (userId <= 0)
                 userId = 1;
 
-            if (!string.IsNullOrWhiteSpace(rawSvg))
+            string svgString = !string.IsNullOrWhiteSpace(rawSvg) ? rawSvg.Trim() : (item.IconPath ?? "").Trim();
+
+            // Decode base64 if it was encoded from client to bypass request validation
+            if (svgString.StartsWith("base64:", StringComparison.OrdinalIgnoreCase))
             {
                 try
                 {
-                    string iconName =
-                        (item.Label ?? "tech")
-                            .ToLowerInvariant()
-                            .Replace(" ", "_")
-                            .Replace("#", "sharp")
-                            .Replace(".", "_")
-                        + "_"
-                        + DateTime.UtcNow.Ticks
-                        + ".svg";
-                    string targetDir =
-                        HttpContext.Current != null
-                            ? HttpContext.Current.Server.MapPath("~/Assets/Icons/")
-                            : null;
-                    if (!string.IsNullOrEmpty(targetDir))
+                    byte[] bytes = Convert.FromBase64String(svgString.Substring(7));
+                    svgString = System.Text.Encoding.UTF8.GetString(bytes).Trim();
+                }
+                catch { }
+            }
+
+            if (!string.IsNullOrWhiteSpace(svgString) && svgString.IndexOf("<svg", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                // Save the SVG tag itself directly instead of writing to disk or saving file path
+                item.IconPath = svgString;
+            }
+            else if (string.IsNullOrWhiteSpace(item.IconPath) && item.TechId > 0)
+            {
+                try
+                {
+                    var existingList = GetPortfolioData(userId, false)?.TechStacks;
+                    var existingItem = existingList != null ? System.Linq.Enumerable.FirstOrDefault(existingList, t => t.TechId == item.TechId) : null;
+                    if (existingItem != null && !string.IsNullOrWhiteSpace(existingItem.IconPath))
                     {
-                        if (!System.IO.Directory.Exists(targetDir))
-                            System.IO.Directory.CreateDirectory(targetDir);
-                        string fullPath = System.IO.Path.Combine(targetDir, iconName);
-                        System.IO.File.WriteAllText(fullPath, rawSvg);
-                        item.IconPath = "Assets/Icons/" + iconName;
+                        item.IconPath = existingItem.IconPath;
+                    }
+                }
+                catch { }
+            }
+
+            if (item.TechId == 0)
+            {
+                try
+                {
+                    var existingList = GetPortfolioData(userId, false)?.TechStacks;
+                    var duplicate = existingList != null ? System.Linq.Enumerable.FirstOrDefault(existingList, t =>
+                        string.Equals(t.GroupName, item.GroupName, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(t.Label, item.Label, StringComparison.OrdinalIgnoreCase)) : null;
+                    if (duplicate != null)
+                    {
+                        item.TechId = duplicate.TechId;
                     }
                 }
                 catch { }
@@ -488,7 +536,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 new SqlParameter("@user_id", userId),
                 new SqlParameter("@group_name", item.GroupName ?? "Frontend"),
                 new SqlParameter("@label", item.Label ?? ""),
-                new SqlParameter("@icon_path", item.IconPath ?? ""),
+                new SqlParameter("@icon_path", System.Data.SqlDbType.NVarChar, -1) { Value = (object)(item.IconPath ?? "") },
             };
 
             try
@@ -497,8 +545,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 InvalidateCache(userId);
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("[PortfolioService] SaveTechStack error: " + ex.Message);
                 return false;
             }
         }
@@ -832,6 +881,160 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
             }
         }
 
+        public static List<ContactDto> GetContacts(int userId = 0)
+        {
+            if (userId <= 0)
+                userId = AuthHelper.GetCurrentUserId();
+            if (userId <= 0)
+                userId = 1;
+
+            var list = new List<ContactDto>();
+            try
+            {
+                var dt = DatabaseHelper.ExecuteStoredProcedureDataTable(
+                    "sp_GetContacts",
+                    new SqlParameter("@user_id", userId)
+                );
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    foreach (DataRow r in dt.Rows)
+                    {
+                        list.Add(new ContactDto
+                        {
+                            ContactId = Convert.ToInt32(r["contact_id"]),
+                            UserId = Convert.ToInt32(r["user_id"]),
+                            Platform = r["platform"]?.ToString() ?? "Other",
+                            ContactLabel = r["contact_label"] != DBNull.Value ? r["contact_label"].ToString() : "",
+                            ContactValue = r["contact_value"]?.ToString() ?? "",
+                            ContactUrl = r["contact_url"] != DBNull.Value ? r["contact_url"].ToString() : "",
+                            DisplayOrder = Convert.ToInt32(r["display_order"]),
+                            IsActive = Convert.ToBoolean(r["is_active"])
+                        });
+                    }
+                    return list;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[PortfolioService] sp_GetContacts error (falling back): " + ex.Message);
+            }
+
+            // Fallback: Check profile_tbl for legacy contacts if contacts_tbl has no rows
+            try
+            {
+                var dtProfile = DatabaseHelper.ExecuteQuery(
+                    "SELECT email, github_url, linkedin_url FROM profile_tbl WHERE user_id = @UserId",
+                    new SqlParameter("@UserId", userId)
+                );
+                if (dtProfile != null && dtProfile.Rows.Count > 0)
+                {
+                    var row = dtProfile.Rows[0];
+                    string email = row["email"]?.ToString();
+                    string github = row["github_url"]?.ToString();
+                    string linkedin = row["linkedin_url"]?.ToString();
+
+                    int order = 1;
+                    if (!string.IsNullOrWhiteSpace(email))
+                    {
+                        list.Add(new ContactDto
+                        {
+                            ContactId = -1,
+                            UserId = userId,
+                            Platform = "Email",
+                            ContactLabel = "Email Address",
+                            ContactValue = email.Trim(),
+                            ContactUrl = "mailto:" + email.Trim(),
+                            DisplayOrder = order++,
+                            IsActive = true
+                        });
+                    }
+                    if (!string.IsNullOrWhiteSpace(github))
+                    {
+                        list.Add(new ContactDto
+                        {
+                            ContactId = -2,
+                            UserId = userId,
+                            Platform = "GitHub",
+                            ContactLabel = "GitHub Profile",
+                            ContactValue = github.Trim(),
+                            ContactUrl = github.Trim(),
+                            DisplayOrder = order++,
+                            IsActive = true
+                        });
+                    }
+                    if (!string.IsNullOrWhiteSpace(linkedin))
+                    {
+                        list.Add(new ContactDto
+                        {
+                            ContactId = -3,
+                            UserId = userId,
+                            Platform = "LinkedIn",
+                            ContactLabel = "LinkedIn Profile",
+                            ContactValue = linkedin.Trim(),
+                            ContactUrl = linkedin.Trim(),
+                            DisplayOrder = order++,
+                            IsActive = true
+                        });
+                    }
+                }
+            }
+            catch { }
+
+            return list;
+        }
+
+        public static bool SaveContact(ContactDto contact, int userId = 0)
+        {
+            if (userId <= 0)
+                userId = contact.UserId > 0 ? contact.UserId : AuthHelper.GetCurrentUserId();
+            if (userId <= 0)
+                userId = 1;
+
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@contact_id", contact.ContactId),
+                new SqlParameter("@user_id", userId),
+                new SqlParameter("@platform", contact.Platform ?? "Other"),
+                new SqlParameter("@contact_label", (object)contact.ContactLabel ?? DBNull.Value),
+                new SqlParameter("@contact_value", contact.ContactValue ?? ""),
+                new SqlParameter("@contact_url", (object)contact.ContactUrl ?? DBNull.Value),
+                new SqlParameter("@display_order", contact.DisplayOrder)
+            };
+
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_SaveContact", parameters);
+                InvalidateCache(userId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[PortfolioService] SaveContact error: " + ex.Message);
+                return false;
+            }
+        }
+
+        public static bool DeleteContact(int contactId, int userId = 0)
+        {
+            if (userId <= 0)
+                userId = AuthHelper.GetCurrentUserId();
+            try
+            {
+                DatabaseHelper.ExecuteStoredProcedureNonQuery(
+                    "sp_DeleteContact",
+                    new SqlParameter("@contact_id", contactId),
+                    new SqlParameter("@user_id", userId)
+                );
+                InvalidateCache(userId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[PortfolioService] DeleteContact error: " + ex.Message);
+                return false;
+            }
+        }
+
         // -------------------------------------------------------------
         // User Supervision & Admin Services
         // -------------------------------------------------------------
@@ -846,7 +1049,14 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 {
                     foreach (DataRow r in dt.Rows)
                     {
-                        string role = r["Role"]?.ToString() ?? "User";
+                        string role = "User";
+                        if (r.Table.Columns.Contains("Role") && r["Role"] != DBNull.Value)
+                            role = r["Role"].ToString();
+                        else if (r.Table.Columns.Contains("UserRole") && r["UserRole"] != DBNull.Value)
+                            role = r["UserRole"].ToString();
+                        else if (r.Table.Columns.Contains("user_role") && r["user_role"] != DBNull.Value)
+                            role = r["user_role"].ToString();
+
                         if (
                             excludeAdmins
                             && role.Equals("Admin", StringComparison.OrdinalIgnoreCase)
@@ -854,6 +1064,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                         {
                             continue;
                         }
+
+                        string avatar = "";
+                        if (r.Table.Columns.Contains("AvatarPath") && r["AvatarPath"] != DBNull.Value)
+                            avatar = r["AvatarPath"].ToString();
+                        else if (r.Table.Columns.Contains("avatar_path") && r["avatar_path"] != DBNull.Value)
+                            avatar = r["avatar_path"].ToString();
 
                         list.Add(
                             new UserSummaryDto
@@ -877,10 +1093,58 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                         ? Convert.ToDateTime(r["BirthDate"])
                                         : (DateTime?)null,
                                 RoleTitle = r["RoleTitle"]?.ToString() ?? "",
+                                AvatarPath = avatar,
                             }
                         );
                     }
                 }
+
+                // Batch-load avatar paths from profile_tbl if sp_GetAllUsers does not return AvatarPath column
+                if (list.Count > 0 && (dt == null || (!dt.Columns.Contains("AvatarPath") && !dt.Columns.Contains("avatar_path"))))
+                {
+                    try
+                    {
+                        var avatarDt = DatabaseHelper.ExecuteDataTable("SELECT user_id, avatar_path FROM dbo.profile_tbl WHERE avatar_path IS NOT NULL AND avatar_path <> ''");
+                        if (avatarDt != null)
+                        {
+                            var map = new System.Collections.Generic.Dictionary<int, string>();
+                            foreach (DataRow row in avatarDt.Rows)
+                            {
+                                int uid = Convert.ToInt32(row["user_id"]);
+                                map[uid] = row["avatar_path"]?.ToString() ?? "";
+                            }
+                            foreach (var u in list)
+                            {
+                                if (map.ContainsKey(u.UserId))
+                                    u.AvatarPath = map[u.UserId];
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // Link pending password reset requests to users
+                try
+                {
+                    var pendingResets = GetPendingPasswordResets();
+
+                    if (pendingResets != null && pendingResets.Count > 0)
+                    {
+                        foreach (var u in list)
+                        {
+                            var matched = pendingResets.FirstOrDefault(pr =>
+                                (pr.UserId.HasValue && pr.UserId.Value == u.UserId) ||
+                                (!string.IsNullOrEmpty(pr.Email) && string.Equals(pr.Email, u.Email, StringComparison.OrdinalIgnoreCase)));
+                            if (matched != null)
+                            {
+                                u.PendingResetId = matched.ResetId;
+                                u.PendingResetReason = matched.Reason;
+                                u.PendingResetRequestedAt = matched.CreatedAt;
+                            }
+                        }
+                    }
+                }
+                catch { }
             }
             catch (Exception ex)
             {
@@ -903,6 +1167,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                 {
                     foreach (DataRow r in dt.Rows)
                     {
+                        string avatar = "";
+                        if (r.Table.Columns.Contains("AvatarPath") && r["AvatarPath"] != DBNull.Value)
+                            avatar = r["AvatarPath"].ToString();
+                        else if (r.Table.Columns.Contains("avatar_path") && r["avatar_path"] != DBNull.Value)
+                            avatar = r["avatar_path"].ToString();
+
                         list.Add(
                             new UserPortfolioReportDto
                             {
@@ -929,10 +1199,86 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                                 TechCount = Convert.ToInt32(r["TechCount"]),
                                 ExperiencesCount = Convert.ToInt32(r["ExperiencesCount"]),
                                 PortfolioStatus = r["PortfolioStatus"]?.ToString() ?? "Not Started",
+                                Role = r.Table.Columns.Contains("Role") && r["Role"] != DBNull.Value
+                                    ? r["Role"].ToString()
+                                    : (r.Table.Columns.Contains("UserRole") && r["UserRole"] != DBNull.Value
+                                        ? r["UserRole"].ToString()
+                                        : (r.Table.Columns.Contains("user_role") && r["user_role"] != DBNull.Value
+                                            ? r["user_role"].ToString()
+                                            : "User")),
+                                AvatarPath = avatar,
                             }
                         );
                     }
                 }
+
+                // Batch-load avatar paths from profile_tbl if sp_GetUserPortfolioReports does not return AvatarPath column
+                if (list.Count > 0 && (dt == null || (!dt.Columns.Contains("AvatarPath") && !dt.Columns.Contains("avatar_path"))))
+                {
+                    try
+                    {
+                        var avatarDt = DatabaseHelper.ExecuteDataTable("SELECT user_id, avatar_path FROM dbo.profile_tbl WHERE avatar_path IS NOT NULL AND avatar_path <> ''");
+                        if (avatarDt != null)
+                        {
+                            var map = new System.Collections.Generic.Dictionary<int, string>();
+                            foreach (DataRow row in avatarDt.Rows)
+                            {
+                                int uid = Convert.ToInt32(row["user_id"]);
+                                map[uid] = row["avatar_path"]?.ToString() ?? "";
+                            }
+                            foreach (var u in list)
+                            {
+                                if (map.ContainsKey(u.UserId))
+                                    u.AvatarPath = map[u.UserId];
+                            }
+                        }
+                    }
+                    catch { }
+                }
+                // Ensure all users (including Admins) are represented in the combined report list
+                try
+                {
+                    var allUsers = GetAllUsers(excludeAdmins: false);
+                    if (allUsers != null && allUsers.Count > 0)
+                    {
+                        var existingIds = new System.Collections.Generic.HashSet<int>(System.Linq.Enumerable.Select(list, x => x.UserId));
+                        foreach (var u in allUsers)
+                        {
+                            if (!existingIds.Contains(u.UserId))
+                            {
+                                list.Add(new UserPortfolioReportDto
+                                {
+                                    UserId = u.UserId,
+                                    FirstName = u.FirstName,
+                                    LastName = u.LastName,
+                                    FullName = u.FullName,
+                                    Email = u.Email,
+                                    IsActive = u.IsActive,
+                                    CreatedAt = u.CreatedAt,
+                                    LastLoginAt = u.LastLoginAt,
+                                    LoginCount = u.LoginCount,
+                                    HasProfile = u.HasProfile,
+                                    RoleTitle = string.IsNullOrEmpty(u.RoleTitle) ? (u.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ? "Administrator" : "Not Set") : u.RoleTitle,
+                                    Role = u.Role,
+                                    AvatarPath = u.AvatarPath,
+                                    PortfolioStatus = u.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ? "N/A" : (u.HasProfile ? "In Progress" : "Not Started")
+                                });
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                // Order by recent login stream: most recent sign-ins first, then by account creation
+                list = System.Linq.Enumerable.ToList(
+                    System.Linq.Enumerable.ThenByDescending(
+                        System.Linq.Enumerable.ThenByDescending(
+                            System.Linq.Enumerable.OrderByDescending(list, u => u.LastLoginAt.HasValue),
+                            u => u.LastLoginAt
+                        ),
+                        u => u.CreatedAt
+                    )
+                );
             }
             catch (Exception ex)
             {
@@ -1011,7 +1357,16 @@ namespace _24_1639DelMundoPersonalPortfolio.Services
                         stats.PortfolioCreationRate = Convert.ToInt32(r["PortfolioCreationRate"]);
                 }
 
-                stats.RecentUsers = GetAllUsers(excludeAdmins: true);
+                var allUsers = GetAllUsers(excludeAdmins: false);
+                stats.RecentUsers = allUsers != null
+                    ? System.Linq.Enumerable.ToList(
+                        System.Linq.Enumerable.ThenByDescending(
+                            System.Linq.Enumerable.ThenByDescending(
+                                System.Linq.Enumerable.OrderByDescending(allUsers, u => u.LastLoginAt.HasValue),
+                                u => u.LastLoginAt),
+                            u => u.CreatedAt)
+                      )
+                    : new List<UserSummaryDto>();
                 stats.UserPortfolioReports = GetUserPortfolioReports();
             }
             catch (Exception ex)

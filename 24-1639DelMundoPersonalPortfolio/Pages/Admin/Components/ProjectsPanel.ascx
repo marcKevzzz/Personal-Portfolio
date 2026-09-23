@@ -8,13 +8,13 @@
 
     <div class="add-form">
         <div class="field">
-            <label>Project Title</label>
+            <label>Project Title <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtProjectTitle" runat="server" placeholder="e.g. Samson Dental Center" />
             </div>
         </div>
         <div class="field">
-            <label>Project Image &amp; Preview</label>
+            <label>Project Image &amp; Preview <span class="req-star">*</span></label>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <div class="input-row" style="flex: 1; border: none;">
                     <asp:FileUpload ID="fuProjectImage" runat="server" accept="image/*" CssClass="admin-file-input" />
@@ -32,7 +32,7 @@
             </div>
         </div>
         <div class="field" style="grid-column: 1 / -1;">
-            <label>Technology Tags (Hit Enter or comma to add)</label>
+            <label>Technology Tags <span class="req-star">*</span></label>
             <div class="chips-container" id="projectTagChips" data-input-target="hidProjectTags">
                 <asp:Literal ID="litProjectChips" runat="server" />
                 <input type="text" class="chip-input" placeholder="Type tag & hit Enter..." />
@@ -41,7 +41,7 @@
         </div>
         <div style="grid-column: 1 / -1; display: flex; gap: 12px; align-items: center;">
             <asp:Button ID="btnAddProject" runat="server" Text="Add Project" CssClass="btn btn-primary" OnClick="btnAddProject_Click" data-confirm-title="Add Project" data-confirm-msg="Are you sure you want to add this project?" data-confirm-btn="Add Project" />
-            <asp:Button ID="btnCancelProjectEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelProjectEdit_Click" />
+            <asp:Button ID="btnCancelProjectEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelProjectEdit_Click" data-confirm-title="Discard Changes" data-confirm-msg="Are you sure you want to discard your changes?" data-confirm-type="warning" data-confirm-btn="Discard" />
         </div>
     </div>
 
@@ -68,7 +68,7 @@
                             <td><strong><%# Eval("Title") %></strong></td>
                             <td>
                                 <%# !string.IsNullOrWhiteSpace((string)Eval("ProjectUrl")) 
-                                    ? "<a href=\"" + Eval("ProjectUrl") + "\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color: inherit; text-decoration: underline; text-underline-offset: 3px; word-break: break-all;\" title=\"Open URL\">" + Server.HtmlEncode((string)Eval("ProjectUrl")) + "</a>" 
+                                    ? "<a href=\"" + Eval("ProjectUrl") + "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"table-preview-link\" title=\"Open URL\"><span>" + Server.HtmlEncode((string)Eval("ProjectUrl")) + "</span><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\"></path><polyline points=\"15 3 21 3 21 9\"></polyline><line x1=\"10\" y1=\"14\" x2=\"21\" y2=\"3\"></line></svg></a>" 
                                     : "<span style=\"color: var(--muted);\">-</span>" %>
                             </td>
                             <td><%# Eval("Tags") %></td>

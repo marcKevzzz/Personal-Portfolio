@@ -27,6 +27,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         protected void btnAddEducation_Click(object sender, EventArgs e)
         {
+            if (_24_1639DelMundoPersonalPortfolio.Helpers.DuplicateSubmissionGuard.IsDuplicate(this.Page))
+            {
+                ResetForm();
+                BindEducations();
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(txtEduTitle.Text) || string.IsNullOrWhiteSpace(txtEduInstitution.Text))
             {
                 Page.ClientScript.RegisterStartupScript(GetType(), "eduWarn", "if(window.AdminToast) AdminToast.warning('Please enter both degree/title and institution.', 'Validation Error');", true);
@@ -36,8 +43,17 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             int eduId = int.TryParse(hidEditingEduId.Value, out int id) ? id : 0;
 
             int startYear = int.TryParse(txtEduStartYear.Text.Trim(), out int sy) ? sy : DateTime.Today.Year;
-            int? endYear = int.TryParse(txtEduEndYear.Text.Trim(), out int ey) ? ey : (int?)null;
-            bool isCurrent = !endYear.HasValue;
+            string endYearStr = txtEduEndYear.Text.Trim();
+            bool isCurrent = string.Equals(endYearStr, "Present", StringComparison.OrdinalIgnoreCase);
+            int? endYear = null;
+            if (!isCurrent && int.TryParse(endYearStr, out int ey))
+            {
+                endYear = ey;
+            }
+            else if (!isCurrent && string.IsNullOrEmpty(endYearStr))
+            {
+                isCurrent = true;
+            }
 
             var edu = new EducationDto
             {
@@ -84,7 +100,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 {
                     hidEditingEduId.Value = item.EduId.ToString();
                     txtEduStartYear.Text = item.StartYear > 0 ? item.StartYear.ToString() : "";
-                    txtEduEndYear.Text = item.EndYear.HasValue ? item.EndYear.Value.ToString() : "";
+                    txtEduEndYear.Text = (item.IsCurrent || !item.EndYear.HasValue) ? "Present" : item.EndYear.Value.ToString();
                     txtEduTitle.Text = item.Title;
                     txtEduSubtitle.Text = item.Subtitle;
                     txtEduInstitution.Text = item.InstitutionName;
@@ -93,6 +109,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                     btnAddEducation.Attributes["data-confirm-title"] = "Update Education";
                     btnAddEducation.Attributes["data-confirm-msg"] = $"Save changes to {item.Title}?";
                     btnCancelEduEdit.Visible = true;
+
+                    if (item.IsCurrent || !item.EndYear.HasValue)
+                    {
+                        Page.ClientScript.RegisterStartupScript(GetType(), "chkEduPresentInit", "setTimeout(function(){ var cb = document.getElementById('chkEduPresent'); if(cb) cb.checked = true; }, 50);", true);
+                    }
                 }
             }
         }

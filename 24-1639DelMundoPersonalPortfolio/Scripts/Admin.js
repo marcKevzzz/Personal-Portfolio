@@ -16,6 +16,8 @@ document.addEventListener("DOMContentLoaded", function () {
   initAdminLogout();
   initInputFocus();
   initPasswordToggles();
+  safeDecodeSvgCode();
+  initTableFilters();
 });
 
 /* -------------------------------------------------------------
@@ -206,7 +208,7 @@ function initAdminCursor() {
 
   // Hover targets with delegation & GSAP scale
   var hoverSelector =
-    "a, button, input, textarea, select, .nav-item, .btn, .sidebar-toggle-btn, .admin-logout-btn, .admin-avatar-box, .status-pill, .chip, .chip-tag, .chip-remove, .chip-input, .chips-container, .data-table tr, .dash-kpi-card, .jump-panel-btn";
+    "a, button, input, textarea, select, .nav-item, .btn, .sidebar-toggle-btn, .admin-logout-btn, .admin-avatar-box, .status-pill, .chip, .chip-tag, .chip-remove, .chip-input, .chips-container, .data-table tr, .dash-kpi-card, .jump-panel-btn, .filter-pill, .table-filter-input, .admin-modal-close-btn, .user-avatar-initials";
 
   document.addEventListener("mouseover", function (e) {
     if (e.target && e.target.closest(hoverSelector)) {
@@ -401,10 +403,14 @@ function initAdminNavigation() {
 
     if (panelName !== "techstack") {
       safeEncodeSvgCode();
+    } else {
+      safeDecodeSvgCode();
     }
 
     localStorage.setItem("admin_active_panel", panelName);
   }
+
+  window.switchAdminPanel = activatePanel;
 
   navLinks.forEach(function (link) {
     link.addEventListener("click", function (e) {
@@ -597,6 +603,24 @@ function safeEncodeSvgCode() {
     try {
       txtSvg.value =
         "base64:" + btoa(unescape(encodeURIComponent(txtSvg.value.trim())));
+    } catch (err) {}
+  }
+}
+
+function safeDecodeSvgCode() {
+  var txtSvg =
+    document.getElementById("txtTechSvgCode") ||
+    document.querySelector("textarea[id*='txtTechSvgCode']");
+  if (
+    txtSvg &&
+    txtSvg.value &&
+    txtSvg.value.trim().startsWith("base64:")
+  ) {
+    try {
+      txtSvg.value = decodeURIComponent(escape(atob(txtSvg.value.trim().substring(7))));
+      if (typeof updateLiveTechSvgPreview === "function") {
+        updateLiveTechSvgPreview(txtSvg.value);
+      }
     } catch (err) {}
   }
 }
@@ -941,9 +965,16 @@ function validateAdminForm(trigger) {
 
   if (firstInvalid) {
     firstInvalid.classList.add("input-error");
-    var parentField =
-      firstInvalid.closest(".field") || firstInvalid.closest(".input-row");
-    if (parentField) parentField.classList.add("has-error");
+    var inputRow = firstInvalid.closest(".input-row");
+    if (inputRow) {
+      inputRow.classList.add("has-error");
+      inputRow.classList.add("input-error");
+    }
+    var field = firstInvalid.closest(".field");
+    if (field) {
+      field.classList.add("has-error");
+      field.classList.remove("input-error");
+    }
     firstInvalid.focus();
     if (typeof AdminToast !== "undefined") {
       AdminToast.warning(errorMsg, "Validation Error");
@@ -953,6 +984,55 @@ function validateAdminForm(trigger) {
 
   return { valid: true };
 }
+
+/* Clear invalid input state as soon as the user starts typing */
+document.addEventListener(
+  "input",
+  function (e) {
+    var el = e.target;
+    if (
+      el &&
+      (el.tagName === "INPUT" ||
+        el.tagName === "TEXTAREA" ||
+        el.tagName === "SELECT")
+    ) {
+      el.classList.remove("input-error");
+      var inputRow = el.closest(".input-row");
+      if (inputRow) {
+        inputRow.classList.remove("has-error", "input-error");
+      }
+      var field = el.closest(".field");
+      if (field) {
+        field.classList.remove("has-error", "input-error");
+      }
+    }
+  },
+  true
+);
+
+document.addEventListener(
+  "change",
+  function (e) {
+    var el = e.target;
+    if (
+      el &&
+      (el.tagName === "INPUT" ||
+        el.tagName === "TEXTAREA" ||
+        el.tagName === "SELECT")
+    ) {
+      el.classList.remove("input-error");
+      var inputRow = el.closest(".input-row");
+      if (inputRow) {
+        inputRow.classList.remove("has-error", "input-error");
+      }
+      var field = el.closest(".field");
+      if (field) {
+        field.classList.remove("has-error", "input-error");
+      }
+    }
+  },
+  true
+);
 
 /* -------------------------------------------------------------
    UNIVERSAL MODAL CONFIRMATION INTERCEPTOR
@@ -974,8 +1054,14 @@ document.addEventListener(
           ? "danger"
           : "primary");
 
-      // Perform validation on Add/Save/Update actions before opening modal
-      if (type !== "danger") {
+      var isCancel =
+        type === "warning" ||
+        (trigger.id && trigger.id.toLowerCase().indexOf("cancel") >= 0) ||
+        (trigger.value && trigger.value.toLowerCase().indexOf("cancel") >= 0) ||
+        (trigger.textContent && trigger.textContent.toLowerCase().indexOf("cancel") >= 0);
+
+      // Perform validation on Add/Save/Update actions before opening modal (never block Cancel/Discard or Delete)
+      if (type !== "danger" && !isCancel) {
         var valResult = validateAdminForm(trigger);
         if (!valResult.valid) {
           e.preventDefault();
@@ -988,13 +1074,13 @@ document.addEventListener(
       e.stopPropagation();
 
       var title =
-        trigger.getAttribute("data-confirm-title") || "Confirm Action";
+        trigger.getAttribute("data-confirm-title") || (isCancel ? "Discard Changes" : "Confirm Action");
       var msg =
         trigger.getAttribute("data-confirm-msg") ||
-        "Are you sure you want to proceed?";
+        (isCancel ? "Are you sure you want to discard your changes?" : "Are you sure you want to proceed?");
       var confirmText =
         trigger.getAttribute("data-confirm-btn") ||
-        (type === "danger" ? "Delete" : "Save Changes");
+        (type === "danger" ? "Delete" : (isCancel ? "Discard" : "Save Changes"));
 
       AdminModal.confirm({
         title: title,
@@ -1348,3 +1434,95 @@ var AdminModal = (function () {
   };
 })();
 window.AdminModal = AdminModal;
+
+/* -------------------------------------------------------------
+   ADMIN TABLE REAL-TIME FILTERS
+   Works for tblUserActivity, tblUserPortfolios, tblAllUsers
+   ------------------------------------------------------------- */
+function initTableFilters() {
+  function applyFilter(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+
+    var input = document.querySelector('.table-filter-input[data-table="' + tableId + '"]');
+    var activePill = document.querySelector('.dash-filter-pills[data-table="' + tableId + '"] .filter-pill.active');
+    
+    var query = input ? input.value.trim().toLowerCase() : "";
+    var filterValue = activePill ? (activePill.getAttribute("data-filter") || "all").toLowerCase() : "all";
+
+    var tbody = table.querySelector("tbody");
+    if (!tbody) return;
+
+    var rows = Array.from(tbody.querySelectorAll("tr:not(.filter-no-results)"));
+    var visibleCount = 0;
+
+    rows.forEach(function (row) {
+      // Don't filter placeholder empty rows that say "No user activity" from initial load
+      if (row.cells.length === 1 && row.cells[0].colSpan > 1 && row.textContent.toLowerCase().indexOf("no ") !== -1) {
+        return;
+      }
+
+      var text = row.textContent.toLowerCase();
+      var matchesQuery = !query || text.indexOf(query) !== -1;
+      var matchesPill = true;
+
+      if (filterValue !== "all") {
+        var rowStatus = (row.getAttribute("data-status") || "").toLowerCase();
+        var rowRole = (row.getAttribute("data-role") || "").toLowerCase();
+        if (rowStatus && (rowStatus === filterValue || rowStatus.indexOf(filterValue) !== -1)) {
+          matchesPill = true;
+        } else if (rowRole && (rowRole === filterValue || rowRole.indexOf(filterValue) !== -1)) {
+          matchesPill = true;
+        } else {
+          matchesPill = text.indexOf(filterValue) !== -1;
+        }
+      }
+
+      if (matchesQuery && matchesPill) {
+        row.style.display = "";
+        visibleCount++;
+      } else {
+        row.style.display = "none";
+      }
+    });
+
+    // Handle no matching results feedback
+    var noResRow = tbody.querySelector(".filter-no-results");
+    if (visibleCount === 0 && rows.length > 0) {
+      if (!noResRow) {
+        noResRow = document.createElement("tr");
+        noResRow.className = "filter-no-results";
+        var colCount = (table.querySelector("thead tr") || { cells: { length: 8 } }).cells.length;
+        noResRow.innerHTML = '<td colspan="' + colCount + '" style="text-align:center; color:var(--text-dim); padding:20px; font-style:italic;">No records match your filter criteria.</td>';
+        tbody.appendChild(noResRow);
+      }
+      noResRow.style.display = "";
+    } else if (noResRow) {
+      noResRow.style.display = "none";
+    }
+  }
+
+  // Event delegation for text input filtering
+  document.addEventListener("input", function (e) {
+    if (e.target && e.target.classList.contains("table-filter-input")) {
+      var tableId = e.target.getAttribute("data-table");
+      if (tableId) applyFilter(tableId);
+    }
+  });
+
+  // Event delegation for filter pills
+  document.addEventListener("click", function (e) {
+    var pill = e.target.closest(".filter-pill");
+    if (pill) {
+      var container = pill.closest(".dash-filter-pills");
+      if (container) {
+        var tableId = container.getAttribute("data-table");
+        container.querySelectorAll(".filter-pill").forEach(function (p) {
+          p.classList.remove("active");
+        });
+        pill.classList.add("active");
+        if (tableId) applyFilter(tableId);
+      }
+    }
+  });
+}

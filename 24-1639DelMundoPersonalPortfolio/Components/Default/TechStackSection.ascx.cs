@@ -15,6 +15,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
         {
         }
 
+        public string RenderInlineSvg(object iconPathObj, object labelObj)
+        {
+            return _24_1639DelMundoPersonalPortfolio.Helpers.SvgHelper.RenderInlineSvg(iconPathObj, labelObj, "tech-icon");
+        }
+
         public void BindData(List<TechStackItemDto> techStacks)
         {
             TechStacks = techStacks ?? new List<TechStackItemDto>();

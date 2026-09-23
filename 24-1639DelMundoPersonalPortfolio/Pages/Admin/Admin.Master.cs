@@ -33,5 +33,11 @@ namespace _24_1639DelMundoPersonalPortfolio
                 }
             }
         }
+
+        protected override void OnPreRender(EventArgs e)
+        {
+            base.OnPreRender(e);
+            DuplicateSubmissionGuard.RegisterToken(this.Page);
+        }
     }
 }

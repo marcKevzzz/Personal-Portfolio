@@ -7,8 +7,9 @@
     <div class="admin-profile-card">
         <div class="admin-profile-header">
             <div class="avatar-preview-container">
-                <asp:Image ID="imgAdminAvatar" runat="server" CssClass="account-avatar-img" Visible="false" ClientIDMode="Static" onerror="this.style.display='none'; var ph = document.getElementById('adminAvatarSvgPlaceholder'); if (ph) ph.style.display='flex';" />
-                <div id="adminAvatarSvgPlaceholder" runat="server" class="avatar-svg-placeholder" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(61,127,255,0.08);" ClientIDMode="Static">
+                <asp:Image ID="imgAdminAvatar" runat="server" CssClass="account-avatar-img" Visible="false" ClientIDMode="Static" onerror="this.style.display='none'; var ph = document.getElementById('adminAvatarInitials'); if (ph) ph.style.display='flex';" />
+                <span id="adminAvatarInitials" runat="server" clientidmode="Static" class="user-avatar-initials account-avatar-initials" style="display: none;">M</span>
+                <div id="adminAvatarSvgPlaceholder" runat="server" class="avatar-svg-placeholder" style="width:100%; height:100%; display:none; align-items:center; justify-content:center; background:rgba(61,127,255,0.08);" ClientIDMode="Static">
                     <svg class="profile-icon-svg" viewBox="0 0 24 24" fill="currentColor" style="width:48px; height:48px; color:var(--text-dim);">
                         <rect x="9" y="4" width="6" height="6" />
                         <rect x="11" y="10" width="2" height="2" />

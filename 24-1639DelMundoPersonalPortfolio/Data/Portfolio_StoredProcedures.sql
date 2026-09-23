@@ -107,10 +107,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_SaveProfile
     @avatar_path NVARCHAR(255) = 'Assets/Images/pixelart_portrait.png',
     @location_address NVARCHAR(255) = NULL,
     @birth_date DATE = NULL,
-    @experience_years INT = 1,
-    @email NVARCHAR(150) = NULL,
-    @github_url NVARCHAR(255) = NULL,
-    @linkedin_url NVARCHAR(255) = NULL
+    @experience_years INT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -118,34 +115,37 @@ BEGIN
     IF EXISTS (SELECT 1 FROM dbo.profile_tbl WHERE user_id = @user_id)
     BEGIN
         UPDATE dbo.profile_tbl
-        SET hero_subline = @hero_subline,
-            hero_names = @hero_names,
-            role_summary = @role_summary,
-            role_title = @role_title,
-            focus_area = @focus_area,
-            based_in = @based_in,
-            avatar_path = @avatar_path,
+        SET hero_subline     = @hero_subline,
+            hero_names       = @hero_names,
+            role_summary     = @role_summary,
+            role_title       = @role_title,
+            focus_area       = @focus_area,
+            based_in         = @based_in,
+            avatar_path      = @avatar_path,
             location_address = @location_address,
-            birth_date = @birth_date,
+            birth_date       = @birth_date,
             experience_years = @experience_years,
-            email = @email,
-            github_url = @github_url,
-            linkedin_url = @linkedin_url,
-            updated_at = GETDATE()
+            updated_at       = GETDATE()
         WHERE user_id = @user_id;
+
+        SELECT profile_id FROM dbo.profile_tbl WHERE user_id = @user_id;
     END
     ELSE
     BEGIN
         INSERT INTO dbo.profile_tbl
         (
-            user_id, hero_subline, hero_names, role_summary, role_title, focus_area, based_in,
-            avatar_path, location_address, birth_date, experience_years, email, github_url, linkedin_url, updated_at
+            user_id, hero_subline, hero_names, role_summary, role_title,
+            focus_area, based_in, avatar_path, location_address, birth_date,
+            experience_years, created_at, updated_at
         )
         VALUES
         (
-            @user_id, @hero_subline, @hero_names, @role_summary, @role_title, @focus_area, @based_in,
-            @avatar_path, @location_address, @birth_date, @experience_years, @email, @github_url, @linkedin_url, GETDATE()
+            @user_id, @hero_subline, @hero_names, @role_summary, @role_title,
+            @focus_area, @based_in, @avatar_path, @location_address, @birth_date,
+            @experience_years, GETDATE(), GETDATE()
         );
+
+        SELECT SCOPE_IDENTITY() AS profile_id;
     END
 END;
 GO
@@ -184,7 +184,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_SaveTechStack
     @user_id INT,
     @group_name NVARCHAR(100),
     @label NVARCHAR(100),
-    @icon_path NVARCHAR(255)
+    @icon_path NVARCHAR(MAX)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -462,7 +462,8 @@ BEGIN
         ISNULL(u.login_count, 0) AS LoginCount,
         CASE WHEN p.profile_id IS NOT NULL THEN 1 ELSE 0 END AS HasProfile,
         p.birth_date AS BirthDate,
-        ISNULL(p.role_title, 'Not Set') AS RoleTitle
+        ISNULL(p.role_title, 'Not Set') AS RoleTitle,
+        ISNULL(p.avatar_path, '') AS AvatarPath
     FROM dbo.users_tbl u
     LEFT JOIN dbo.profile_tbl p ON u.user_id = p.user_id
     ORDER BY u.created_at DESC;
@@ -589,6 +590,7 @@ BEGIN
         CASE WHEN p.profile_id IS NOT NULL THEN 1 ELSE 0 END AS HasProfile,
         ISNULL(p.role_title, 'Not Set') AS RoleTitle,
         p.updated_at AS LastProfileUpdate,
+        ISNULL(p.avatar_path, '') AS AvatarPath,
         (SELECT COUNT(1) FROM dbo.projects_tbl WHERE user_id = u.user_id) AS ProjectsCount,
         (SELECT COUNT(1) FROM dbo.skills_tbl WHERE user_id = u.user_id) AS SkillsCount,
         (SELECT COUNT(1) FROM dbo.tech_stacks_tbl WHERE user_id = u.user_id) AS TechCount,
@@ -678,3 +680,95 @@ BEGIN
     END
 END;
 GO
+
+-- 13. Contacts Management Procedures
+CREATE OR ALTER PROCEDURE dbo.sp_GetContacts
+    @user_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT 
+        contact_id,
+        user_id,
+        platform,
+        ISNULL(contact_label, '') AS contact_label,
+        contact_value,
+        ISNULL(contact_url, '') AS contact_url,
+        display_order,
+        is_active,
+        created_at,
+        updated_at
+    FROM dbo.contacts_tbl
+    WHERE user_id = @user_id AND is_active = 1
+    ORDER BY display_order ASC, contact_id ASC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_SaveContact
+    @contact_id INT = 0,
+    @user_id INT,
+    @platform NVARCHAR(50),
+    @contact_label NVARCHAR(100) = NULL,
+    @contact_value NVARCHAR(500),
+    @contact_url NVARCHAR(500) = NULL,
+    @display_order INT = 0
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @contact_id > 0 AND EXISTS (SELECT 1 FROM dbo.contacts_tbl WHERE contact_id = @contact_id AND user_id = @user_id)
+    BEGIN
+        UPDATE dbo.contacts_tbl
+        SET platform = @platform,
+            contact_label = @contact_label,
+            contact_value = @contact_value,
+            contact_url = @contact_url,
+            display_order = @display_order,
+            updated_at = GETDATE()
+        WHERE contact_id = @contact_id AND user_id = @user_id;
+
+        SELECT @contact_id AS contact_id;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO dbo.contacts_tbl (
+            user_id,
+            platform,
+            contact_label,
+            contact_value,
+            contact_url,
+            display_order,
+            is_active,
+            created_at,
+            updated_at
+        )
+        VALUES (
+            @user_id,
+            @platform,
+            @contact_label,
+            @contact_value,
+            @contact_url,
+            @display_order,
+            1,
+            GETDATE(),
+            GETDATE()
+        );
+
+        SELECT SCOPE_IDENTITY() AS contact_id;
+    END
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DeleteContact
+    @contact_id INT,
+    @user_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM dbo.contacts_tbl
+    WHERE contact_id = @contact_id AND user_id = @user_id;
+
+    SELECT @@ROWCOUNT AS RowsAffected;
+END;
+GO
+

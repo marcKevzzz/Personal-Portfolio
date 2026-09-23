@@ -17,6 +17,12 @@ function initInputFocus() {
     input.addEventListener("blur", function () {
       if (row) row.classList.remove("focused");
     });
+    input.addEventListener("input", function () {
+      var wrapper = input.closest(".field");
+      if (wrapper && wrapper.classList.contains("invalid")) {
+        wrapper.classList.remove("invalid");
+      }
+    });
   });
 }
 
@@ -161,9 +167,27 @@ function initSignIn() {
     });
   }
 
-  // Enter key support for signin
+  // Client-side sign-in validation
   var passInput = document.getElementById("password");
   var signInBtn = document.getElementById("signInBtn");
+
+  if (signInBtn) {
+    signInBtn.addEventListener("click", function (e) {
+      var emailVal = emailInput ? emailInput.value.trim() : "";
+      var passVal = passInput ? passInput.value : "";
+
+      var emailValid = markValid(emailInput, EMAIL_RE.test(emailVal));
+      var passValid = markValid(passInput, passVal.length >= 8);
+
+      if (!emailValid || !passValid) {
+        if (e) e.preventDefault();
+        var first = !emailValid ? emailInput : passInput;
+        if (first) first.focus();
+      }
+    });
+  }
+
+  // Enter key support for signin
   [emailInput, passInput].forEach(function (el) {
     if (el) {
       el.addEventListener("keydown", function (e) {

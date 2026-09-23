@@ -7,6 +7,7 @@ using System.Web.UI.WebControls;
 using _24_1639DelMundoPersonalPortfolio.Data;
 using _24_1639DelMundoPersonalPortfolio.Helpers;
 using _24_1639DelMundoPersonalPortfolio.Models;
+using _24_1639DelMundoPersonalPortfolio.Services;
 
 namespace _24_1639DelMundoPersonalPortfolio
 {
@@ -67,8 +68,35 @@ namespace _24_1639DelMundoPersonalPortfolio
                 litStatusText.Text = isActive ? "Active Account" : "Deactivated";
                 litMemberSince.Text = createdAt.ToString("MMMM yyyy");
 
-                imgAvatarPreview.Style["display"] = "none";
-                avatarSvgPlaceholder.Style["display"] = "flex";
+                var pData = PortfolioService.GetPortfolioData(currentUser.UserId);
+                string avatar = pData?.Profile?.AvatarPath;
+                bool hasRealAvatar = !string.IsNullOrWhiteSpace(avatar)
+                    && !avatar.Contains("image_placeholder")
+                    && !avatar.Contains("pixelart_portrait");
+                string initial = !string.IsNullOrWhiteSpace(fName)
+                    ? fName.Substring(0, 1).ToUpper()
+                    : (!string.IsNullOrWhiteSpace(email) ? email.Substring(0, 1).ToUpper() : "U");
+
+                if (hasRealAvatar)
+                {
+                    imgAvatarPreview.ImageUrl = ResolveUrl("~/" + avatar.TrimStart('~', '/'));
+                    imgAvatarPreview.Style["display"] = "block";
+                    userProfileInitials.Style["display"] = "none";
+                    avatarSvgPlaceholder.Style["display"] = "none";
+                }
+                else if (!string.IsNullOrEmpty(initial))
+                {
+                    imgAvatarPreview.Style["display"] = "none";
+                    userProfileInitials.InnerText = initial;
+                    userProfileInitials.Style["display"] = "flex";
+                    avatarSvgPlaceholder.Style["display"] = "none";
+                }
+                else
+                {
+                    imgAvatarPreview.Style["display"] = "none";
+                    userProfileInitials.Style["display"] = "none";
+                    avatarSvgPlaceholder.Style["display"] = "flex";
+                }
 
                 if (AuthHelper.IsAdmin())
                 {

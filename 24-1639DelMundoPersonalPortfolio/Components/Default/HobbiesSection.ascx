@@ -14,19 +14,12 @@
         <ItemTemplate>
           <div class="hobby-card reveal">
             <div class="hobby-card-glow"></div>
-            <div class="hobby-card-top">
-              <span class="hobby-card-index">// <%# string.Format("{0:D2}", Container.ItemIndex + 1) %></span>
-              <span class="hobby-tag">PASSION</span>
-            </div>
             <div class="hobby-card-main">
-              <h3 class="hobby-card-title"><%# Server.HtmlEncode(Eval("HobbyName").ToString()) %></h3>
-              <%# !string.IsNullOrWhiteSpace(Eval("HobbyDescription") as string) ? "<p class=\"hobby-card-desc\">" + Server.HtmlEncode(Eval("HobbyDescription").ToString()) + "</p>" : "<p class=\"hobby-card-desc placeholder-desc\">No description provided.</p>" %>
-            </div>
-            <div class="hobby-card-bottom">
-              <div class="hobby-status">
-                <span class="hobby-pulse-dot"></span>
-                <span class="hobby-status-label">ACTIVE PURSUIT</span>
+              <div class="hobby-card-top">
+                <span class="hobby-card-index"><%# string.Format("{0:D2}", Container.ItemIndex + 1) %></span>
+                <h3 class="hobby-card-title"><%# Server.HtmlEncode(Eval("HobbyName").ToString()) %></h3>
               </div>
+              <%# !string.IsNullOrWhiteSpace(Eval("HobbyDescription") as string) ? "<p class=\"hobby-card-desc\">" + Server.HtmlEncode(Eval("HobbyDescription").ToString()) + "</p>" : "<p class=\"hobby-card-desc placeholder-desc\">No description provided.</p>" %>
             </div>
           </div>
         </ItemTemplate>

@@ -289,5 +289,31 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
             var context = HttpContext.Current;
             return context?.Session?[SessionEmailKey] as string ?? string.Empty;
         }
+
+        /// <summary>
+        /// Generates an avatar circle HTML element: an img tag if a custom avatar image exists,
+        /// falling back to a span with the user's initial.
+        /// </summary>
+        public static string GetUserAvatarHtml(string avatarPath, string fullName, string email = "")
+        {
+            string initial = !string.IsNullOrWhiteSpace(fullName)
+                ? fullName.Substring(0, 1).ToUpper()
+                : (!string.IsNullOrWhiteSpace(email) ? email.Substring(0, 1).ToUpper() : "U");
+
+            bool hasRealAvatar = !string.IsNullOrWhiteSpace(avatarPath)
+                && !avatarPath.Contains("image_placeholder")
+                && !avatarPath.Contains("pixelart_portrait");
+
+            if (hasRealAvatar)
+            {
+                string rel = avatarPath.TrimStart('~', '/');
+                string url = VirtualPathUtility.ToAbsolute("~/" + rel);
+                string encUrl = HttpUtility.HtmlAttributeEncode(url);
+                string encInitial = HttpUtility.HtmlEncode(initial);
+                return $"<img src=\"{encUrl}\" class=\"user-avatar-initials\" alt=\"Avatar\" onerror=\"this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';\" /><span class=\"user-avatar-initials\" style=\"display:none;\">{encInitial}</span>";
+            }
+
+            return $"<span class=\"user-avatar-initials\">{HttpUtility.HtmlEncode(initial)}</span>";
+        }
     }
 }

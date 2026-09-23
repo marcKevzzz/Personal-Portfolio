@@ -16,6 +16,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public List<EducationDto> Educations { get; set; } = new List<EducationDto>();
         public List<AwardDto> Awards { get; set; } = new List<AwardDto>();
         public List<HobbyDto> Hobbies { get; set; } = new List<HobbyDto>();
+        public List<ContactDto> Contacts { get; set; } = new List<ContactDto>();
         public DateTime FetchedAt { get; set; } = DateTime.UtcNow;
     }
 
@@ -235,6 +236,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public int TechCount { get; set; }
         public int ExperiencesCount { get; set; }
         public string PortfolioStatus { get; set; } = "Not Started";
+        public string Role { get; set; } = "User";
+        public string AvatarPath { get; set; } = "";
     }
 
     public class CategoryStatDto
@@ -260,6 +263,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public bool HasProfile { get; set; }
         public DateTime? BirthDate { get; set; }
         public string RoleTitle { get; set; } = "";
+        public string AvatarPath { get; set; } = "";
+        public int? PendingResetId { get; set; }
+        public string PendingResetReason { get; set; } = "";
+        public DateTime? PendingResetRequestedAt { get; set; }
+        public bool HasPendingReset => PendingResetId.HasValue;
     }
 
     public class PasswordResetSummaryDto
@@ -270,5 +278,73 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public string FullName { get; set; } = "";
         public string Status { get; set; } = "Pending";
         public DateTime RequestedAt { get; set; }
+    }
+
+    public class ContactDto
+    {
+        public int ContactId { get; set; }
+        public int UserId { get; set; }
+        public string Platform { get; set; } = "Email";
+        public string ContactLabel { get; set; } = "";
+        public string ContactValue { get; set; } = "";
+        public string ContactUrl { get; set; } = "";
+        public int DisplayOrder { get; set; } = 0;
+        public bool IsActive { get; set; } = true;
+
+        public string DisplayLabel => !string.IsNullOrWhiteSpace(ContactLabel) ? ContactLabel : Platform;
+
+        public string ComputedUrl
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(ContactUrl))
+                    return ContactUrl.Trim();
+
+                string val = (ContactValue ?? "").Trim();
+                if (string.IsNullOrEmpty(val)) return "#";
+
+                string p = (Platform ?? "").Trim().ToLowerInvariant();
+                switch (p)
+                {
+                    case "email":
+                        return val.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) ? val : "mailto:" + val;
+                    case "phone":
+                    case "mobile":
+                        return val.StartsWith("tel:", StringComparison.OrdinalIgnoreCase) ? val : "tel:" + val.Replace(" ", "").Replace("-", "");
+                    case "github":
+                        return val.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || val.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                            ? val : "https://github.com/" + val.TrimStart('@');
+                    case "linkedin":
+                        return val.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || val.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                            ? val : (val.StartsWith("linkedin.com", StringComparison.OrdinalIgnoreCase) ? "https://" + val : "https://linkedin.com/in/" + val.TrimStart('@'));
+                    case "facebook":
+                        return val.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || val.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                            ? val : "https://facebook.com/" + val.TrimStart('@');
+                    case "instagram":
+                        return val.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || val.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                            ? val : "https://instagram.com/" + val.TrimStart('@');
+                    case "twitter":
+                    case "twitter / x":
+                    case "x":
+                        return val.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || val.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                            ? val : "https://x.com/" + val.TrimStart('@');
+                    case "telegram":
+                        return val.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || val.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                            ? val : "https://t.me/" + val.TrimStart('@');
+                    case "youtube":
+                        return val.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || val.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                            ? val : (val.StartsWith("@") ? "https://youtube.com/" + val : "https://youtube.com/@" + val);
+                    case "discord":
+                        return val.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || val.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                            ? val : (val.StartsWith("discord.gg", StringComparison.OrdinalIgnoreCase) ? "https://" + val : "#");
+                    default:
+                        if (val.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || val.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                            return val;
+                        if (val.Contains("@") && val.Contains("."))
+                            return "mailto:" + val;
+                        return val;
+                }
+            }
+        }
     }
 }

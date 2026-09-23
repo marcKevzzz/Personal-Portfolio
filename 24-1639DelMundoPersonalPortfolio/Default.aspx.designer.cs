@@ -15,6 +15,8 @@ namespace _24_1639DelMundoPersonalPortfolio
     {
         protected global::System.Web.UI.WebControls.Panel pnlAdminViewingBanner;
         protected global::System.Web.UI.WebControls.Literal litViewingUserName;
+        protected global::System.Web.UI.WebControls.HyperLink lnkReturnToSelf;
+        protected global::System.Web.UI.WebControls.Repeater rptUserPortfolios;
 
         /// <summary>
         /// NavSectionControl control.

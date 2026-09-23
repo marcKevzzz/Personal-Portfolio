@@ -68,3 +68,5 @@ App_Data/*.ldf
 ehthumbs.db
 Thumbs.db
 [Dd]esktop.ini
+
+connections.config

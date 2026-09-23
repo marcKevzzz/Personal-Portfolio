@@ -22,7 +22,7 @@
               <asp:Repeater ID="rptIcons" runat="server">
                 <ItemTemplate>
                   <div class="tech-card" data-label="<%# Server.HtmlEncode(Eval("Label").ToString()) %>" title="<%# Server.HtmlEncode(Eval("Label").ToString()) %>">
-                    <img src="<%# ResolveUrl("~/" + (Eval("IconPath")?.ToString() ?? "").TrimStart('~', '/')) %>" alt="<%# Server.HtmlEncode(Eval("Label").ToString()) %>" class="tech-icon" />
+                    <%# RenderInlineSvg(Eval("IconPath"), Eval("Label")) %>
                   </div>
                 </ItemTemplate>
               </asp:Repeater>

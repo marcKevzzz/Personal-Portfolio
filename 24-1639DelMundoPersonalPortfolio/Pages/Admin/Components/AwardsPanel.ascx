@@ -8,13 +8,13 @@
 
     <div class="add-form">
         <div class="field">
-            <label>Year</label>
+            <label>Year <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtAwardYear" runat="server" TextMode="Number" min="1950" max="2100" placeholder="e.g. 2026" />
             </div>
         </div>
         <div class="field">
-            <label>Award / Competition Title</label>
+            <label>Award / Competition Title <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtAwardTitle" runat="server" placeholder="DevCup 2026" />
             </div>
@@ -26,14 +26,14 @@
             </div>
         </div>
         <div class="field">
-            <label>Issuing Organization</label>
+            <label>Issuing Organization <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtAwardOrg" runat="server" placeholder="Quezon City University" />
             </div>
         </div>
         <div style="grid-column: 1 / -1; display: flex; gap: 12px; align-items: center;">
             <asp:Button ID="btnAddAward" runat="server" Text="Add Award" CssClass="btn btn-primary" OnClick="btnAddAward_Click" data-confirm-title="Add Award" data-confirm-msg="Are you sure you want to add this award / certificate?" data-confirm-btn="Add Award" />
-            <asp:Button ID="btnCancelAwardEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelAwardEdit_Click" />
+            <asp:Button ID="btnCancelAwardEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelAwardEdit_Click" data-confirm-title="Discard Changes" data-confirm-msg="Are you sure you want to discard your changes?" data-confirm-type="warning" data-confirm-btn="Discard" />
         </div>
     </div>
 

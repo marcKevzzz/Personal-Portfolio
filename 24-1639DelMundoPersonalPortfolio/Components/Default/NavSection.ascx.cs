@@ -8,7 +8,12 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (AuthHelper.IsAdmin())
+            if (!AuthHelper.IsAuthenticated())
+            {
+                lnkNavProfile.NavigateUrl = "~/Auth/SignIn.aspx";
+                lnkNavProfile.ToolTip = "Sign In / My Website";
+            }
+            else if (AuthHelper.IsAdmin())
             {
                 lnkNavProfile.NavigateUrl = "~/Pages/Admin/Admin.aspx";
                 lnkNavProfile.ToolTip = "Admin Console";
@@ -16,7 +21,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
             else
             {
                 lnkNavProfile.NavigateUrl = "~/Pages/User/PortfolioBuilder.aspx";
-                lnkNavProfile.ToolTip = "Portfolio Builder";
+                lnkNavProfile.ToolTip = "Website Builder";
             }
         }
     }

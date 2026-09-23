@@ -11,6 +11,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.User.Components
 {
     public partial class UserAccountPanel
     {
+        protected global::System.Web.UI.WebControls.Image imgUserAccountAvatar;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl userAccountInitials;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl avatarSvgPlaceholder;
         protected global::System.Web.UI.WebControls.Literal litUserDisplayName;
         protected global::System.Web.UI.WebControls.TextBox txtUserFirstName;
         protected global::System.Web.UI.WebControls.TextBox txtUserLastName;

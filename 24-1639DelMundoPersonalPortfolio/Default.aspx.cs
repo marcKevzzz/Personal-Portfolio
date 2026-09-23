@@ -12,46 +12,106 @@ namespace _24_1639DelMundoPersonalPortfolio
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!AuthHelper.IsAuthenticated())
+            bool isAuthenticated = AuthHelper.IsAuthenticated();
+            int currentUserId = isAuthenticated ? AuthHelper.GetCurrentUserId() : 0;
+            bool isAdmin = isAuthenticated && AuthHelper.IsAdmin();
+
+            int targetUserId = 0;
+            if (int.TryParse(Request.QueryString["userId"], out int qUserId) && qUserId > 0)
             {
-                Response.Redirect("~/Auth/SignIn.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl), true);
-                return;
+                targetUserId = qUserId;
+            }
+            else if (int.TryParse(Request.QueryString["id"], out int qId) && qId > 0)
+            {
+                targetUserId = qId;
             }
 
-            int currentUserId = AuthHelper.GetCurrentUserId();
-            int effectiveUserId;
+            int effectiveUserId = 0;
 
-            if (AuthHelper.IsAdmin())
+            if (targetUserId > 0)
             {
-                // System Administrators do not have a personal live portfolio
-                // They can only view other registered users' websites via ?userId=X
-                if (int.TryParse(Request.QueryString["userId"], out int qUserId) && qUserId > 0 && qUserId != currentUserId)
+                // Target user specified in query string - allow any user or visitor to view!
+                var checkData = PortfolioService.GetPortfolioData(targetUserId, false);
+                if (checkData != null && checkData.Profile != null)
                 {
-                    effectiveUserId = qUserId;
-                    pnlAdminViewingBanner.Visible = true;
+                    effectiveUserId = targetUserId;
                 }
                 else
                 {
-                    // No target user specified or tried to view self -> redirect back to Admin Console
-                    Response.Redirect("~/Pages/Admin/Admin.aspx", true);
-                    return;
+                    // Target user not found
+                    if (isAuthenticated)
+                    {
+                        effectiveUserId = isAdmin ? 1 : currentUserId;
+                    }
+                    else
+                    {
+                        Response.Redirect("~/Auth/SignIn.aspx", true);
+                        return;
+                    }
                 }
             }
             else
             {
-                // Normal users can ONLY view their own personal portfolio preview
-                // Other userId query parameters are strictly forbidden/ignored
-                effectiveUserId = currentUserId;
-                pnlAdminViewingBanner.Visible = false;
+                // No target user specified in URL
+                if (!isAuthenticated)
+                {
+                    Response.Redirect("~/Auth/SignIn.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl), true);
+                    return;
+                }
+
+                if (isAdmin)
+                {
+                    // Admins visiting without userId view the first registered user or redirect to Admin
+                    // var allUsers = PortfolioService.GetAllUsers(excludeAdmins: true);
+                    // if (allUsers != null && allUsers.Count > 0)
+                    // {
+                    //     effectiveUserId = allUsers[0].UserId;
+                    // }
+                    // else
+                    // {
+                        Response.Redirect("~/Pages/Admin/Admin.aspx", true);
+                        return;
+                    // }
+                }
+                else
+                {
+                    effectiveUserId = currentUserId;
+                }
             }
 
             var data = PortfolioService.GetPortfolioData(effectiveUserId, false);
 
-            if (AuthHelper.IsAdmin() && pnlAdminViewingBanner.Visible)
+            // Determine if viewer is looking at someone else's portfolio
+            bool isViewingOther = (effectiveUserId != currentUserId);
+            pnlAdminViewingBanner.Visible = isViewingOther;
+
+            if (isViewingOther)
             {
-                string name = data?.Profile?.FullName;
-                if (string.IsNullOrWhiteSpace(name)) name = $"User #{effectiveUserId}";
+                string name = data?.Profile?.LastName;
+                if (string.IsNullOrWhiteSpace(name))
+                    name = !string.IsNullOrWhiteSpace(data?.Profile?.HeroNames) ? data.Profile.HeroNames.Split(',')[0] : $"User #{effectiveUserId}";
                 litViewingUserName.Text = Server.HtmlEncode(name);
+
+                if (isAdmin)
+                {
+                    lnkReturnToSelf.NavigateUrl = "~/Pages/Admin/Admin.aspx";
+                    lnkReturnToSelf.Text = "← Back";
+                }
+                else if (isAuthenticated)
+                {
+                    lnkReturnToSelf.NavigateUrl = "~/Default.aspx";
+                    lnkReturnToSelf.Text = "← Return";
+                }
+                else
+                {
+                    lnkReturnToSelf.NavigateUrl = "~/Auth/SignIn.aspx";
+                    lnkReturnToSelf.Text = "Sign In / Create Portfolio";
+                }
+
+                // Bind community portfolio switcher list
+                var usersList = PortfolioService.GetAllUsers(excludeAdmins: true);
+                rptUserPortfolios.DataSource = usersList;
+                rptUserPortfolios.DataBind();
             }
 
             if (data != null)
@@ -65,7 +125,7 @@ namespace _24_1639DelMundoPersonalPortfolio
                 EducationSectionControl.BindData(data.Educations);
                 AwardsSectionControl.BindData(data.Awards);
                 HobbiesSectionControl.BindData(data.Hobbies);
-                ContactSectionControl.BindData(data.Profile);
+                ContactSectionControl.BindData(data.Contacts, data.Profile);
             }
 
             if (!IsPostBack && Request.QueryString["login"] == "true")
@@ -83,10 +143,11 @@ namespace _24_1639DelMundoPersonalPortfolio
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public static PortfolioDataDto GetPortfolioData(bool forceRefresh = false)
+        public static PortfolioDataDto GetPortfolioData(int userId = 0, bool forceRefresh = false)
         {
-            int currentUserId = AuthHelper.GetCurrentUserId();
-            return PortfolioService.GetPortfolioData(currentUserId, forceRefresh);
+            if (userId <= 0)
+                userId = AuthHelper.GetCurrentUserId();
+            return PortfolioService.GetPortfolioData(userId, forceRefresh);
         }
     }
 }

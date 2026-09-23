@@ -102,13 +102,27 @@
     <Content Include="Assets\Icons\github.svg" />
     <Content Include="Assets\Icons\gsap.svg" />
     <Content Include="Assets\Icons\html5.svg" />
+    <Content Include="Assets\Icons\html_639256842523243125.svg" />
+    <Content Include="Assets\Icons\html_639256842969058796.svg" />
+    <Content Include="Assets\Icons\html_639256843025103574.svg" />
     <Content Include="Assets\Icons\js.svg" />
     <Content Include="Assets\Icons\json.svg" />
     <Content Include="Assets\Icons\motion.svg" />
     <Content Include="Assets\Icons\mysql.svg" />
     <Content Include="Assets\Icons\netcore.svg" />
     <Content Include="Assets\Icons\nodejs.svg" />
+    <Content Include="Assets\Icons\oo_639257346670019250.svg" />
+    <Content Include="Assets\Icons\oo_639257348585844348.svg" />
+    <Content Include="Assets\Icons\oo_639257348677131852.svg" />
+    <Content Include="Assets\Icons\oo_639257354159816767.svg" />
+    <Content Include="Assets\Icons\oo_639257354921177097.svg" />
+    <Content Include="Assets\Icons\oo_639257355294626013.svg" />
+    <Content Include="Assets\Icons\oo_639257355925768828.svg" />
+    <Content Include="Assets\Icons\oo_639257356136584355.svg" />
+    <Content Include="Assets\Icons\oo_639257356932391936.svg" />
     <Content Include="Assets\Icons\postgresql.svg" />
+    <Content Include="Assets\Icons\react.svg" />
+    <Content Include="Assets\Icons\reacttest.svg" />
     <Content Include="Assets\Icons\tailwindcss.svg" />
     <Content Include="Assets\Icons\threejs.svg" />
     <Content Include="Assets\Icons\typescript.svg" />
@@ -116,13 +130,22 @@
     <Content Include="Assets\Icons\vscode.svg" />
     <Content Include="Assets\Icons\webgpu.svg" />
     <Content Include="Assets\Images\cpu_scheduler.png" />
+    <Content Include="Assets\Images\image_placeholder.png" />
     <Content Include="Assets\Images\mlbb_mayhem.png" />
     <Content Include="Assets\Images\payroll.png" />
     <Content Include="Assets\Images\pixelart_portrait.png" />
+    <Content Include="Assets\Images\POS_639256844469239033.jpg" />
+    <Content Include="Assets\Images\profile_avatar_bina_639256840713150982.webp" />
+    <Content Include="Assets\Images\profile_avatar_raidenchibi_639257310671669250.jpg" />
     <Content Include="Assets\Images\reviewbot.png" />
     <Content Include="Assets\Images\samsondentalcenter.png" />
+    <Content Include="Assets\Images\Screenshot_2026-09-04_073014_639257577816801529.png" />
+    <Content Include="Assets\Images\Screenshot_2026-09-19_094843_639253801739360772.png" />
+    <Content Include="Assets\Images\Screenshot_2026-09-23_130655_639257368366971719.png" />
     <Content Include="Assets\Images\tower_of_hanoi.png" />
+    <Content Include="Assets\UserImages\.gitkeep" />
     <Content Include="Assets\UserImages\user_1_639252182237359074.jpg" />
+    <Content Include="Assets\**\*" Exclude="@(Content)" />
     <Content Include="Content\Admin.css" />
     <Content Include="Content\Auth.css" />
     <Content Include="Content\Site.css" />
@@ -139,6 +162,7 @@
     <Content Include="Pages\Admin\Components\EducationPanel.ascx" />
     <Content Include="Pages\Admin\Components\AwardsPanel.ascx" />
     <Content Include="Pages\Admin\Components\HobbiesPanel.ascx" />
+    <Content Include="Pages\Admin\Components\ContactsPanel.ascx" />
     <Content Include="Pages\Admin\Components\UsersPanel.ascx" />
     <Content Include="Pages\Admin\Components\AdminProfilePanel.ascx" />
     <Content Include="Pages\User\PortfolioBuilder.aspx" />
@@ -148,6 +172,7 @@
     <Content Include="Scripts\Auth.js" />
     <Content Include="Scripts\Scripts.js" />
     <Content Include="Web.config" />
+    <Content Include="connections.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
@@ -268,6 +293,8 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\AuthHelper.cs" />
+    <Compile Include="Helpers\DuplicateSubmissionGuard.cs" />
+    <Compile Include="Helpers\SvgHelper.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\Enums.cs" />
     <Compile Include="Models\PortfolioDto.cs" />
@@ -343,6 +370,13 @@
     </Compile>
     <Compile Include="Pages\Admin\Components\HobbiesPanel.ascx.designer.cs">
       <DependentUpon>HobbiesPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\ContactsPanel.ascx.cs">
+      <DependentUpon>ContactsPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\Components\ContactsPanel.ascx.designer.cs">
+      <DependentUpon>ContactsPanel.ascx</DependentUpon>
     </Compile>
     <Compile Include="Pages\Admin\Components\UsersPanel.ascx.cs">
       <DependentUpon>UsersPanel.ascx</DependentUpon>

@@ -8,6 +8,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
 {
     public partial class ContactSection
     {
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl contactLinksContainer;
+        protected global::System.Web.UI.WebControls.Repeater rptContacts;
+        protected global::System.Web.UI.WebControls.Literal litContactsEmpty;
         protected global::System.Web.UI.WebControls.HyperLink contactEmailLink;
         protected global::System.Web.UI.WebControls.Literal litEmailEmpty;
         protected global::System.Web.UI.WebControls.HyperLink contactGithubLink;

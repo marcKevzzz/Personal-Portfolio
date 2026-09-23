@@ -283,6 +283,12 @@ namespace _24_1639DelMundoPersonalPortfolio
                                         <line x1=""12"" y1=""8"" x2=""12"" y2=""12""></line>
                                         <line x1=""12"" y1=""16"" x2=""12.01"" y2=""16""></line>
                                       </svg>";
+                ClientScript.RegisterStartupScript(
+                    this.GetType(),
+                    "highlightAuthError",
+                    "setTimeout(function(){ var f1 = document.getElementById('email'); var f2 = document.getElementById('password'); if (f1) f1.closest('.field')?.classList.add('invalid'); if (f2) f2.closest('.field')?.classList.add('invalid'); }, 50);",
+                    true
+                );
             }
             else
             {

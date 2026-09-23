@@ -8,19 +8,13 @@
 
     <div class="add-form">
         <div class="field">
-            <label>Year / Date</label>
-            <div class="input-date-wrap">
-                <asp:TextBox ID="txtAwardYear" runat="server" CssClass="date-picker" placeholder="e.g. 2026" />
-                <svg class="input-date-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
+            <label>Year <span class="req-star">*</span></label>
+            <div class="input-row">
+                <asp:TextBox ID="txtAwardYear" runat="server" TextMode="Number" min="1950" max="2100" placeholder="e.g. 2026" />
             </div>
         </div>
         <div class="field">
-            <label>Award / Competition Title</label>
+            <label>Award / Competition Title <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtAwardTitle" runat="server" placeholder="DevCup 2026" />
             </div>
@@ -32,14 +26,14 @@
             </div>
         </div>
         <div class="field">
-            <label>Issuing Organization</label>
+            <label>Issuing Organization <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtAwardOrg" runat="server" placeholder="Quezon City University" />
             </div>
         </div>
         <div style="grid-column: 1 / -1; display: flex; gap: 12px; align-items: center;">
             <asp:Button ID="btnAddAward" runat="server" Text="Add Award" CssClass="btn btn-primary" OnClick="btnAddAward_Click" data-confirm-title="Add Award" data-confirm-msg="Are you sure you want to add this award / certificate?" data-confirm-btn="Add Award" />
-            <asp:Button ID="btnCancelAwardEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelAwardEdit_Click" />
+            <asp:Button ID="btnCancelAwardEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelAwardEdit_Click" data-confirm-title="Discard Changes" data-confirm-msg="Are you sure you want to discard your changes?" data-confirm-type="warning" data-confirm-btn="Discard" />
         </div>
     </div>
 

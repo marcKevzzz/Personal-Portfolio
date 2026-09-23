@@ -6,42 +6,62 @@
 
     <asp:HiddenField ID="hidEditingEduId" runat="server" Value="0" />
 
-    <div class="add-form">
+    <div class="add-form three-col">
         <div class="field">
-            <label>Year Started</label>
+            <label>Year Started <span class="req-star">*</span></label>
             <div class="input-row">
-                <asp:TextBox ID="txtEduStartYear" runat="server" TextMode="Number" min="1950" max="2100" placeholder="e.g. 2020" />
+                <asp:TextBox ID="txtEduStartYear" runat="server" placeholder="e.g. 2020" />
             </div>
         </div>
         <div class="field">
-            <label>Year Ended</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="margin: 0;">Year Ended</label>
+                <label style="margin: 0; font-size: 11px; cursor: pointer; color: var(--blue-light); display: inline-flex; align-items: center; gap: 6px; font-weight: 500;">
+                    <input type="checkbox" id="chkEduPresent" onchange="toggleEduPresent(this);" />
+                    <span>Present</span>
+                </label>
+            </div>
             <div class="input-row">
-                <asp:TextBox ID="txtEduEndYear" runat="server" TextMode="Number" min="1950" max="2100" placeholder="e.g. 2024" />
+                <asp:TextBox ID="txtEduEndYear" runat="server" placeholder="e.g. 2024 or Present" />
             </div>
         </div>
         <div class="field">
-            <label>Degree / Level</label>
+            <label>Degree / Level <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtEduTitle" runat="server" placeholder="Collegiate Level" />
             </div>
         </div>
         <div class="field">
-            <label>Course / Major</label>
+            <label>Course / Major <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtEduSubtitle" runat="server" placeholder="B.S. Information Technology" />
             </div>
         </div>
         <div class="field">
-            <label>Institution Name</label>
+            <label>Institution Name <span class="req-star">*</span></label>
             <div class="input-row">
                 <asp:TextBox ID="txtEduInstitution" runat="server" placeholder="Quezon City University" />
             </div>
         </div>
-        <div style="grid-column: 1 / -1; display: flex; gap: 12px; align-items: center;">
+        <div class="field" style="display: flex; gap: 12px; align-items: flex-start; margin-top: auto; padding-bottom: 2px;">
             <asp:Button ID="btnAddEducation" runat="server" Text="Add Education" CssClass="btn btn-primary" OnClick="btnAddEducation_Click" data-confirm-title="Add Education" data-confirm-msg="Are you sure you want to add this education milestone?" data-confirm-btn="Add Education" />
-            <asp:Button ID="btnCancelEduEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelEduEdit_Click" />
+            <asp:Button ID="btnCancelEduEdit" runat="server" Text="Cancel Edit" CssClass="btn btn-secondary" Visible="false" OnClick="btnCancelEduEdit_Click" data-confirm-title="Discard Changes" data-confirm-msg="Are you sure you want to discard your changes?" data-confirm-type="warning" data-confirm-btn="Discard" />
         </div>
     </div>
+
+    <script>
+        function toggleEduPresent(chk) {
+            var txt = document.getElementById('<%= txtEduEndYear.ClientID %>');
+            if (!txt) return;
+            if (chk.checked) {
+                txt.value = 'Present';
+            } else {
+                if (txt.value.trim().toLowerCase() === 'present') {
+                    txt.value = '';
+                }
+            }
+        }
+    </script>
 
     <div class="data-table-wrap">
         <table class="data-table">
