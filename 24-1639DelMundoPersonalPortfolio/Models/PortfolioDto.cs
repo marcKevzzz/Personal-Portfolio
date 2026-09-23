@@ -26,13 +26,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public string FirstName { get; set; } = "";
         public string LastName { get; set; } = "";
         public string FullName => $"{FirstName} {LastName}".Trim();
-        public string HeroSubline { get; set; } = "builds interfaces";
+        public string HeroSubline { get; set; } = "";
         public string HeroNames { get; set; } = "";
         public string RoleSummary { get; set; } = "";
-        public string RoleTitle { get; set; } = "Web Developer";
-        public string FocusArea { get; set; } = "Interfaces & Data Systems";
-        public string BasedIn { get; set; } = "Quezon City";
-        public string AvatarPath { get; set; } = "Assets/Images/pixelart_portrait.png";
+        public string RoleTitle { get; set; } = "";
+        public string FocusArea { get; set; } = "";
+        public string BasedIn { get; set; } = "";
+        public string AvatarPath { get; set; } = "Assets/Images/image_placeholder.png";
         public string LocationAddress { get; set; } = "";
         public DateTime? BirthDate { get; set; }
 
@@ -45,7 +45,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
                 {
                     var today = DateTime.Today;
                     int age = today.Year - BirthDate.Value.Year;
-                    if (BirthDate.Value.Date > today.AddYears(-age)) age--;
+                    if (BirthDate.Value.Date > today.AddYears(-age))
+                        age--;
                     return age >= 0 ? age : 0;
                 }
                 return _fallbackAge;
@@ -92,7 +93,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         {
             get
             {
-                if (IsCurrent || !EndYear.HasValue) return $"{StartYear} — Present";
+                if (IsCurrent || !EndYear.HasValue)
+                    return $"{StartYear} — Present";
                 return $"{StartYear} — {EndYear.Value}";
             }
         }
@@ -125,7 +127,8 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         {
             get
             {
-                if (IsCurrent || !EndYear.HasValue) return $"{StartYear} — Present";
+                if (IsCurrent || !EndYear.HasValue)
+                    return $"{StartYear} — Present";
                 return $"{StartYear} — {EndYear.Value}";
             }
         }
@@ -178,7 +181,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public int TotalEducations { get; set; }
         public int TotalAwards { get; set; }
         public int TotalHobbies { get; set; }
-        
+
         // User Accounts Overview Metrics
         public int TotalUsers { get; set; }
         public int ActiveUsers { get; set; }
@@ -204,10 +207,13 @@ namespace _24_1639DelMundoPersonalPortfolio.Models
         public DateTime ReportGeneratedAt { get; set; } = DateTime.UtcNow;
 
         public List<CategoryStatDto> TechCategoryStats { get; set; } = new List<CategoryStatDto>();
-        public List<CategoryStatDto> ProjectCategoryStats { get; set; } = new List<CategoryStatDto>();
+        public List<CategoryStatDto> ProjectCategoryStats { get; set; } =
+            new List<CategoryStatDto>();
         public List<UserSummaryDto> RecentUsers { get; set; } = new List<UserSummaryDto>();
-        public List<PasswordResetSummaryDto> RecentPendingResets { get; set; } = new List<PasswordResetSummaryDto>();
-        public List<UserPortfolioReportDto> UserPortfolioReports { get; set; } = new List<UserPortfolioReportDto>();
+        public List<PasswordResetSummaryDto> RecentPendingResets { get; set; } =
+            new List<PasswordResetSummaryDto>();
+        public List<UserPortfolioReportDto> UserPortfolioReports { get; set; } =
+            new List<UserPortfolioReportDto>();
     }
 
     public class UserPortfolioReportDto

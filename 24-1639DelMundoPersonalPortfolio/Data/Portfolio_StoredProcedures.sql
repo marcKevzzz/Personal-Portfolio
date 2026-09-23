@@ -24,12 +24,12 @@ BEGIN
         u.first_name,
         u.last_name,
         ISNULL(p.hero_names, u.first_name + ',' + u.last_name) AS hero_names,
-        ISNULL(p.hero_subline, 'builds interfaces') AS hero_subline,
+        ISNULL(p.hero_subline, '') AS hero_subline,
         ISNULL(p.role_summary, '') AS role_summary,
-        ISNULL(p.role_title, 'Web Developer') AS role_title,
-        ISNULL(p.focus_area, 'Interfaces & Data Systems') AS focus_area,
-        ISNULL(p.based_in, 'Quezon City') AS based_in,
-        ISNULL(p.avatar_path, 'Assets/Images/pixelart_portrait.png') AS avatar_path,
+        ISNULL(p.role_title, '') AS role_title,
+        ISNULL(p.focus_area, '') AS focus_area,
+        ISNULL(p.based_in, '') AS based_in,
+        ISNULL(p.avatar_path, '') AS avatar_path,
         ISNULL(p.location_address, '') AS location_address,
         p.birth_date,
         CASE 
@@ -38,7 +38,7 @@ BEGIN
                 CASE WHEN DATEADD(YEAR, DATEDIFF(YEAR, p.birth_date, GETDATE()), p.birth_date) > GETDATE() THEN 1 ELSE 0 END
             ELSE 0
         END AS derived_age,
-        ISNULL(p.experience_years, 1) AS experience_years,
+        ISNULL(p.experience_years, 0) AS experience_years,
         ISNULL(p.email, u.email) AS email,
         ISNULL(p.github_url, '') AS github_url,
         ISNULL(p.linkedin_url, '') AS linkedin_url,

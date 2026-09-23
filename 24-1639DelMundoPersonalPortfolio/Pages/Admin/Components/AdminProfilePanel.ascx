@@ -16,14 +16,6 @@
                         <rect x="4" y="15" width="16" height="5" />
                     </svg>
                 </div>
-                <label for="adminAvatarUpload" class="avatar-edit-overlay" title="Change Avatar">
-                    <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                        <circle cx="12" cy="13" r="4"></circle>
-                    </svg>
-                    <span>Change Photo</span>
-                </label>
-                <asp:FileUpload ID="adminAvatarUpload" runat="server" ClientIDMode="Static" accept="image/*" style="display:none;" />
             </div>
             <div>
                 <h3 style="font-size: var(--t-md); font-weight: 500;">

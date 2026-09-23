@@ -127,46 +127,6 @@ namespace _24_1639DelMundoPersonalPortfolio
                 newPasswordHash = AuthHelper.HashPassword(newPassword);
             }
 
-            // Handle Image Upload
-            string relativeImagePath = null;
-            if (avatarUpload.HasFile)
-            {
-                string ext = Path.GetExtension(avatarUpload.FileName).ToLowerInvariant();
-                string[] allowedExts = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
-
-                if (Array.IndexOf(allowedExts, ext) < 0)
-                {
-                    ShowAlert("Invalid image format. Allowed formats: PNG, JPG, JPEG, WEBP, GIF.", isError: true);
-                    return;
-                }
-
-                // Check file size (max 5 MB)
-                if (avatarUpload.PostedFile.ContentLength > 5 * 1024 * 1024)
-                {
-                    ShowAlert("Image file size must not exceed 5 MB.", isError: true);
-                    return;
-                }
-
-                try
-                {
-                    string targetFolder = Server.MapPath("~/Assets/UserImages/");
-                    if (!Directory.Exists(targetFolder))
-                    {
-                        Directory.CreateDirectory(targetFolder);
-                    }
-
-                    string safeFileName = $"user_{currentUser.UserId}_{DateTime.UtcNow.Ticks}{ext}";
-                    string fullSavePath = Path.Combine(targetFolder, safeFileName);
-
-                    avatarUpload.SaveAs(fullSavePath);
-                    relativeImagePath = $"~/Assets/UserImages/{safeFileName}";
-                }
-                catch (Exception ex)
-                {
-                    ShowAlert("Failed to upload image: " + ex.Message, isError: true);
-                    return;
-                }
-            }
 
             try
             {

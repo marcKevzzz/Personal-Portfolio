@@ -17,13 +17,48 @@ namespace _24_1639DelMundoPersonalPortfolio.Components.Default
             ProfileData = profile ?? new ProfileDto();
 
             var user = _24_1639DelMundoPersonalPortfolio.Helpers.AuthHelper.GetCurrentUser();
-            string email = string.IsNullOrWhiteSpace(ProfileData.Email) ? (user?.Email ?? "contact@example.com") : ProfileData.Email;
-            string github = string.IsNullOrWhiteSpace(ProfileData.GithubUrl) ? "https://github.com" : ProfileData.GithubUrl;
-            string linkedin = string.IsNullOrWhiteSpace(ProfileData.LinkedinUrl) ? "https://linkedin.com" : ProfileData.LinkedinUrl;
+            string email = string.IsNullOrWhiteSpace(ProfileData.Email) ? (user?.Email ?? "") : ProfileData.Email;
+            string github = string.IsNullOrWhiteSpace(ProfileData.GithubUrl) ? "" : ProfileData.GithubUrl.Trim();
+            string linkedin = string.IsNullOrWhiteSpace(ProfileData.LinkedinUrl) ? "" : ProfileData.LinkedinUrl.Trim();
 
-            contactEmailLink.NavigateUrl = $"mailto:{email}";
-            contactGithubLink.NavigateUrl = github;
-            contactLinkedinLink.NavigateUrl = linkedin;
+            // Email link
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                contactEmailLink.NavigateUrl = $"mailto:{email}";
+                contactEmailLink.Visible = true;
+                litEmailEmpty.Visible = false;
+            }
+            else
+            {
+                contactEmailLink.Visible = false;
+                litEmailEmpty.Visible = true;
+            }
+
+            // GitHub link
+            if (!string.IsNullOrWhiteSpace(github))
+            {
+                contactGithubLink.NavigateUrl = github;
+                contactGithubLink.Visible = true;
+                litGithubEmpty.Visible = false;
+            }
+            else
+            {
+                contactGithubLink.Visible = false;
+                litGithubEmpty.Visible = true;
+            }
+
+            // LinkedIn link
+            if (!string.IsNullOrWhiteSpace(linkedin))
+            {
+                contactLinkedinLink.NavigateUrl = linkedin;
+                contactLinkedinLink.Visible = true;
+                litLinkedinEmpty.Visible = false;
+            }
+            else
+            {
+                contactLinkedinLink.Visible = false;
+                litLinkedinEmpty.Visible = true;
+            }
         }
     }
 }

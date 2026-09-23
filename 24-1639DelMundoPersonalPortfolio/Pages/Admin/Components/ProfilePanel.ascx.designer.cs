@@ -11,8 +11,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 {
     public partial class ProfilePanel
     {
-        protected global::System.Web.UI.WebControls.Literal litLinkedFullName;
-        protected global::System.Web.UI.WebControls.Literal litLinkedEmail;
         protected global::System.Web.UI.WebControls.TextBox txtProfileBirthDate;
         protected global::System.Web.UI.WebControls.Label lblProfileAgeHint;
         protected global::System.Web.UI.WebControls.TextBox txtProfileEmail;

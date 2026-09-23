@@ -78,6 +78,7 @@
           </div>
           <div class="strength" id="strengthMeter" data-level="0">
             <i></i><i></i><i></i>
+            <span id="strengthLabel" style="font-size: var(--t-xxs); margin-left: 8px; font-family: var(--f-display); letter-spacing: .08em; transition: color .25s;"></span>
           </div>
           <div class="field-error">Password must be at least 8 characters.</div>
         </div>

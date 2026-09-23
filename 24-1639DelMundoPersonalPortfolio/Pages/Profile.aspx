@@ -25,14 +25,6 @@
                 <rect x="4" y="15" width="16" height="5" />
               </svg>
             </div>
-            <label for="avatarUpload" class="avatar-edit-overlay" title="Change Avatar">
-              <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="13" r="4"></circle>
-              </svg>
-              <span>Change Photo</span>
-            </label>
-            <asp:FileUpload ID="avatarUpload" runat="server" ClientIDMode="Static" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" />
           </div>
           <div class="avatar-info">
             <h3 id="profileHeaderName"><asp:Literal ID="litProfileHeaderName" runat="server" /></h3>
@@ -265,27 +257,6 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // 1. Instant Client-side Image Preview
-        var fileInput = document.getElementById("avatarUpload");
-        var previewImg = document.getElementById("imgAvatarPreview");
-        var svgPlaceholder = document.getElementById("avatarSvgPlaceholder");
-        if (fileInput && previewImg) {
-          fileInput.addEventListener("change", function () {
-            var file = fileInput.files && fileInput.files[0];
-            if (file) {
-              var reader = new FileReader();
-              reader.onload = function (e) {
-                previewImg.src = e.target.result;
-                previewImg.style.display = "block";
-                if (svgPlaceholder) svgPlaceholder.style.display = "none";
-              };
-              reader.readAsDataURL(file);
-              if (typeof Toast !== "undefined") {
-                Toast.info("Avatar photo selected: " + file.name + ". Click Save Changes to apply.", "Avatar Ready");
-              }
-            }
-          });
-        }
 
         // 2. Modal Utilities
         function openModal(modalId) {

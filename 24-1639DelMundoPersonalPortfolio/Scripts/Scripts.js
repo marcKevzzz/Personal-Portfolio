@@ -545,11 +545,11 @@ function initBinaryDecoder(customTitles) {
   var titles =
     customTitles && customTitles.length
       ? customTitles
-      : ["Del Mundo", "Marc Kevin", "Kevs"];
+      : [container.textContent.trim() || "Creator"];
   var currentIndex = -1;
   var isDecoding = false;
   var currentText =
-    container.textContent.trim() || titles[titles.length - 1] || "Kevs";
+    container.textContent.trim() || titles[0] || "Creator";
   var timer = null;
   var animFrame = null;
 

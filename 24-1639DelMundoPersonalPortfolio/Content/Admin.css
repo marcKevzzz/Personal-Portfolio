@@ -649,6 +649,15 @@ button:focus-visible {
   box-sizing: border-box;
 }
 
+.admin-fieldgroup .field input[type="text"],
+.admin-fieldgroup .field input[type="email"],
+.admin-fieldgroup .field input[type="password"],   
+.admin-fieldgroup .field input[type="number"],   
+.admin-fieldgroup .field input[type="date"],
+.admin-fieldgroup .field select {
+  background: var(--bg);
+}
+
 .field input[type="date"],
 input[type="date"],
 #AdminMainContent_ucProfilePanel_txtProfileBirthDate {

@@ -185,6 +185,10 @@ function initSignUp() {
 
   var pwInput = document.getElementById("password");
   var meter = document.getElementById("strengthMeter");
+  var strengthLabel = document.getElementById("strengthLabel");
+  var STRENGTH_LABELS = ["", "Weak", "Fair", "Strong"];
+  var STRENGTH_COLORS = ["", "var(--danger)", "var(--blue-light)", "var(--cyan)"];
+
   if (pwInput && meter) {
     pwInput.addEventListener("input", function () {
       var v = pwInput.value;
@@ -193,6 +197,10 @@ function initSignUp() {
       if (v.length >= 8 && /[0-9]/.test(v) && /[A-Z]/.test(v)) level = 2;
       if (v.length >= 12 && /[0-9]/.test(v) && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v)) level = 3;
       meter.setAttribute("data-level", level);
+      if (strengthLabel) {
+        strengthLabel.textContent = v.length > 0 ? STRENGTH_LABELS[level] : "";
+        strengthLabel.style.color = v.length > 0 ? STRENGTH_COLORS[level] : "";
+      }
     });
   }
 
@@ -238,7 +246,21 @@ function initSignUp() {
     termsScrollBox.addEventListener("scroll", checkTermsScroll);
   }
 
+  // Enter key support — triggers createAccountBtn from any form field
+  var signupFieldIds = ["firstName", "lastName", "email", "password", "confirm"];
   var createAccountBtn = document.getElementById("createAccountBtn");
+  signupFieldIds.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && createAccountBtn) {
+          e.preventDefault();
+          createAccountBtn.click();
+        }
+      });
+    }
+  });
+
   if (createAccountBtn) {
     createAccountBtn.addEventListener("click", function (e) {
       var firstNameField = document.getElementById("firstName");

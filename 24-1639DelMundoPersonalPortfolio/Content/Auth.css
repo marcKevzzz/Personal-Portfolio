@@ -458,16 +458,28 @@ input:focus-visible {
 /* Password Strength Indicator */
 .strength {
     display: flex;
+    align-items: center;
     gap: 4px;
     margin-top: 6px;
 }
 
 .strength i {
     flex: 1;
+    min-width: 20px;
     height: 2px;
     background: var(--line);
     display: block;
     transition: background .25s ease;
+}
+
+.strength span {
+    font-size: 10px;
+    font-family: var(--f-display, monospace);
+    letter-spacing: .08em;
+    line-height: 1;
+    margin-left: 4px;
+    transition: color .25s;
+    white-space: nowrap;
 }
 
 .strength[data-level="1"] i:nth-child(1) {

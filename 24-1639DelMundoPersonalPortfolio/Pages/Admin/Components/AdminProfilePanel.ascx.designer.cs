@@ -4,7 +4,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
     {
         protected global::System.Web.UI.WebControls.Image imgAdminAvatar;
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl adminAvatarSvgPlaceholder;
-        protected global::System.Web.UI.WebControls.FileUpload adminAvatarUpload;
         protected global::System.Web.UI.WebControls.Literal litAdminDisplayName;
         protected global::System.Web.UI.WebControls.TextBox txtAdminFullName;
         protected global::System.Web.UI.WebControls.TextBox txtAdminEmail;

@@ -24,15 +24,6 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             var data = PortfolioService.GetPortfolioData(currentUid, true);
             var p = data?.Profile ?? new ProfileDto();
 
-            // Populate pre-filled user identity from users_tbl
-            string userFullName = !string.IsNullOrWhiteSpace(p.FullName) 
-                ? p.FullName 
-                : (currentUser != null ? $"{currentUser.FirstName} {currentUser.LastName}".Trim() : "Creator");
-            string loginEmail = currentUser?.Email ?? "";
-
-            litLinkedFullName.Text = Server.HtmlEncode(userFullName);
-            litLinkedEmail.Text = Server.HtmlEncode(loginEmail);
-
             // Populate Profile Birth Date and live age calculation hint
             if (p.BirthDate.HasValue)
             {
@@ -46,16 +37,19 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             }
 
             // Populate Profile Contact Email (default to login email if profile email not yet set)
+            string loginEmail = currentUser?.Email ?? "";
             txtProfileEmail.Text = !string.IsNullOrWhiteSpace(p.Email) 
                 ? p.Email 
                 : loginEmail;
 
-            txtHeroSubline.Text = p.HeroSubline ?? "builds interfaces";
-            hidHeroNames.Value = p.HeroNames ?? (currentUser != null ? $"{currentUser.FirstName},{currentUser.LastName}" : "Kevs,Marc Kevin,Del Mundo");
+            txtHeroSubline.Text = p.HeroSubline ?? "";
+            hidHeroNames.Value = !string.IsNullOrWhiteSpace(p.HeroNames) 
+                ? p.HeroNames 
+                : (currentUser != null ? $"{currentUser.FirstName},{currentUser.LastName}".Trim(',') : "");
             txtRoleSummary.Text = p.RoleSummary ?? "";
-            txtRoleTitle.Text = p.RoleTitle ?? "Web Developer";
-            txtFocusArea.Text = p.FocusArea ?? "Interfaces & Data Systems";
-            txtBasedIn.Text = p.BasedIn ?? "Quezon City";
+            txtRoleTitle.Text = p.RoleTitle ?? "";
+            txtFocusArea.Text = p.FocusArea ?? "";
+            txtBasedIn.Text = p.BasedIn ?? "";
             hidExistingAvatarPath.Value = p.AvatarPath ?? "";
             if (!string.IsNullOrWhiteSpace(p.AvatarPath))
             {
@@ -68,7 +62,7 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
             }
 
             txtLocationAddress.Text = p.LocationAddress ?? "";
-            txtExperienceYears.Text = p.ExperienceYears.ToString();
+            txtExperienceYears.Text = p.ExperienceYears > 0 ? p.ExperienceYears.ToString() : "";
             txtGithubUrl.Text = p.GithubUrl ?? "";
             txtLinkedinUrl.Text = p.LinkedinUrl ?? "";
 
@@ -77,7 +71,11 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
 
         private void RenderHeroChips(string names)
         {
-            if (string.IsNullOrWhiteSpace(names)) names = "Kevs,Marc Kevin,Del Mundo";
+            if (string.IsNullOrWhiteSpace(names))
+            {
+                var currentUser = AuthHelper.GetCurrentUser();
+                names = currentUser != null ? $"{currentUser.FirstName},{currentUser.LastName}".Trim(',') : "";
+            }
             var sb = new StringBuilder();
             sb.Append("<div class=\"chips-list\">");
             var parts = names.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -157,7 +155,9 @@ namespace _24_1639DelMundoPersonalPortfolio.Pages.Admin.Components
                 BirthDate = birthDate,
                 Email = txtProfileEmail.Text.Trim(),
                 HeroSubline = txtHeroSubline.Text.Trim(),
-                HeroNames = string.IsNullOrWhiteSpace(hidHeroNames.Value) ? "Kevs,Marc Kevin,Del Mundo" : hidHeroNames.Value.Trim(),
+                HeroNames = string.IsNullOrWhiteSpace(hidHeroNames.Value) 
+                    ? (AuthHelper.GetCurrentUser() != null ? $"{AuthHelper.GetCurrentUser().FirstName},{AuthHelper.GetCurrentUser().LastName}".Trim(',') : "") 
+                    : hidHeroNames.Value.Trim(),
                 RoleSummary = txtRoleSummary.Text.Trim(),
                 RoleTitle = txtRoleTitle.Text.Trim(),
                 FocusArea = txtFocusArea.Text.Trim(),

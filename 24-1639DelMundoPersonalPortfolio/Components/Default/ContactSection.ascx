@@ -8,8 +8,13 @@
  
     <div class="contact-links">
       <asp:HyperLink ID="contactEmailLink" runat="server" ClientIDMode="Static" CssClass="reveal">[ Email ]</asp:HyperLink>
+      <asp:Literal ID="litEmailEmpty"  runat="server" Visible="false"><span class="reveal" style="font-size: var(--t-sm);color: var(--text-mid);padding: 14px 0;margin-right: 32px;border-bottom: 1px solid var(--line);transition: color .2s ease, border-color .2s ease;" >[ No email added yet ]</span></asp:Literal>
+
       <asp:HyperLink ID="contactGithubLink" runat="server" ClientIDMode="Static" CssClass="reveal" Target="_blank" rel="noopener noreferrer">[ Github ]</asp:HyperLink>
+      <asp:Literal ID="litGithubEmpty"  runat="server" Visible="false"><span class="reveal" style="font-size: var(--t-sm);color: var(--text-mid);padding: 14px 0;margin-right: 32px;border-bottom: 1px solid var(--line);transition: color .2s ease, border-color .2s ease;" >[ No GitHub added yet ]</span></asp:Literal>
+
       <asp:HyperLink ID="contactLinkedinLink" runat="server" ClientIDMode="Static" CssClass="reveal" Target="_blank" rel="noopener noreferrer">[ LinkedIn ]</asp:HyperLink>
+      <asp:Literal ID="litLinkedinEmpty"  runat="server" Visible="false"><span class="reveal" style="font-size: var(--t-sm);color: var(--text-mid);padding: 14px 0;margin-right: 32px;border-bottom: 1px solid var(--line);transition: color .2s ease, border-color .2s ease;" >[ No LinkedIn added yet ]</span></asp:Literal>
     </div>
   </div>
 </section>

@@ -1137,6 +1137,15 @@ h2.section-title {
     transition: color .2s ease, border-color .2s ease;
 }
 
+.contact-links a {
+    font-size: var(--t-sm);
+    color: var(--text-mid);
+    padding: 14px 0;
+    margin-right: 32px;
+    border-bottom: 1px solid var(--line);
+    transition: color .2s ease, border-color .2s ease;
+}
+
 .contact-links a:hover {
     color: var(--text);
     border-color: var(--blue-light);
