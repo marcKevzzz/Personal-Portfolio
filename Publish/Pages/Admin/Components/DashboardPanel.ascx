@@ -237,7 +237,7 @@
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                             <circle cx="12" cy="12" r="3"></circle>
                                         </svg>
-                                        <span>Preview</span>
+                                        <span>Website</span>
                                     </a>
                                 <% } else { %>
                                     <span style="font-size: 11px; color: var(--text-dim); font-style: italic;">No Public Site</span>

@@ -51,9 +51,12 @@ namespace _24_1639DelMundoPersonalPortfolio
 
             try
             {
-                // 1. Verify user exists in database
-                string userCheckQuery = "SELECT COUNT(1) FROM users_tbl WHERE LOWER(email) = LOWER(@Email);";
-                int userExists = Convert.ToInt32(DatabaseHelper.ExecuteScalar(userCheckQuery, new SqlParameter("@Email", emailVal)));
+                // 1. Verify user exists using stored procedure
+                object userCheckObj = DatabaseHelper.ExecuteStoredProcedureScalar(
+                    "sp_CheckUserEmailExists",
+                    new SqlParameter("@email", emailVal)
+                );
+                int userExists = (userCheckObj != null && userCheckObj != DBNull.Value) ? Convert.ToInt32(userCheckObj) : 0;
 
                 if (userExists == 0)
                 {
@@ -64,21 +67,12 @@ namespace _24_1639DelMundoPersonalPortfolio
                 // 2. Hash new password
                 string passwordHash = AuthHelper.HashPassword(newPass);
 
-                // 3. Update password in users_tbl
-                string updatePassQuery = @"UPDATE users_tbl 
-                                          SET password_hash = @PasswordHash 
-                                          WHERE LOWER(email) = LOWER(@Email);";
-
-                DatabaseHelper.ExecuteNonQuery(updatePassQuery,
-                    new SqlParameter("@PasswordHash", passwordHash),
-                    new SqlParameter("@Email", emailVal));
-
-                // 4. Update status in password_resets_tbl to 'used'
-                string updateReqQuery = @"UPDATE password_resets_tbl 
-                                         SET status = 'used' 
-                                         WHERE LOWER(email) = LOWER(@Email) AND status = 'password_removed';";
-
-                DatabaseHelper.ExecuteNonQuery(updateReqQuery, new SqlParameter("@Email", emailVal));
+                // 3. Atomically update password in users_tbl and mark reset as 'used' in password_resets_tbl
+                DatabaseHelper.ExecuteStoredProcedureNonQuery(
+                    "sp_CompletePasswordReset",
+                    new SqlParameter("@email", emailVal),
+                    new SqlParameter("@password_hash", passwordHash)
+                );
 
                 Response.Redirect("~/Auth/SignIn.aspx?reset=success&email=" + Server.UrlEncode(emailVal));
             }

@@ -49,13 +49,13 @@
         <div class="field">
             <label>Hero subline</label>
             <div class="input-row">
-                <asp:TextBox ID="txtHeroSubline" runat="server" placeholder="e.g. builds interfaces, solves problems" />
+                <asp:TextBox ID="txtHeroSubline" runat="server" placeholder="Enter subline or short tagline..." />
             </div>
         </div>
         <div class="field">
             <label>Role title <span class="req-star">*</span></label>
             <div class="input-row">
-                <asp:TextBox ID="txtRoleTitle" runat="server" placeholder="e.g. Web Developer" />
+                <asp:TextBox ID="txtRoleTitle" runat="server" placeholder="Enter role title..." />
             </div>
         </div>
     </div>
@@ -79,13 +79,13 @@
         <div class="field">
             <label>Focus area</label>
             <div class="input-row">
-                <asp:TextBox ID="txtFocusArea" runat="server" placeholder="e.g. Interfaces & Data Systems" />
+                <asp:TextBox ID="txtFocusArea" runat="server" placeholder="Enter focus area..." />
             </div>
         </div>
         <div class="field">
             <label>Based in</label>
             <div class="input-row">
-                <asp:TextBox ID="txtBasedIn" runat="server" placeholder="e.g. Quezon City" />
+                <asp:TextBox ID="txtBasedIn" runat="server" placeholder="City, Country" />
             </div>
         </div>
     </div>
@@ -94,7 +94,7 @@
         <div class="field">
             <label>Location address</label>
             <div class="input-row">
-                <asp:TextBox ID="txtLocationAddress" runat="server" placeholder="e.g. Novaliches Proper, Quezon City" />
+                <asp:TextBox ID="txtLocationAddress" runat="server" placeholder="Enter full location address..." />
             </div>
         </div>
         <div class="field">

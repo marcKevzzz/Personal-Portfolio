@@ -2299,9 +2299,23 @@ input[type="checkbox"]:checked,
     overflow-y: auto;
     overflow-x: hidden;
 }
-.modal-dialog.terms-condition{
-    gap: 32px;
-     min-height: 70vh;
+.modal-dialog.terms-condition {
+    width: 100%;
+    max-width: 580px;
+    height: 75vh;
+    max-height: 620px;
+    min-height: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+    padding: 28px 28px 24px;
+}
+
+.modal-dialog.terms-condition .modal-header,
+.modal-dialog.terms-condition .terms-scroll-status,
+.modal-dialog.terms-condition .modal-footer {
+    flex-shrink: 0;
 }
 .modal-dialog.password{
     gap: 8px;
@@ -2436,6 +2450,21 @@ input[type="checkbox"]:checked,
     margin-bottom: 12px;
 }
 
+.terms-scroll-box {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 18px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    font-size: var(--t-xs);
+    line-height: 1.6;
+    color: var(--text-mid);
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) var(--bg-1);
+}
+
 .terms-scroll-status {
     display: flex;
     align-items: center;
@@ -2447,7 +2476,7 @@ input[type="checkbox"]:checked,
     padding: 8px 12px;
     background: var(--bg-2);
     border: 1px dashed var(--line);
-    margin-bottom: 20px;
+    margin-bottom: 0;
     transition: all 0.3s ease;
 }
 

@@ -87,12 +87,11 @@ namespace _24_1639DelMundoPersonalPortfolio
 
             try
             {
-                // 1. Query user from users_tbl
-                string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, is_active, created_at 
-                                 FROM users_tbl 
-                                 WHERE LOWER(email) = LOWER(@Email);";
-
-                var dt = DatabaseHelper.ExecuteQuery(query, new SqlParameter("@Email", emailVal));
+                // 1. Query user from users_tbl using stored procedure
+                var dt = DatabaseHelper.ExecuteStoredProcedureDataTable(
+                    "sp_GetUserByEmail",
+                    new SqlParameter("@email", emailVal)
+                );
 
                 if (dt == null || dt.Rows.Count == 0)
                 {
@@ -115,12 +114,18 @@ namespace _24_1639DelMundoPersonalPortfolio
                 string lastName = row["last_name"] != DBNull.Value ? row["last_name"].ToString() : "";
 
                 // 2. Check if user is in "password_removed" state from an approved reset request
-                string checkReq = "SELECT TOP 1 reset_id FROM password_resets_tbl WHERE user_id = @UserId AND status = 'password_removed' ORDER BY reset_id DESC;";
-                var dtReq = DatabaseHelper.ExecuteQuery(checkReq, new SqlParameter("@UserId", userId));
+                var dtReq = DatabaseHelper.ExecuteStoredProcedureDataTable(
+                    "sp_GetLatestPasswordResetByEmail",
+                    new SqlParameter("@email", emailVal)
+                );
                 if (dtReq != null && dtReq.Rows.Count > 0)
                 {
-                    Response.Redirect("~/Auth/NewPassword.aspx?email=" + Server.UrlEncode(emailVal) + "&approved=true");
-                    return;
+                    string reqStatus = (dtReq.Rows[0]["status"]?.ToString() ?? "").Trim().ToLowerInvariant();
+                    if (reqStatus == "password_removed")
+                    {
+                        Response.Redirect("~/Auth/NewPassword.aspx?email=" + Server.UrlEncode(emailVal) + "&approved=true");
+                        return;
+                    }
                 }
 
                 // If not approved for reset, password is required
@@ -208,25 +213,24 @@ namespace _24_1639DelMundoPersonalPortfolio
 
             try
             {
-                // Verify user exists
-                string userQuery = "SELECT user_id FROM users_tbl WHERE LOWER(email) = LOWER(@Email);";
-                object userObj = DatabaseHelper.ExecuteScalar(userQuery, new SqlParameter("@Email", reqEmail));
+                // Verify user exists using stored procedure
+                var dtUser = DatabaseHelper.ExecuteStoredProcedureDataTable(
+                    "sp_GetUserByEmail",
+                    new SqlParameter("@email", reqEmail)
+                );
 
-                if (userObj == null)
+                if (dtUser == null || dtUser.Rows.Count == 0)
                 {
                     ShowAlert("No registered account found with that email address.", isError: true);
                     return;
                 }
 
-                int userId = Convert.ToInt32(userObj);
-
                 // Check for existing pending or approved requests to prevent duplicates
-                string checkExistingQuery = @"SELECT TOP 1 reset_id, status 
-                                             FROM password_resets_tbl 
-                                             WHERE LOWER(email) = LOWER(@Email) AND status IN ('pending', 'password_removed')
-                                             ORDER BY reset_id DESC;";
+                var dtExisting = DatabaseHelper.ExecuteStoredProcedureDataTable(
+                    "sp_GetLatestPasswordResetByEmail",
+                    new SqlParameter("@email", reqEmail)
+                );
 
-                var dtExisting = DatabaseHelper.ExecuteQuery(checkExistingQuery, new SqlParameter("@Email", reqEmail));
                 if (dtExisting != null && dtExisting.Rows.Count > 0)
                 {
                     string existingStatus = (dtExisting.Rows[0]["status"]?.ToString() ?? "").Trim().ToLowerInvariant();
@@ -244,20 +248,12 @@ namespace _24_1639DelMundoPersonalPortfolio
                     }
                 }
 
-                // Insert into password_resets_tbl
-                string insertQuery = @"INSERT INTO password_resets_tbl 
-                                       (user_id, email, reason, status, created_at)
-                                       VALUES 
-                                       (@UserId, @Email, @Reason, 'pending', GETDATE());";
-
-                var parameters = new SqlParameter[]
-                {
-                    new SqlParameter("@UserId", userId),
-                    new SqlParameter("@Email", reqEmail),
-                    new SqlParameter("@Reason", string.IsNullOrEmpty(reqReason) ? "Password removal requested." : (object)reqReason)
-                };
-
-                DatabaseHelper.ExecuteNonQuery(insertQuery, parameters);
+                // Submit request via stored procedure
+                DatabaseHelper.ExecuteStoredProcedureNonQuery(
+                    "sp_RequestPasswordReset",
+                    new SqlParameter("@email", reqEmail),
+                    new SqlParameter("@reason", string.IsNullOrEmpty(reqReason) ? "Password removal requested." : (object)reqReason)
+                );
 
                 // Post-Redirect-Get: Redirect to GET so refreshing browser does NOT resubmit request!
                 Response.Redirect("~/Auth/SignIn.aspx?req=sent&email=" + Server.UrlEncode(reqEmail));

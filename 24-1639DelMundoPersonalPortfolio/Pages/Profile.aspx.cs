@@ -32,12 +32,11 @@ namespace _24_1639DelMundoPersonalPortfolio
             var currentUser = AuthHelper.GetCurrentUser();
             if (currentUser == null) return;
 
-            // Query fresh user data from database
-            string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, is_active, created_at 
-                             FROM users_tbl 
-                             WHERE user_id = @UserId;";
-
-            var dt = DatabaseHelper.ExecuteQuery(query, new SqlParameter("@UserId", currentUser.UserId));
+            // Query fresh user data from database via stored procedure
+            var dt = DatabaseHelper.ExecuteStoredProcedureDataTable(
+                "sp_GetUserById",
+                new SqlParameter("@user_id", currentUser.UserId)
+            );
             if (dt != null && dt.Rows.Count > 0)
             {
                 var row = dt.Rows[0];
@@ -158,33 +157,17 @@ namespace _24_1639DelMundoPersonalPortfolio
 
             try
             {
-                // Build dynamic UPDATE query
-                string updateSql = @"UPDATE users_tbl 
-                                    SET first_name = @FirstName, 
-                                        last_name = @LastName";
-
-                if (!string.IsNullOrEmpty(newPasswordHash))
-                {
-                    updateSql += ", password_hash = @PasswordHash";
-                }
-
-                updateSql += " WHERE user_id = @UserId;";
-
                 var parameters = new System.Collections.Generic.List<SqlParameter>
                 {
-                    new SqlParameter("@FirstName", newFirstName),
-                    new SqlParameter("@LastName", newLastName),
-                    new SqlParameter("@UserId", currentUser.UserId)
+                    new SqlParameter("@user_id", currentUser.UserId),
+                    new SqlParameter("@first_name", newFirstName),
+                    new SqlParameter("@last_name", newLastName),
+                    new SqlParameter("@password_hash", (object)newPasswordHash ?? DBNull.Value)
                 };
 
-                if (!string.IsNullOrEmpty(newPasswordHash))
-                {
-                    parameters.Add(new SqlParameter("@PasswordHash", newPasswordHash));
-                }
+                int rowsAffected = DatabaseHelper.ExecuteStoredProcedureNonQuery("sp_UpdateUserDetails", parameters.ToArray());
 
-                int rowsAffected = DatabaseHelper.ExecuteNonQuery(updateSql, parameters.ToArray());
-
-                if (rowsAffected > 0)
+                if (rowsAffected >= 0)
                 {
                     // Update user in session
                     currentUser.FirstName = newFirstName;
@@ -223,12 +206,7 @@ namespace _24_1639DelMundoPersonalPortfolio
         {
             try
             {
-                string reqQuery = @"SELECT reset_id, user_id, email, reason, status, created_at 
-                                   FROM password_resets_tbl 
-                                   WHERE status = 'pending' 
-                                   ORDER BY reset_id DESC;";
-
-                var dt = DatabaseHelper.ExecuteQuery(reqQuery);
+                var dt = DatabaseHelper.ExecuteStoredProcedureDataTable("sp_GetPendingPasswordResets");
                 rptAdminRequests.DataSource = dt;
                 rptAdminRequests.DataBind();
             }
@@ -251,8 +229,11 @@ namespace _24_1639DelMundoPersonalPortfolio
                 int resetId = Convert.ToInt32(e.CommandArgument);
                 try
                 {
-                    string updateSql = "UPDATE password_resets_tbl SET status = 'password_removed' WHERE reset_id = @ResetId;";
-                    DatabaseHelper.ExecuteNonQuery(updateSql, new SqlParameter("@ResetId", resetId));
+                    DatabaseHelper.ExecuteStoredProcedureNonQuery(
+                        "sp_ApprovePasswordReset",
+                        new SqlParameter("@reset_id", resetId),
+                        new SqlParameter("@reviewed_by", AuthHelper.GetCurrentUserId())
+                    );
 
                     LoadAdminRequests();
                     ShowAlert("Password successfully removed for the requested user.", isError: false);

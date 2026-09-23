@@ -68,11 +68,12 @@ namespace _24_1639DelMundoPersonalPortfolio
 
             try
             {
-                // 1. Check if email is already registered
-                string checkQuery =
-                    "SELECT COUNT(1) FROM users_tbl WHERE LOWER(email) = LOWER(@Email)";
-                var emailParam = new SqlParameter("@Email", emailVal);
-                int count = Convert.ToInt32(DatabaseHelper.ExecuteScalar(checkQuery, emailParam));
+                // 1. Check if email is already registered using stored procedure
+                object emailCountObj = DatabaseHelper.ExecuteStoredProcedureScalar(
+                    "sp_CheckUserEmailExists",
+                    new SqlParameter("@email", emailVal)
+                );
+                int count = (emailCountObj != null && emailCountObj != DBNull.Value) ? Convert.ToInt32(emailCountObj) : 0;
 
                 if (count > 0)
                 {
@@ -99,44 +100,22 @@ namespace _24_1639DelMundoPersonalPortfolio
                     role = "Admin";
                 }
 
-                // 4. Insert new user into users_tbl and seed initial profile
-                string insertQuery =
-                    @"INSERT INTO users_tbl 
-                                       (first_name, last_name, email, password_hash, user_role, is_active, created_at)
-                                       VALUES 
-                                       (@FirstName, @LastName, @Email, @PasswordHash, @UserRole, 1, GETDATE());
-                                       SELECT SCOPE_IDENTITY();";
-
+                // 4. Register user and initialize blank profile atomically via sp_RegisterUser
                 var parameters = new SqlParameter[]
                 {
-                    new SqlParameter("@FirstName", fName),
-                    new SqlParameter("@LastName", lName),
-                    new SqlParameter("@Email", emailVal),
-                    new SqlParameter("@PasswordHash", passwordHash),
-                    new SqlParameter("@UserRole", role),
+                    new SqlParameter("@first_name", fName),
+                    new SqlParameter("@last_name", lName),
+                    new SqlParameter("@email", emailVal),
+                    new SqlParameter("@password_hash", passwordHash),
+                    new SqlParameter("@user_role", role),
+                    new SqlParameter("@is_active", true),
                 };
 
-                object newIdObj = DatabaseHelper.ExecuteScalar(insertQuery, parameters);
-                int newUserId =
-                    (newIdObj != null && newIdObj != DBNull.Value) ? Convert.ToInt32(newIdObj) : 0;
+                object newIdObj = DatabaseHelper.ExecuteStoredProcedureScalar("sp_RegisterUser", parameters);
+                int newUserId = (newIdObj != null && newIdObj != DBNull.Value) ? Convert.ToInt32(newIdObj) : 0;
 
                 if (newUserId > 0)
                 {
-                    try
-                    {
-                        string profileInsert =
-                            @"INSERT INTO profile_tbl (user_id, first_name, last_name, email, role_title, focus_area, based_in, avatar_path, updated_at)
-                                                 VALUES (@UserId, @FirstName, @LastName, @Email, '', '', '', '', GETDATE());";
-                        DatabaseHelper.ExecuteNonQuery(
-                            profileInsert,
-                            new SqlParameter("@UserId", newUserId),
-                            new SqlParameter("@FirstName", fName),
-                            new SqlParameter("@LastName", lName),
-                            new SqlParameter("@Email", emailVal)
-                        );
-                    }
-                    catch { }
-
                     Response.Redirect(
                         "~/Auth/SignIn.aspx?registered=true&email=" + Server.UrlEncode(emailVal)
                     );

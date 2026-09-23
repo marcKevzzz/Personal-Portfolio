@@ -146,10 +146,9 @@
         <p>By proceeding to accept these terms, you confirm that you have read, understood, and consented to each provision outlined above. This agreement constitutes the full understanding between you and the platform administration.</p>
       </div>
 
-
       <div class="modal-footer">
         <button type="button" class="modal-btn-cancel" id="declineTermsBtn">Decline</button>
-        <asp:Button ID="acceptTermsBtn" runat="server" ClientIDMode="Static" CssClass="modal-btn-accept submit" Text="I Agree &amp; Continue" OnClick="btnAcceptTerms_Click" Enabled="false" UseSubmitBehavior="true" />
+        <asp:Button ID="acceptTermsBtn" runat="server" ClientIDMode="Static" CssClass="modal-btn-accept submit" Text="I Agree &amp; Continue" OnClick="btnAcceptTerms_Click" UseSubmitBehavior="true" />
       </div>
     </div>
   </div>

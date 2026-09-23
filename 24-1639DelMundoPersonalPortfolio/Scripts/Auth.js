@@ -9,21 +9,25 @@ var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
    INPUT FOCUS & REVEAL HELPERS
    ------------------------------------------------------------- */
 function initInputFocus() {
-  document.querySelectorAll(".field input, .field select, .input-row input, .input-row select").forEach(function (input) {
-    var row = input.closest(".input-row") || input.closest(".field");
-    input.addEventListener("focus", function () {
-      if (row) row.classList.add("focused");
+  document
+    .querySelectorAll(
+      ".field input, .field select, .input-row input, .input-row select",
+    )
+    .forEach(function (input) {
+      var row = input.closest(".input-row") || input.closest(".field");
+      input.addEventListener("focus", function () {
+        if (row) row.classList.add("focused");
+      });
+      input.addEventListener("blur", function () {
+        if (row) row.classList.remove("focused");
+      });
+      input.addEventListener("input", function () {
+        var wrapper = input.closest(".field");
+        if (wrapper && wrapper.classList.contains("invalid")) {
+          wrapper.classList.remove("invalid");
+        }
+      });
     });
-    input.addEventListener("blur", function () {
-      if (row) row.classList.remove("focused");
-    });
-    input.addEventListener("input", function () {
-      var wrapper = input.closest(".field");
-      if (wrapper && wrapper.classList.contains("invalid")) {
-        wrapper.classList.remove("invalid");
-      }
-    });
-  });
 }
 
 function initLoadReveal() {
@@ -34,7 +38,14 @@ function initLoadReveal() {
     gsap.fromTo(
       els,
       { opacity: 0, y: 16 },
-      { opacity: 1, y: 0, duration: 0.6, stagger: 0.06, ease: "power2.out", clearProps: "transform" }
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        stagger: 0.06,
+        ease: "power2.out",
+        clearProps: "transform",
+      },
     );
   } else {
     els.forEach(function (el, i) {
@@ -71,8 +82,14 @@ function initCustomCursor() {
     return;
   }
 
-  var xTo = typeof gsap !== "undefined" ? gsap.quickTo(cursor, "x", { duration: 0.22, ease: "power2.out" }) : null;
-  var yTo = typeof gsap !== "undefined" ? gsap.quickTo(cursor, "y", { duration: 0.22, ease: "power2.out" }) : null;
+  var xTo =
+    typeof gsap !== "undefined"
+      ? gsap.quickTo(cursor, "x", { duration: 0.22, ease: "power2.out" })
+      : null;
+  var yTo =
+    typeof gsap !== "undefined"
+      ? gsap.quickTo(cursor, "y", { duration: 0.22, ease: "power2.out" })
+      : null;
   var isVisible = false;
 
   window.addEventListener("mousemove", function (e) {
@@ -112,7 +129,12 @@ function initSignIn() {
   }
 
   // Clean query string from browser address bar
-  if (urlParams.get("registered") || urlParams.get("reset") || urlParams.get("logout") || urlParams.get("req")) {
+  if (
+    urlParams.get("registered") ||
+    urlParams.get("reset") ||
+    urlParams.get("logout") ||
+    urlParams.get("req")
+  ) {
     if (window.history && window.history.replaceState) {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -147,8 +169,10 @@ function initSignIn() {
     });
   }
 
-  if (closeForgotBtn) closeForgotBtn.addEventListener("click", closeForgotModal);
-  if (cancelForgotBtn) cancelForgotBtn.addEventListener("click", closeForgotModal);
+  if (closeForgotBtn)
+    closeForgotBtn.addEventListener("click", closeForgotModal);
+  if (cancelForgotBtn)
+    cancelForgotBtn.addEventListener("click", closeForgotModal);
   if (forgotModal) {
     forgotModal.addEventListener("click", function (e) {
       if (e.target === forgotModal) closeForgotModal();
@@ -211,7 +235,12 @@ function initSignUp() {
   var meter = document.getElementById("strengthMeter");
   var strengthLabel = document.getElementById("strengthLabel");
   var STRENGTH_LABELS = ["", "Weak", "Fair", "Strong"];
-  var STRENGTH_COLORS = ["", "var(--danger)", "var(--blue-light)", "var(--cyan)"];
+  var STRENGTH_COLORS = [
+    "",
+    "var(--danger)",
+    "var(--blue-light)",
+    "var(--cyan)",
+  ];
 
   if (pwInput && meter) {
     pwInput.addEventListener("input", function () {
@@ -219,7 +248,13 @@ function initSignUp() {
       var level = 0;
       if (v.length >= 8) level = 1;
       if (v.length >= 8 && /[0-9]/.test(v) && /[A-Z]/.test(v)) level = 2;
-      if (v.length >= 12 && /[0-9]/.test(v) && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v)) level = 3;
+      if (
+        v.length >= 12 &&
+        /[0-9]/.test(v) &&
+        /[A-Z]/.test(v) &&
+        /[^A-Za-z0-9]/.test(v)
+      )
+        level = 3;
       meter.setAttribute("data-level", level);
       if (strengthLabel) {
         strengthLabel.textContent = v.length > 0 ? STRENGTH_LABELS[level] : "";
@@ -233,7 +268,6 @@ function initSignUp() {
   var acceptTermsBtn = document.getElementById("acceptTermsBtn");
   var declineTermsBtn = document.getElementById("declineTermsBtn");
   var closeTermsBtn = document.getElementById("closeTermsBtn");
-  var termsScrollStatus = document.getElementById("termsScrollStatus");
   var statusIcon = document.getElementById("statusIcon");
   var statusText = document.getElementById("statusText");
 
@@ -252,17 +286,20 @@ function initSignUp() {
     });
   }
 
+  if (acceptTermsBtn) {
+    acceptTermsBtn.disabled = true;
+  }
+
   function checkTermsScroll() {
     if (!termsScrollBox || !acceptTermsBtn) return;
-    var atBottom = termsScrollBox.scrollTop + termsScrollBox.clientHeight >= termsScrollBox.scrollHeight - 24 ||
+    var distanceToBottom =
+      termsScrollBox.scrollHeight -
+      (termsScrollBox.scrollTop + termsScrollBox.clientHeight);
+    var atBottom =
+      distanceToBottom <= 28 ||
       termsScrollBox.scrollHeight <= termsScrollBox.clientHeight + 10;
     if (atBottom) {
       acceptTermsBtn.disabled = false;
-      if (termsScrollStatus) {
-        termsScrollStatus.classList.add("unlocked");
-        if (statusIcon) statusIcon.textContent = "✓";
-        if (statusText) statusText.textContent = "Terms reviewed — you may now accept & continue";
-      }
     }
   }
 
@@ -271,7 +308,13 @@ function initSignUp() {
   }
 
   // Enter key support — triggers createAccountBtn from any form field
-  var signupFieldIds = ["firstName", "lastName", "email", "password", "confirm"];
+  var signupFieldIds = [
+    "firstName",
+    "lastName",
+    "email",
+    "password",
+    "confirm",
+  ];
   var createAccountBtn = document.getElementById("createAccountBtn");
   signupFieldIds.forEach(function (id) {
     var el = document.getElementById(id);
@@ -293,23 +336,31 @@ function initSignUp() {
       var passField = document.getElementById("password");
       var confirmField = document.getElementById("confirm");
 
-      var firstValid = firstNameField ? markValid(firstNameField, firstNameField.value.trim().length > 0) : true;
-      var lastValid = lastNameField ? markValid(lastNameField, lastNameField.value.trim().length > 0) : true;
-      var emailValid = markValid(emailField, EMAIL_RE.test(emailField ? emailField.value : ""));
-      var passValid = markValid(passField, passField ? passField.value.length >= 8 : false);
+      var firstValid = firstNameField
+        ? markValid(firstNameField, firstNameField.value.trim().length > 0)
+        : true;
+      var lastValid = lastNameField
+        ? markValid(lastNameField, lastNameField.value.trim().length > 0)
+        : true;
+      var emailValid = markValid(
+        emailField,
+        EMAIL_RE.test(emailField ? emailField.value : ""),
+      );
+      var passValid = markValid(
+        passField,
+        passField ? passField.value.length >= 8 : false,
+      );
       var confirmValid = markValid(
         confirmField,
-        confirmField && passField && confirmField.value === passField.value && confirmField.value.length > 0
+        confirmField &&
+          passField &&
+          confirmField.value === passField.value &&
+          confirmField.value.length > 0,
       );
 
       if (firstValid && lastValid && emailValid && passValid && confirmValid) {
         if (termsScrollBox) termsScrollBox.scrollTop = 0;
         if (acceptTermsBtn) acceptTermsBtn.disabled = true;
-        if (termsScrollStatus) {
-          termsScrollStatus.classList.remove("unlocked");
-          if (statusIcon) statusIcon.textContent = "↓";
-          if (statusText) statusText.textContent = "Scroll to the bottom to continue";
-        }
         if (termsModal) {
           termsModal.style.display = "flex";
           termsModal.setAttribute("aria-hidden", "false");
@@ -337,7 +388,13 @@ function initNewPassword() {
       var level = 0;
       if (v.length >= 8) level = 1;
       if (v.length >= 8 && /[0-9]/.test(v) && /[A-Z]/.test(v)) level = 2;
-      if (v.length >= 12 && /[0-9]/.test(v) && /[A-Z]/.test(v) && /[^A-Za-z0-9]/.test(v)) level = 3;
+      if (
+        v.length >= 12 &&
+        /[0-9]/.test(v) &&
+        /[A-Z]/.test(v) &&
+        /[^A-Za-z0-9]/.test(v)
+      )
+        level = 3;
       meter.setAttribute("data-level", level);
     });
   }
@@ -409,4 +466,3 @@ if (document.readyState === "loading") {
 } else {
   bootAuth();
 }
-

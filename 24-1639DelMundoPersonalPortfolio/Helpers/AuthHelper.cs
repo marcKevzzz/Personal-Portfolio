@@ -180,11 +180,10 @@ namespace _24_1639DelMundoPersonalPortfolio.Helpers
 
                 string emailVal = ticket.Name.Trim().ToLowerInvariant();
 
-                string query = @"SELECT user_id, first_name, last_name, email, password_hash, user_role, is_active, created_at 
-                                 FROM users_tbl 
-                                 WHERE LOWER(email) = LOWER(@Email);";
-
-                var dt = DatabaseHelper.ExecuteQuery(query, new System.Data.SqlClient.SqlParameter("@Email", emailVal));
+                var dt = DatabaseHelper.ExecuteStoredProcedureDataTable(
+                    "sp_GetUserByEmail",
+                    new System.Data.SqlClient.SqlParameter("@email", emailVal)
+                );
                 if (dt == null || dt.Rows.Count == 0)
                     return false;
 

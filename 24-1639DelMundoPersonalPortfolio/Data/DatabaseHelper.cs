@@ -64,14 +64,36 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
         /// </summary>
         public static SqlConnection GetOpenConnection()
         {
-            if (string.IsNullOrEmpty(ConnectionString))
+            string primaryConn = ConnectionString;
+            if (string.IsNullOrEmpty(primaryConn))
             {
                 throw new InvalidOperationException("Connection string 'PortfolioDB' is missing or not configured in Web.config.");
             }
 
-            var connection = new SqlConnection(ConnectionString);
-            connection.Open();
-            return connection;
+            try
+            {
+                var connection = new SqlConnection(primaryConn);
+                connection.Open();
+                return connection;
+            }
+            catch (Exception ex)
+            {
+                // Fallback attempt: if primary connection failed (e.g. remote host is unreachable or port blocked), try PortfolioDB_Local
+                var localConn = ConfigurationManager.ConnectionStrings["PortfolioDB_Local"]?.ConnectionString;
+                if (!string.IsNullOrEmpty(localConn) && !string.Equals(primaryConn, localConn, StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var fallbackConnection = new SqlConnection(localConn);
+                        fallbackConnection.Open();
+                        System.Diagnostics.Debug.WriteLine("[DatabaseHelper] Primary connection failed (" + ex.Message + "), successfully fell back to PortfolioDB_Local.");
+                        return fallbackConnection;
+                    }
+                    catch { }
+                }
+
+                throw;
+            }
         }
 
         /// <summary>
@@ -134,6 +156,14 @@ namespace _24_1639DelMundoPersonalPortfolio.Data
         public static DataTable ExecuteQuery(string query, params SqlParameter[] parameters)
         {
             return ExecuteDataTable(query, parameters);
+        }
+
+        /// <summary>
+        /// Alias for ExecuteStoredProcedureDataTable.
+        /// </summary>
+        public static DataTable ExecuteStoredProcedure(string procedureName, params SqlParameter[] parameters)
+        {
+            return ExecuteStoredProcedureDataTable(procedureName, parameters);
         }
 
         /// <summary>
